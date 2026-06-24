@@ -40,7 +40,13 @@ const publicSchema = z.object({
   NEXT_PUBLIC_SITE_URL: z.string().url().default("https://kappersassistent.nl"),
 });
 
-export const env = serverSchema.parse(process.env);
+// Vercel sets unassigned env vars to "" at build time; strip them so
+// .optional()/.default() in Zod fire correctly instead of failing URL checks.
+const cleanedEnv = Object.fromEntries(
+  Object.entries(process.env).map(([k, v]) => [k, v === "" ? undefined : v]),
+);
+
+export const env = serverSchema.parse(cleanedEnv);
 export const publicEnv = publicSchema.parse({
-  NEXT_PUBLIC_SITE_URL: process.env.NEXT_PUBLIC_SITE_URL,
+  NEXT_PUBLIC_SITE_URL: process.env.NEXT_PUBLIC_SITE_URL || undefined,
 });
