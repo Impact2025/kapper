@@ -16,7 +16,7 @@ const hanken = Hanken_Grotesk({
   display: "swap",
 });
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://kappersassistent.nl";
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://kappersassistent.nl";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
