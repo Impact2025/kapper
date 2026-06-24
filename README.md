@@ -1,36 +1,62 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# KapperAssistent.nl
 
-## Getting Started
+De AI-gedreven operationele cockpit voor de moderne kapsalon: een marketingsite met
+gratis AI- & SEO-scan (leadmagnet), een CRM, een AI-blogengine, Stripe-facturatie en
+geautomatiseerde rapportage.
 
-First, run the development server:
+Gebouwd met **Next.js 16 (App Router, Turbopack)**, **Drizzle ORM + Neon Postgres**,
+**Tailwind v4**, **Anthropic Claude**, **Resend** en **Stripe**.
+
+> ⚠️ Deze Next.js-versie wijkt af van de standaard. Lees de relevante gids in
+> `node_modules/next/dist/docs/` voordat je framework-API's gebruikt. Let op: de
+> `middleware`-conventie heet hier **`proxy.ts`** (Node-runtime).
+
+## Functionaliteit (milestones)
+
+- **M1 — Marketing & scan**: landing, prijzen, blog, contact + gratis AI/SEO-scan die
+  leads aanmaakt, een rapport e-mailt (Resend) en de admin notificeert.
+- **M2 — Auth & dashboard**: self-hosted sessies (jose + scrypt), `proxy.ts`-gate,
+  Data Access Layer, `/admin`-cockpit met sidebar.
+- **M3 — CRM**: leadoverzicht met filters, leaddetail met tijdlijn, fasebeheer,
+  notities en e-mails (gelogd in `email_messages`).
+- **M4 — Blog/SEO**: AI-gegenereerde concepten (Claude), live SEO-score, publicatie,
+  publieke artikelpagina's met JSON-LD + sitemap.
+- **M5 — Billing**: Stripe Checkout (subscriptions, inline price_data), webhook met
+  signatureverificatie die salons + abonnementen provisioneert, couponengine.
+- **M6 — Analytics & rapporten**: event-tracking (+ n8n-ingestie), dag-/maandrapporten
+  met AI-samenvatting, cron-route beschermd met `CRON_SECRET`.
+
+## Aan de slag
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+pnpm install
+cp .env.example .env.local   # vul minimaal DATABASE_URL en AUTH_SECRET in
+pnpm db:migrate              # of: pnpm db:push
+pnpm db:seed                 # maakt een admin-gebruiker (zie SEED_ADMIN_* env)
+pnpm dev                     # http://localhost:3000  (admin: /login -> /admin)
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+`AUTH_SECRET` genereer je met `openssl rand -base64 32`. De seed maakt standaard een
+admin op basis van `SEED_ADMIN_EMAIL` (default uit `.env.example`).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Scripts
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Script | Doel |
+| --- | --- |
+| `pnpm dev` / `pnpm build` / `pnpm start` | Next dev / productie-build / start |
+| `pnpm test` | Vitest unit-tests (couponengine, auth, SEO, markdown, utils) |
+| `pnpm lint` | ESLint |
+| `pnpm db:generate` / `db:migrate` / `db:push` / `db:studio` | Drizzle-migraties |
+| `pnpm db:seed` | Admin-gebruiker aanmaken/bijwerken |
 
-## Learn More
+## Omgeving
 
-To learn more about Next.js, take a look at the following resources:
+Zie `.env.example`. Optionele integraties degraderen netjes wanneer keys ontbreken
+(geen DB -> lege lijsten; geen Anthropic -> fallback-tekst; geen Resend -> e-mail
+overgeslagen; geen Stripe -> checkout meldt dat online betalen nog niet actief is).
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Cron
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+`vercel.json` plant `/api/cron/report` (dagelijks 07:00, maandelijks de 1e). De route
+verifieert `Authorization: Bearer $CRON_SECRET`. Handmatig genereren kan via
+`/admin/reports`.
