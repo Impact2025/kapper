@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import { Icon } from "@/components/ui/icon";
 import { ButtonLink } from "@/components/ui/button";
 import { Reveal } from "@/components/marketing/reveal";
@@ -109,13 +110,14 @@ export default function HomePage() {
           <div className="relative order-1 lg:order-2 h-[400px] md:h-[550px]">
             <div className="absolute inset-0 bg-primary/5 rounded-3xl -rotate-3 scale-105" />
             <div className="relative h-full w-full rounded-3xl overflow-hidden shadow-2xl border-4 border-white">
-              <div className="absolute inset-0 bg-gradient-to-br from-primary-container via-primary-fixed-dim to-secondary-fixed" />
-              <div className="absolute inset-0 flex items-center justify-center">
-                <Icon
-                  name="content_cut"
-                  className="text-white/30 text-[160px]"
-                />
-              </div>
+              <Image
+                src="/hero.png"
+                alt="Kapster vlechtt haar van klant in een sfeervolle salon"
+                fill
+                priority
+                className="object-cover object-center"
+                sizes="(max-width: 1024px) 100vw, 50vw"
+              />
               <div className="absolute top-md right-md glass-card p-md rounded-xl max-w-[200px] animate-pulse">
                 <div className="flex items-center gap-sm mb-xs">
                   <Icon
