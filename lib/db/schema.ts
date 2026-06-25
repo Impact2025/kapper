@@ -53,6 +53,7 @@ export const salons = pgTable("salons", {
   phone: text("phone"),
   settings: jsonb("settings").$type<Record<string, unknown>>().default({}).notNull(),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull().$onUpdate(() => new Date()),
 });
 
 export const users = pgTable("users", {
@@ -66,6 +67,7 @@ export const users = pgTable("users", {
   role: roleEnum("role").default("owner").notNull(),
   salonId: uuid("salon_id").references(() => salons.id, { onDelete: "set null" }),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull().$onUpdate(() => new Date()),
 });
 
 // Auth.js adapter tables
@@ -222,6 +224,81 @@ export const subscriptions = pgTable("subscriptions", {
   currentPeriodEnd: timestamp("current_period_end", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 });
+
+/* ============================ AI Receptionist ============================ */
+export const conversationChannelEnum = pgEnum("conversation_channel", ["whatsapp", "phone"]);
+export const conversationStatusEnum = pgEnum("conversation_status", [
+  "active",
+  "closed",
+  "transferred",
+  "escalated",
+]);
+export const messageRoleEnum = pgEnum("message_role", ["user", "assistant"]);
+export const appointmentStatusEnum = pgEnum("appointment_status", [
+  "confirmed",
+  "completed",
+  "no_show",
+  "cancelled",
+]);
+export const appointmentSourceEnum = pgEnum("appointment_source", [
+  "ai_whatsapp",
+  "ai_phone",
+  "manual",
+]);
+
+export const conversations = pgTable("conversations", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  salonId: uuid("salon_id")
+    .notNull()
+    .references(() => salons.id, { onDelete: "cascade" }),
+  channel: conversationChannelEnum("channel").notNull(),
+  externalId: text("external_id"), // WATI conversation ID or Vapi call ID
+  phoneNumber: text("phone_number"), // normalized E.164
+  customerName: text("customer_name"),
+  status: conversationStatusEnum("status").default("active").notNull(),
+  startedAt: timestamp("started_at", { withTimezone: true }).defaultNow().notNull(),
+  closedAt: timestamp("closed_at", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull().$onUpdate(() => new Date()),
+});
+
+export const messages = pgTable("messages", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  conversationId: uuid("conversation_id")
+    .notNull()
+    .references(() => conversations.id, { onDelete: "cascade" }),
+  role: messageRoleEnum("role").notNull(),
+  content: text("content").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+export const appointments = pgTable(
+  "appointments",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    salonId: uuid("salon_id")
+      .notNull()
+      .references(() => salons.id, { onDelete: "cascade" }),
+    conversationId: uuid("conversation_id").references(() => conversations.id, {
+      onDelete: "set null",
+    }),
+    externalId: text("external_id"), // ID in the agenda provider
+    agendaProvider: text("agenda_provider").notNull(),
+    customerName: text("customer_name").notNull(),
+    customerPhone: text("customer_phone").notNull(),
+    serviceType: text("service_type").notNull(),
+    appointmentTime: timestamp("appointment_time", { withTimezone: true }).notNull(),
+    durationMinutes: integer("duration_minutes").notNull().default(30),
+    status: appointmentStatusEnum("status").default("confirmed").notNull(),
+    source: appointmentSourceEnum("source").notNull(),
+    reminderSentAt: timestamp("reminder_sent_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [
+    index("appointments_salon_time_idx").on(t.salonId, t.appointmentTime),
+    index("appointments_status_idx").on(t.status),
+  ],
+);
 
 /* ============================ Analytics & Reports ============================ */
 export const events = pgTable(

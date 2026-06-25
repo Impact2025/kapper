@@ -2,10 +2,12 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { requireSalonOwner } from "@/lib/auth/dal";
 import { getSalonWithSubscription } from "@/lib/salon/queries";
+import { getSalonMetrics } from "@/lib/salon/metrics";
 import { PageHeader, Card, Badge } from "@/components/admin/ui";
 import { Icon } from "@/components/ui/icon";
 import { PLANS } from "@/lib/plans";
 import { formatEur } from "@/lib/utils";
+import { UpgradeModal } from "@/components/salon/upgrade-modal";
 
 export const metadata: Metadata = { title: "Abonnement" };
 
@@ -27,7 +29,10 @@ const STATUS_TONES: Record<string, BadgeTone> = {
 
 export default async function AbonnementPage() {
   const user = await requireSalonOwner();
-  const salon = await getSalonWithSubscription(user.salonId);
+  const [salon, metrics] = await Promise.all([
+    getSalonWithSubscription(user.salonId),
+    getSalonMetrics(user.salonId),
+  ]);
 
   const salonStatus = salon?.status ?? "trial";
   const salonPlan = salon?.plan ?? "essential";
@@ -70,12 +75,11 @@ export default async function AbonnementPage() {
                 Kies een plan om je AI-assistent actief te houden na de proefperiode.
               </p>
             </div>
-            <Link
-              href="/prijzen"
-              className="inline-flex items-center gap-base rounded-full bg-secondary px-md py-sm text-label-md font-label-md text-on-secondary transition-all hover:opacity-90"
-            >
-              Plan kiezen →
-            </Link>
+            <UpgradeModal
+              upgradePlans={PLANS}
+              triggerLabel="Plan kiezen →"
+              triggerClass="inline-flex items-center gap-base rounded-full bg-secondary px-md py-sm text-label-md font-label-md text-on-secondary transition-all hover:opacity-90"
+            />
           </div>
         </div>
       )}
@@ -131,40 +135,53 @@ export default async function AbonnementPage() {
               </p>
             </div>
           )}
-          {upgradePlans.map((up) => (
-            <div
-              key={up.id}
-              className={`rounded-xl border p-md ${
-                up.popular
-                  ? "border-primary/40 bg-primary-fixed/20"
-                  : "border-outline-variant/40 bg-surface-container-lowest"
-              }`}
-            >
-              <div className="mb-sm flex items-start justify-between">
-                <div>
-                  <div className="flex items-center gap-xs">
-                    <span className="font-headline-md text-headline-md text-on-surface">
-                      {up.name}
-                    </span>
-                    {up.popular && <Badge tone="primary">Populair</Badge>}
-                  </div>
-                  <div className="mt-xs text-label-sm text-on-surface-variant">{up.tagline}</div>
+          {upgradePlans.length > 0 && (
+            <>
+              {/* Usage nudge */}
+              {metrics.callsHandled > 0 && (
+                <div className="flex items-start gap-sm rounded-lg border border-outline-variant/40 bg-surface-container px-md py-sm text-label-sm text-on-surface-variant">
+                  <Icon name="insights" className="mt-0.5 text-[16px] shrink-0 text-primary" />
+                  <span>
+                    Deze maand {metrics.callsHandled} gesprek{metrics.callsHandled !== 1 ? "ken" : ""} afgehandeld.
+                    Upgrade voor onbeperkte capaciteit en meer functies.
+                  </span>
                 </div>
-                <div className="shrink-0 text-right">
-                  <div className="font-headline-md text-headline-md text-on-surface">
-                    {formatEur(up.price)}
+              )}
+
+              {upgradePlans.map((up) => (
+                <div
+                  key={up.id}
+                  className={`rounded-xl border p-md ${
+                    up.popular
+                      ? "border-primary/40 bg-primary-fixed/20"
+                      : "border-outline-variant/40 bg-surface-container-lowest"
+                  }`}
+                >
+                  <div className="mb-sm flex items-start justify-between">
+                    <div>
+                      <div className="flex items-center gap-xs">
+                        <span className="font-headline-md text-headline-md text-on-surface">
+                          {up.name}
+                        </span>
+                        {up.popular && <Badge tone="primary">Populair</Badge>}
+                      </div>
+                      <div className="mt-xs text-label-sm text-on-surface-variant">{up.tagline}</div>
+                    </div>
+                    <div className="shrink-0 text-right">
+                      <div className="font-headline-md text-headline-md text-on-surface">
+                        {formatEur(up.price)}
+                      </div>
+                      <div className="text-label-sm text-on-surface-variant">/maand</div>
+                    </div>
                   </div>
-                  <div className="text-label-sm text-on-surface-variant">/maand</div>
+                  <UpgradeModal
+                    upgradePlans={[up]}
+                    triggerLabel={`Upgrade naar ${up.audience}`}
+                  />
                 </div>
-              </div>
-              <Link
-                href="/prijzen"
-                className="flex w-full items-center justify-center gap-base rounded-full border border-primary px-md py-sm text-label-md font-label-md text-primary transition-all hover:bg-primary hover:text-on-primary"
-              >
-                Upgrade naar {up.audience}
-              </Link>
-            </div>
-          ))}
+              ))}
+            </>
+          )}
         </div>
       </div>
 

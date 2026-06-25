@@ -29,6 +29,22 @@ function eur(n: number): string {
   return "€" + n.toLocaleString("nl-NL");
 }
 
+export function welcomeEmail({
+  salonName,
+  setPasswordUrl,
+}: {
+  salonName: string;
+  setPasswordUrl: string;
+}): string {
+  const inner = `
+    <p style="font-size:16px;line-height:1.6;margin:0 0 16px;">Welkom bij KapperAssistent! Je account voor <strong>${salonName}</strong> is aangemaakt.</p>
+    <p style="font-size:16px;line-height:1.6;margin:0 0 24px;">Klik op de knop hieronder om je wachtwoord in te stellen en direct in te loggen. De link is 24 uur geldig.</p>
+    <div style="margin-bottom:24px;">${button(setPasswordUrl, "Wachtwoord instellen en inloggen →")}</div>
+    <p style="font-size:13px;color:#747871;">Heb je dit account niet aangemaakt? Neem dan contact met ons op via <a href="mailto:support@kappersassistent.nl" style="color:${BRAND};">support@kappersassistent.nl</a>.</p>
+  `;
+  return shell(`Welkom bij KapperAssistent, ${salonName}!`, inner);
+}
+
 /** Generic email: a title + free-text body (newlines become paragraphs). */
 export function simpleEmail({ title, body }: { title: string; body: string }): string {
   const paragraphs = body
@@ -43,6 +59,58 @@ export function simpleEmail({ title, body }: { title: string; body: string }): s
     )
     .join("");
   return shell(title, paragraphs);
+}
+
+export function aiLiveEmail({ salonName, dashboardUrl }: { salonName: string; dashboardUrl: string }): string {
+  const inner = `
+    <p style="font-size:16px;line-height:1.6;margin:0 0 16px;">Goed nieuws! De AI-assistent van <strong>${salonName}</strong> heeft zojuist zijn eerste gesprek afgehandeld. Je AI-receptionist staat live. 🎉</p>
+    <p style="font-size:16px;line-height:1.6;margin:0 0 24px;">Klanten kunnen je nu bereiken via WhatsApp en/of telefoon. De AI plant afspraken in, beantwoordt vragen en stuurt herinneringen — terwijl jij gewoon aan het werk bent.</p>
+    <div style="margin-bottom:24px;">${button(dashboardUrl, "Bekijk je eerste gesprekken →")}</div>
+    <p style="font-size:13px;color:#747871;">Je KPI's worden bijgewerkt zodra er meer data binnenkomt.</p>
+  `;
+  return shell(`Je AI-assistent staat live, ${salonName}!`, inner);
+}
+
+export function weeklyDigestEmail({
+  salonName,
+  period,
+  callsHandled,
+  bookingsMade,
+  noShowsPrevented,
+  protectedRevenueEur,
+  dashboardUrl,
+}: {
+  salonName: string;
+  period: string;
+  callsHandled: number;
+  bookingsMade: number;
+  noShowsPrevented: number;
+  protectedRevenueEur: number;
+  dashboardUrl: string;
+}): string {
+  const inner = `
+    <p style="font-size:16px;line-height:1.6;margin:0 0 16px;">Hier is je weekoverzicht voor <strong>${salonName}</strong> (${period}).</p>
+    <table style="width:100%;border-collapse:collapse;font-size:14px;margin-bottom:24px;">
+      <tr style="background:#f5f3f0;">
+        <td style="padding:10px 12px;color:#444842;font-weight:600;">Gesprekken afgehandeld</td>
+        <td style="padding:10px 12px;text-align:right;font-weight:700;font-size:18px;">${callsHandled}</td>
+      </tr>
+      <tr>
+        <td style="padding:10px 12px;color:#444842;">Boekingen via AI</td>
+        <td style="padding:10px 12px;text-align:right;font-weight:700;font-size:18px;">${bookingsMade}</td>
+      </tr>
+      <tr style="background:#f5f3f0;">
+        <td style="padding:10px 12px;color:#444842;">No-shows voorkomen</td>
+        <td style="padding:10px 12px;text-align:right;font-weight:700;font-size:18px;">${noShowsPrevented}</td>
+      </tr>
+      <tr>
+        <td style="padding:10px 12px;color:#444842;font-weight:600;">Beschermde omzet</td>
+        <td style="padding:10px 12px;text-align:right;font-weight:700;font-size:18px;color:#526350;">€${protectedRevenueEur}</td>
+      </tr>
+    </table>
+    <div style="margin-bottom:16px;">${button(dashboardUrl, "Open dashboard →")}</div>
+  `;
+  return shell(`Weekoverzicht ${salonName}`, inner);
 }
 
 export function adminReportEmail({

@@ -6,6 +6,7 @@ import { getSalonMetrics } from "@/lib/salon/metrics";
 import { PageHeader, Card, StatCard, Badge } from "@/components/admin/ui";
 import { Icon } from "@/components/ui/icon";
 import { formatEur } from "@/lib/utils";
+import { OnboardingWizard } from "@/components/salon/onboarding-wizard";
 
 export const metadata: Metadata = { title: "Overzicht" };
 
@@ -28,11 +29,51 @@ export default async function DashboardPage() {
   const completedSteps = onboardingSteps.filter((s) => s.done).length;
   const showOnboarding = completedSteps < onboardingSteps.length;
 
+  const wizardSteps = [
+    {
+      title: "Agenda koppelen",
+      description: "Verbind Salonized, Phorest, Treatwell of Acuity. De AI boekt alleen in jouw agenda en hallucineert nooit beschikbaarheid.",
+      time: "5 minuten",
+      icon: "calendar_month",
+      href: "/dashboard/integraties",
+      cta: "Agenda koppelen",
+      done: !!salon?.agendaProvider,
+    },
+    {
+      title: "No-show beleid instellen",
+      description: "Stel in hoe laat klanten gratis mogen annuleren en of je een aanbetaling wilt. De AI informeert klanten automatisch.",
+      time: "3 minuten",
+      icon: "event_busy",
+      href: "/dashboard/no-show",
+      cta: "Beleid instellen",
+      done: !!noShow.enabled,
+    },
+    {
+      title: "WhatsApp activeren",
+      description: "Voer je WATI API-sleutel in. Daarna handelt de AI alle WhatsApp-berichten af — 24/7, onder 800ms reactietijd.",
+      time: "5 minuten",
+      icon: "chat",
+      href: "/dashboard/integraties",
+      cta: "WhatsApp koppelen",
+      done: !!ai.whatsappEnabled,
+    },
+    {
+      title: "Telefonische receptie activeren",
+      description: "Voer je zakelijke telefoonnummer en Vapi-sleutel in. De AI neemt gesprekken aan en plant direct afspraken.",
+      time: "5 minuten",
+      icon: "phone",
+      href: "/dashboard/integraties",
+      cta: "Telefoon activeren",
+      done: !!ai.phoneEnabled,
+    },
+  ];
+
   const deltaHint = (delta: number) =>
     delta > 0 ? `+${delta}% vs vorige maand` : delta < 0 ? `${delta}% vs vorige maand` : "Gelijk aan vorige maand";
 
   return (
     <div>
+      <OnboardingWizard steps={wizardSteps} salonId={user.salonId} />
       <PageHeader
         title={`Welkom terug, ${user.name?.split(" ")[0] ?? "kapper"}`}
         subtitle={`${salon?.name ?? "Jouw salon"} · Afgelopen 30 dagen`}
@@ -125,6 +166,7 @@ export default async function DashboardPage() {
         <Card>
           <h2 className="mb-md font-headline-md text-headline-md text-on-surface">Snel naar</h2>
           <div className="flex flex-col gap-xs">
+            <QuickLink href="/dashboard/gesprekken" icon="forum" label="Gesprekken bekijken" />
             <QuickLink href="/dashboard/afspraken" icon="calendar_month" label="Afspraken bekijken" />
             <QuickLink href="/dashboard/no-show" icon="event_busy" label="No-show beleid instellen" />
             <QuickLink href="/dashboard/integraties" icon="cable" label="Integraties beheren" />

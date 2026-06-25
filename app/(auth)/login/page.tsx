@@ -28,7 +28,14 @@ export default function LoginPage() {
         </div>
 
         <p className="mt-md text-center text-label-sm text-on-surface-variant">
-          Nog geen toegang? Neem contact op met je beheerder.
+          <Link href="/forgot-password" className="text-primary hover:underline">
+            Wachtwoord vergeten?
+          </Link>
+          {" · "}
+          Vragen? Mail{" "}
+          <a href="mailto:support@kappersassistent.nl" className="text-primary hover:underline">
+            support@kappersassistent.nl
+          </a>
         </p>
       </div>
     </main>

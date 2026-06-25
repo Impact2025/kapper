@@ -80,7 +80,7 @@ export async function createCheckout(
     ...(discounts.length ? { discounts } : {}),
     success_url: `${publicEnv.NEXT_PUBLIC_SITE_URL}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: `${publicEnv.NEXT_PUBLIC_SITE_URL}/prijzen`,
-    metadata: { plan: plan.id, salonName, couponId: couponId ?? "" },
+    metadata: { plan: plan.id, salonName, email, couponId: couponId ?? "" },
   });
 
   if (!session.url) return { error: "Kon geen betaalsessie starten. Probeer opnieuw." };

@@ -56,6 +56,7 @@ const integrationSchema = z.object({
   agendaProvider: z.enum(["salonized", "phorest", "treatwell", "acuity", ""]),
   agendaApiKey: z.string().max(500),
   watiApiKey: z.string().max(500),
+  vapiApiKey: z.string().max(500),
   phoneNumber: z.string().max(30),
 });
 
@@ -70,19 +71,25 @@ export async function updateIntegrations(
     agendaProvider: formData.get("agendaProvider") ?? "",
     agendaApiKey: formData.get("agendaApiKey") ?? "",
     watiApiKey: formData.get("watiApiKey") ?? "",
+    vapiApiKey: formData.get("vapiApiKey") ?? "",
     phoneNumber: formData.get("phoneNumber") ?? "",
   });
 
   if (!parsed.success) return { error: "Ongeldige invoer." };
 
-  const { agendaProvider, agendaApiKey, watiApiKey, phoneNumber } = parsed.data;
+  const { agendaProvider, agendaApiKey, watiApiKey, vapiApiKey, phoneNumber } = parsed.data;
+
+  // Encrypt API keys before storage
+  const { encrypt } = await import("@/lib/crypto");
+  const encryptIfSet = (v: string) => (v ? encrypt(v) : null);
 
   const aiSettings = {
     whatsappEnabled: !!watiApiKey,
     phoneEnabled: !!phoneNumber,
-    watiApiKey: watiApiKey || null,
+    watiApiKey: encryptIfSet(watiApiKey),
+    vapiApiKey: encryptIfSet(vapiApiKey),
     phoneNumber: phoneNumber || null,
-    agendaApiKey: agendaApiKey || null,
+    agendaApiKey: encryptIfSet(agendaApiKey),
   };
 
   await db

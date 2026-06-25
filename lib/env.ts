@@ -33,6 +33,15 @@ const serverSchema = z.object({
   // Cron protection
   CRON_SECRET: z.string().optional(),
 
+  // AI Receptionist
+  WATI_BASE_URL: z.string().url().optional(), // e.g. https://live-server-XXX.wati.io
+  WATI_API_KEY: z.string().optional(),        // WATI Bearer token / webhook signing key
+  VAPI_API_KEY: z.string().optional(),        // Vapi webhook auth Bearer token
+  ENCRYPTION_KEY: z.string().optional(),      // 64 hex chars = 32 bytes for AES-256-GCM
+
+  // Observability
+  SENTRY_DSN: z.string().url().optional(),
+
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
 });
 

@@ -1,11 +1,15 @@
 import "server-only";
+import { randomBytes, createHash } from "node:crypto";
 import type Stripe from "stripe";
 import { eq } from "drizzle-orm";
 import { db } from "@/lib/db";
-import { salons, subscriptions, events } from "@/lib/db/schema";
+import { salons, subscriptions, events, users, verificationTokens } from "@/lib/db/schema";
 import { redeemCoupon } from "@/lib/coupons/service";
 import { PLANS, type PlanId } from "@/lib/plans";
 import { slugify } from "@/lib/utils";
+import { sendEmail } from "@/lib/mail/resend";
+import { welcomeEmail } from "@/lib/mail/templates";
+import { publicEnv } from "@/lib/env";
 
 function planById(id: string | undefined): (typeof PLANS)[number] | undefined {
   return PLANS.find((p) => p.id === id);
@@ -31,6 +35,7 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
   const planId = session.metadata?.plan as PlanId | undefined;
   const salonName = session.metadata?.salonName ?? "Nieuwe salon";
   const couponId = session.metadata?.couponId || undefined;
+  const email = (session.metadata?.email ?? session.customer_email ?? "").toLowerCase().trim();
   const plan = planById(planId);
   if (!plan) return;
 
@@ -68,6 +73,57 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
     props: { plan: plan.id, amount: plan.price },
     dedupeKey: `checkout:${session.id}`,
   });
+
+  // Auto-create owner account so user can login immediately (no 24h wait)
+  if (email) {
+    try {
+      const existing = await db
+        .select({ id: users.id })
+        .from(users)
+        .where(eq(users.email, email))
+        .limit(1);
+
+      if (!existing[0]) {
+        await db.insert(users).values({
+          email,
+          name: salonName,
+          role: "owner",
+          salonId: salon.id,
+        });
+      } else {
+        // Link existing account to the new salon
+        await db
+          .update(users)
+          .set({ salonId: salon.id, role: "owner" })
+          .where(eq(users.id, existing[0].id));
+      }
+
+      // Issue a one-time set-password token (24h) via verificationTokens table
+      const rawToken = randomBytes(32).toString("hex");
+      const tokenHash = createHash("sha256").update(rawToken).digest("hex");
+      const expires = new Date(Date.now() + 24 * 60 * 60 * 1000);
+
+      // Remove any previous tokens for this email
+      await db
+        .delete(verificationTokens)
+        .where(eq(verificationTokens.identifier, `reset:${email}`));
+
+      await db.insert(verificationTokens).values({
+        identifier: `reset:${email}`,
+        token: tokenHash,
+        expires,
+      });
+
+      const setPasswordUrl = `${publicEnv.NEXT_PUBLIC_SITE_URL}/reset-password/${rawToken}`;
+      await sendEmail({
+        to: email,
+        subject: `Welkom bij KapperAssistent — stel je wachtwoord in`,
+        html: welcomeEmail({ salonName, setPasswordUrl }),
+      });
+    } catch (err) {
+      console.error("[provision] auto-account creation failed:", err);
+    }
+  }
 }
 
 async function handleSubscriptionChange(sub: Stripe.Subscription, canceled: boolean) {

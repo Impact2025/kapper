@@ -39,6 +39,12 @@ export function SiteHeader() {
         </div>
 
         <div className="flex items-center gap-sm">
+          <Link
+            href="/login"
+            className="hidden sm:inline-flex font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors"
+          >
+            Inloggen
+          </Link>
           <ButtonLink href="/scan" size="sm" className="hidden sm:inline-flex">
             Gratis AI-scan
           </ButtonLink>
@@ -70,6 +76,13 @@ export function SiteHeader() {
               {l.label}
             </Link>
           ))}
+          <Link
+            href="/login"
+            onClick={() => setOpen(false)}
+            className="font-label-md text-label-md text-on-surface-variant py-xs"
+          >
+            Inloggen
+          </Link>
           <ButtonLink href="/scan" className="mt-xs">
             Gratis AI-scan
           </ButtonLink>

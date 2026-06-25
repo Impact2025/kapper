@@ -10,10 +10,7 @@ export const maxDuration = 60;
 
 function authorized(req: Request): boolean {
   if (!env.CRON_SECRET) return false;
-  const header = req.headers.get("authorization");
-  if (header === `Bearer ${env.CRON_SECRET}`) return true;
-  const url = new URL(req.url);
-  return url.searchParams.get("secret") === env.CRON_SECRET;
+  return req.headers.get("authorization") === `Bearer ${env.CRON_SECRET}`;
 }
 
 async function run(req: Request) {

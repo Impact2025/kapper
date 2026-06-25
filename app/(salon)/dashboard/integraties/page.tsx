@@ -17,10 +17,14 @@ export default async function IntegratiesPage() {
 
   const ai = (salon?.settings?.ai as Record<string, unknown>) ?? {};
 
+  // Show placeholder if key is stored (encrypted) — never expose raw value to client
+  const hasKey = (v: unknown) => (typeof v === "string" && v.length > 0 ? "••••••••" : "");
+
   const integrations = {
     agendaProvider: salon?.agendaProvider ?? "",
-    agendaApiKey: (ai.agendaApiKey as string | null) ?? "",
-    watiApiKey: (ai.watiApiKey as string | null) ?? "",
+    agendaApiKey: hasKey(ai.agendaApiKey),
+    watiApiKey: hasKey(ai.watiApiKey),
+    vapiApiKey: hasKey(ai.vapiApiKey),
     phoneNumber: (ai.phoneNumber as string | null) ?? "",
   };
 

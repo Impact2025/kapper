@@ -29,3 +29,16 @@ export async function verifyPassword(
   const derived = (await scrypt(password.normalize("NFKC"), salt, expected.length)) as Buffer;
   return expected.length === derived.length && timingSafeEqual(expected, derived);
 }
+
+export interface PasswordStrengthResult {
+  ok: boolean;
+  error?: string;
+}
+
+/** Synchronous check — min 8 chars, 1 uppercase, 1 digit. */
+export function validatePasswordStrength(password: string): PasswordStrengthResult {
+  if (password.length < 8) return { ok: false, error: "Minimaal 8 tekens" };
+  if (!/[A-Z]/.test(password)) return { ok: false, error: "Minimaal één hoofdletter" };
+  if (!/[0-9]/.test(password)) return { ok: false, error: "Minimaal één cijfer" };
+  return { ok: true };
+}

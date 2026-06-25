@@ -16,6 +16,7 @@ interface Integrations {
   agendaProvider: string;
   agendaApiKey: string;
   watiApiKey: string;
+  vapiApiKey: string;
   phoneNumber: string;
 }
 
@@ -111,17 +112,35 @@ export function IntegratiesForm({ integrations }: { integrations: Integrations }
           De AI neemt inkomende gesprekken aan en plant direct een afspraak in. Latentie onder 800ms
           — klanten merken geen verschil. Beschikbaar in Pro en Elite.
         </p>
-        <div>
-          <label className="mb-xs block text-label-sm text-on-surface-variant">
-            Zakelijk telefoonnummer
-          </label>
-          <input
-            type="tel"
-            name="phoneNumber"
-            defaultValue={integrations.phoneNumber}
-            placeholder="+31 20 123 4567"
-            className={inputCls}
-          />
+        <div className="flex flex-col gap-sm">
+          <div>
+            <label className="mb-xs block text-label-sm text-on-surface-variant">
+              Zakelijk telefoonnummer
+            </label>
+            <input
+              type="tel"
+              name="phoneNumber"
+              defaultValue={integrations.phoneNumber}
+              placeholder="+31 20 123 4567"
+              className={inputCls}
+            />
+          </div>
+          <div>
+            <label className="mb-xs block text-label-sm text-on-surface-variant">
+              Vapi API-sleutel
+            </label>
+            <input
+              type="password"
+              name="vapiApiKey"
+              defaultValue={integrations.vapiApiKey}
+              placeholder="vapi_…"
+              autoComplete="off"
+              className={inputCls}
+            />
+            <p className="mt-xs text-label-sm text-on-surface-variant">
+              Te vinden in je Vapi-dashboard onder API Keys.
+            </p>
+          </div>
         </div>
       </div>
 

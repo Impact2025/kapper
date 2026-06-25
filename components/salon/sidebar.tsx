@@ -16,6 +16,7 @@ interface NavItem {
 const NAV: NavItem[] = [
   { href: "/dashboard", label: "Overzicht", icon: "dashboard" },
   { href: "/dashboard/ai-receptie", label: "AI-Receptie", icon: "smart_toy" },
+  { href: "/dashboard/gesprekken", label: "Gesprekken", icon: "forum" },
   { href: "/dashboard/afspraken", label: "Afspraken", icon: "calendar_month" },
   { href: "/dashboard/no-show", label: "No-show beleid", icon: "event_busy" },
   { href: "/dashboard/integraties", label: "Integraties", icon: "cable" },
