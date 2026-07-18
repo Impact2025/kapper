@@ -6,7 +6,7 @@ export const revalidate = 3600;
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const base = publicEnv.NEXT_PUBLIC_SITE_URL;
-  const routes = ["", "/diensten", "/prijzen", "/over-ons", "/contact", "/scan", "/blog"];
+  const routes = ["", "/diensten", "/prijzen", "/over-ons", "/contact", "/scan", "/blog", "/privacy", "/voorwaarden"];
   const now = new Date();
 
   const staticEntries: MetadataRoute.Sitemap = routes.map((r) => ({
