@@ -23,6 +23,10 @@ export default async function proxy(req: NextRequest) {
     return NextResponse.redirect(url);
   }
 
+  if (isAdminRoute && session?.role !== "admin") {
+    return NextResponse.redirect(new URL("/dashboard", req.nextUrl));
+  }
+
   if (isLoginRoute && session?.userId) {
     const dest = session.role === "owner" ? "/dashboard" : "/admin";
     return NextResponse.redirect(new URL(dest, req.nextUrl));

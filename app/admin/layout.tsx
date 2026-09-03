@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { getCurrentUser } from "@/lib/auth/dal";
+import { requireRole } from "@/lib/auth/dal";
 import { Sidebar } from "@/components/admin/sidebar";
 
 export const metadata: Metadata = {
@@ -12,8 +12,10 @@ export default async function AdminLayout({
 }: {
   children: React.ReactNode;
 }) {
-  // Authoritative gate: redirects to /login when unauthenticated.
-  const user = await getCurrentUser();
+  // Authoritative gate: redirects unauthenticated users to /login and any
+  // non-admin (e.g. a salon owner) to /admin, which itself redirects them
+  // onward — proxy.ts is optimistic-only, this is what actually enforces it.
+  const user = await requireRole("admin");
 
   return (
     <div className="flex min-h-screen flex-col bg-surface-container-lowest md:flex-row">

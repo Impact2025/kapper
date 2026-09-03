@@ -58,7 +58,7 @@ export const getCurrentUser = cache(async (): Promise<CurrentUser> => {
 /** Require a specific role; redirect to the dashboard root if insufficient. */
 export async function requireRole(role: "admin"): Promise<CurrentUser> {
   const user = await getCurrentUser();
-  if (user.role !== role) redirect("/admin");
+  if (user.role !== role) redirect("/dashboard");
   return user;
 }
 
