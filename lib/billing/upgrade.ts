@@ -16,6 +16,7 @@ export async function createUpgrade(
   enriched.set("plan", formData.get("plan") as string);
   enriched.set("salonName", salon?.name ?? "");
   enriched.set("email", user.email);
+  enriched.set("salonId", user.salonId);
   const coupon = formData.get("coupon");
   if (coupon) enriched.set("coupon", coupon as string);
 

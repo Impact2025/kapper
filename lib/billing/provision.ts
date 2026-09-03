@@ -31,13 +31,66 @@ async function uniqueSlug(base: string): Promise<string> {
   }
 }
 
+/**
+ * An upgrade from an already-logged-in owner carries their salonId in the
+ * checkout metadata (see lib/billing/upgrade.ts) — update that salon's plan
+ * and its existing subscription row in place instead of provisioning a
+ * second salon+account for someone who already has one.
+ */
+async function handleUpgrade(salonId: string, plan: (typeof PLANS)[number], session: Stripe.Checkout.Session) {
+  await db
+    .update(salons)
+    .set({ plan: plan.id, status: "active", mrr: plan.price * 100 })
+    .where(eq(salons.id, salonId));
+
+  const stripeCustomerId = typeof session.customer === "string" ? session.customer : null;
+  const stripeSubId = typeof session.subscription === "string" ? session.subscription : null;
+
+  const [existingSub] = await db
+    .select({ id: subscriptions.id })
+    .from(subscriptions)
+    .where(eq(subscriptions.salonId, salonId))
+    .limit(1);
+
+  if (existingSub) {
+    await db
+      .update(subscriptions)
+      .set({ plan: plan.id, status: "active", stripeCustomerId, stripeSubId })
+      .where(eq(subscriptions.id, existingSub.id));
+  } else {
+    await db.insert(subscriptions).values({ salonId, stripeCustomerId, stripeSubId, plan: plan.id, status: "active" });
+  }
+
+  const couponId = session.metadata?.couponId || undefined;
+  if (couponId) {
+    try {
+      await redeemCoupon(couponId, salonId);
+    } catch {
+      /* non-fatal */
+    }
+  }
+
+  await db.insert(events).values({
+    type: "subscription_upgraded",
+    salonId,
+    props: { plan: plan.id, amount: plan.price },
+    dedupeKey: `checkout:${session.id}`,
+  });
+}
+
 async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
   const planId = session.metadata?.plan as PlanId | undefined;
   const salonName = session.metadata?.salonName ?? "Nieuwe salon";
   const couponId = session.metadata?.couponId || undefined;
   const email = (session.metadata?.email ?? session.customer_email ?? "").toLowerCase().trim();
+  const existingSalonId = session.metadata?.salonId || undefined;
   const plan = planById(planId);
   if (!plan) return;
+
+  if (existingSalonId) {
+    await handleUpgrade(existingSalonId, plan, session);
+    return;
+  }
 
   const slug = await uniqueSlug(salonName);
   const [salon] = await db

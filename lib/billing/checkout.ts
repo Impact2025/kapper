@@ -17,6 +17,9 @@ const schema = z.object({
   salonName: z.string().min(2, "Vul je salonnaam in.").max(120),
   email: z.string().email("Vul een geldig e-mailadres in."),
   coupon: z.string().max(40).optional().or(z.literal("")),
+  // Present only for a logged-in owner upgrading their plan — tells the
+  // webhook to update this salon instead of provisioning a new one.
+  salonId: z.string().uuid().optional().or(z.literal("")),
 });
 
 export async function createCheckout(
@@ -28,11 +31,12 @@ export async function createCheckout(
     salonName: formData.get("salonName"),
     email: formData.get("email"),
     coupon: formData.get("coupon"),
+    salonId: formData.get("salonId") ?? "",
   });
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? "Controleer de velden." };
   }
-  const { plan: planId, salonName, email, coupon } = parsed.data;
+  const { plan: planId, salonName, email, coupon, salonId } = parsed.data;
   const plan = PLANS.find((p) => p.id === (planId as PlanId));
   if (!plan) return { error: "Onbekend abonnement." };
 
@@ -80,7 +84,7 @@ export async function createCheckout(
     ...(discounts.length ? { discounts } : {}),
     success_url: `${publicEnv.NEXT_PUBLIC_SITE_URL}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: `${publicEnv.NEXT_PUBLIC_SITE_URL}/prijzen`,
-    metadata: { plan: plan.id, salonName, email, couponId: couponId ?? "" },
+    metadata: { plan: plan.id, salonName, email, couponId: couponId ?? "", salonId: salonId || "" },
   });
 
   if (!session.url) return { error: "Kon geen betaalsessie starten. Probeer opnieuw." };

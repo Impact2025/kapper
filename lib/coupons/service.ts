@@ -1,5 +1,5 @@
 import "server-only";
-import { eq, sql, desc } from "drizzle-orm";
+import { and, eq, lt, or, isNull, sql, desc } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { coupons, couponRedemptions } from "@/lib/db/schema";
 import { env } from "@/lib/env";
@@ -57,13 +57,29 @@ export async function previewCoupon(
   };
 }
 
-/** Record a redemption and increment the counter. Best-effort, idempotent-ish. */
+/**
+ * Record a redemption and increment the counter. The increment is guarded
+ * by the same WHERE clause that checks the cap, so two concurrent checkouts
+ * can't both squeeze past `maxRedemptions` — the loser's UPDATE matches zero
+ * rows and this throws instead of silently over-redeeming.
+ */
 export async function redeemCoupon(couponId: string, salonId?: string): Promise<void> {
   if (!env.DATABASE_URL) return;
-  await db
+  const [updated] = await db
     .update(coupons)
     .set({ redeemed: sql`${coupons.redeemed} + 1` })
-    .where(eq(coupons.id, couponId));
+    .where(
+      and(
+        eq(coupons.id, couponId),
+        or(isNull(coupons.maxRedemptions), lt(coupons.redeemed, coupons.maxRedemptions)),
+      ),
+    )
+    .returning({ id: coupons.id });
+
+  if (!updated) {
+    throw new Error("Coupon is niet meer geldig (limiet bereikt of niet gevonden).");
+  }
+
   await db.insert(couponRedemptions).values({ couponId, salonId: salonId ?? null });
 }
 
