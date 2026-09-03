@@ -2,6 +2,7 @@
 
 import { useActionState, useState } from "react";
 import { updateIntegrations } from "@/lib/salon/actions";
+import { syncVapiAssistantAction } from "@/lib/salon/vapi-actions";
 import { Icon } from "@/components/ui/icon";
 
 const AGENDA_PROVIDERS = [
@@ -30,6 +31,46 @@ const inputCls =
 const cardCls =
   "rounded-xl border border-outline-variant/40 bg-surface-container-lowest p-md soft-shadow";
 
+function VapiSyncCard() {
+  const [state, action, pending] = useActionState(syncVapiAssistantAction, undefined);
+
+  return (
+    <div className={cardCls}>
+      <h3 className="mb-xs flex items-center gap-sm text-body-md font-medium text-on-surface">
+        <Icon name="sync" className="text-[20px] text-primary" />
+        Vapi-assistant synchroniseren
+      </h3>
+      <p className="mb-md text-label-sm text-on-surface-variant">
+        Zet je vestigingen, behandelingen, team en kennisbank (uit Praktijk) live op je
+        telefoonnummer — Vapi&apos;s eigen Claude-model voert het gesprek, met dezelfde tools als
+        WhatsApp. Draai dit opnieuw na elke wijziging in Praktijk.
+      </p>
+      <form action={action}>
+        <button
+          type="submit"
+          disabled={pending}
+          className="inline-flex items-center gap-base rounded-full bg-primary px-md py-sm text-label-md font-label-md text-on-primary transition-all hover:opacity-90 active:scale-95 soft-shadow disabled:opacity-50"
+        >
+          <Icon name={pending ? "refresh" : "sync"} className={pending ? "text-[18px] animate-spin" : "text-[18px]"} />
+          {pending ? "Synchroniseren…" : "Nu synchroniseren"}
+        </button>
+      </form>
+      {state?.success && (
+        <div className="mt-sm flex items-center gap-xs text-label-md text-primary">
+          <Icon name="check_circle" filled className="text-[18px]" />
+          Vapi-assistant bijgewerkt
+        </div>
+      )}
+      {state?.error && (
+        <div className="mt-sm flex items-center gap-xs text-label-md text-error">
+          <Icon name="error" filled className="text-[18px]" />
+          {state.error}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function IntegratiesForm({ integrations }: { integrations: Integrations }) {
   const [state, action, pending] = useActionState(updateIntegrations, undefined);
   const [provider, setProvider] = useState(integrations.agendaProvider);
@@ -38,6 +79,7 @@ export function IntegratiesForm({ integrations }: { integrations: Integrations }
   const isTreatwell = provider === "treatwell";
 
   return (
+    <div className="flex flex-col gap-md">
     <form action={action} className="flex flex-col gap-md">
       {/* Agenda */}
       <div className={cardCls}>
@@ -298,5 +340,8 @@ export function IntegratiesForm({ integrations }: { integrations: Integrations }
         )}
       </div>
     </form>
+
+    {integrations.phoneNumber && integrations.vapiApiKey && <VapiSyncCard />}
+    </div>
   );
 }

@@ -96,7 +96,9 @@ const FALLBACK_NL =
 const MAX_TOOL_ROUNDS = 4;
 const KNOWLEDGE_CHAR_BUDGET = 6000;
 
-const TOOLS: Anthropic.Tool[] = [
+/** Shared tool catalogue — also the source Vapi's tool schema is derived
+ * from (see lib/ai/vapi-assistant.ts) so both channels stay in sync. */
+export const RECEPTIONIST_TOOLS: Anthropic.Tool[] = [
   {
     name: "check_availability",
     description:
@@ -173,7 +175,9 @@ const TOOLS: Anthropic.Tool[] = [
   },
 ];
 
-function buildSystemPrompt(salon: SalonContext): string {
+/** Exported so the voice channel (lib/ai/vapi-assistant.ts) can give Vapi's
+ * own model the exact same practice knowledge and behavior rules. */
+export function buildSystemPrompt(salon: SalonContext): string {
   const locationsJson = JSON.stringify(
     salon.locations.map((l) => ({ id: l.id, name: l.name, city: l.city })),
   );
@@ -336,6 +340,29 @@ async function runTool(
   }
 }
 
+export interface ToolExecutionResult {
+  resultText: string;
+  bookedAppointment?: ReceptionistResponse["bookedAppointment"];
+  escalated?: ReceptionistResponse["escalated"];
+}
+
+/**
+ * Run a single tool by name — the same logic getReceptionistReply uses
+ * internally, exposed for a channel (Vapi's own Claude-backed voice model)
+ * that calls tools directly instead of going through our own tool loop.
+ */
+export async function executeReceptionistTool(
+  name: string,
+  args: Record<string, unknown>,
+  salon: SalonContext,
+  customerPhone: string,
+  conversationId?: string | null,
+): Promise<ToolExecutionResult> {
+  const state: { bookedAppointment?: ReceptionistResponse["bookedAppointment"]; escalated?: ReceptionistResponse["escalated"] } = {};
+  const resultText = await runTool(name, args, salon, customerPhone, conversationId, state);
+  return { resultText, bookedAppointment: state.bookedAppointment, escalated: state.escalated };
+}
+
 export async function getReceptionistReply(
   salon: SalonContext,
   history: ConversationMessage[],
@@ -361,7 +388,7 @@ export async function getReceptionistReply(
         model: env.ANTHROPIC_MODEL_FAST,
         max_tokens: 768,
         system: systemPrompt,
-        tools: TOOLS,
+        tools: RECEPTIONIST_TOOLS,
         messages,
       });
 

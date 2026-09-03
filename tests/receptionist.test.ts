@@ -37,7 +37,7 @@ vi.mock("@/lib/salon/appointments", () => ({
   setExternalId: (...args: unknown[]) => setExternalIdMock(...args),
 }));
 
-import { getReceptionistReply, type SalonContext } from "@/lib/ai/receptionist";
+import { getReceptionistReply, executeReceptionistTool, type SalonContext } from "@/lib/ai/receptionist";
 
 const salon: SalonContext = {
   id: "salon-1",
@@ -213,5 +213,44 @@ describe("getReceptionistReply — tool-based receptionist", () => {
 
     expect(createMock.mock.calls.length).toBeLessThanOrEqual(5);
     expect(result.reply.length).toBeGreaterThan(0);
+  });
+});
+
+describe("executeReceptionistTool — direct tool execution for the voice channel", () => {
+  beforeEach(() => {
+    bookAppointmentMock.mockReset();
+    findAvailableSlotsMock.mockReset();
+    bookFromSlotMock.mockReset();
+    setExternalIdMock.mockReset();
+  });
+
+  it("runs a single tool without going through Claude's tool loop, and surfaces the booking", async () => {
+    bookFromSlotMock.mockResolvedValue({
+      ok: true,
+      appointmentId: "apt-1",
+      treatment: "Chemisch peeling",
+      location: "Den Bosch",
+      date: "2026-09-10",
+      time: "14:00",
+    });
+    bookAppointmentMock.mockResolvedValue({ ok: true, externalId: "ext-9" });
+
+    const { resultText, bookedAppointment } = await executeReceptionistTool(
+      "book_appointment",
+      { slot_id: "loc-1::treat-1::staff-1::2026-09-10T14:00:00.000Z", customer_name: "Anna Jansen", customer_phone: "+31611112222" },
+      salon,
+      "+31611112222",
+      "call-1",
+    );
+
+    expect(bookFromSlotMock).toHaveBeenCalledWith(expect.objectContaining({ conversationId: "call-1" }));
+    expect(setExternalIdMock).toHaveBeenCalledWith("apt-1", "ext-9");
+    expect(JSON.parse(resultText)).toMatchObject({ ok: true, treatment: "Chemisch peeling" });
+    expect(bookedAppointment).toMatchObject({ customerName: "Anna Jansen", externalId: "ext-9" });
+  });
+
+  it("returns an error result instead of throwing for an unknown tool name", async () => {
+    const { resultText } = await executeReceptionistTool("delete_everything", {}, salon, "+31611112222");
+    expect(JSON.parse(resultText)).toMatchObject({ error: expect.stringContaining("Onbekende tool") });
   });
 });
