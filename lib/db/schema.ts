@@ -246,6 +246,103 @@ export const appointmentSourceEnum = pgEnum("appointment_source", [
   "manual",
 ]);
 
+/* ============================ Praktijk (locaties, behandelingen, team) ============================ */
+export const locations = pgTable(
+  "locations",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    salonId: uuid("salon_id")
+      .notNull()
+      .references(() => salons.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    city: text("city"),
+    address: text("address"),
+    // { mon: [9,18], tue: [9,18], ..., sun: null } — null = gesloten
+    workingHours: jsonb("working_hours").$type<Record<string, [number, number] | null>>().notNull(),
+    active: boolean("active").default(true).notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [index("locations_salon_idx").on(t.salonId)],
+);
+
+export const treatments = pgTable(
+  "treatments",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    salonId: uuid("salon_id")
+      .notNull()
+      .references(() => salons.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    category: text("category"),
+    durationMinutes: integer("duration_minutes").notNull().default(30),
+    priceCents: integer("price_cents").notNull().default(0),
+    description: text("description"),
+    prepInfo: text("prep_info"),
+    aftercareInfo: text("aftercare_info"),
+    active: boolean("active").default(true).notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [index("treatments_salon_idx").on(t.salonId)],
+);
+
+export const staff = pgTable(
+  "staff",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    salonId: uuid("salon_id")
+      .notNull()
+      .references(() => salons.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    role: text("role"),
+    active: boolean("active").default(true).notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [index("staff_salon_idx").on(t.salonId)],
+);
+
+export const staffLocations = pgTable(
+  "staff_locations",
+  {
+    staffId: uuid("staff_id")
+      .notNull()
+      .references(() => staff.id, { onDelete: "cascade" }),
+    locationId: uuid("location_id")
+      .notNull()
+      .references(() => locations.id, { onDelete: "cascade" }),
+  },
+  (t) => [primaryKey({ columns: [t.staffId, t.locationId] })],
+);
+
+export const staffTreatments = pgTable(
+  "staff_treatments",
+  {
+    staffId: uuid("staff_id")
+      .notNull()
+      .references(() => staff.id, { onDelete: "cascade" }),
+    treatmentId: uuid("treatment_id")
+      .notNull()
+      .references(() => treatments.id, { onDelete: "cascade" }),
+  },
+  (t) => [primaryKey({ columns: [t.staffId, t.treatmentId] })],
+);
+
+export const knowledgeEntries = pgTable(
+  "knowledge_entries",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    salonId: uuid("salon_id")
+      .notNull()
+      .references(() => salons.id, { onDelete: "cascade" }),
+    title: text("title").notNull(),
+    content: text("content").notNull(),
+    category: text("category"),
+    active: boolean("active").default(true).notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull().$onUpdate(() => new Date()),
+  },
+  (t) => [index("knowledge_salon_idx").on(t.salonId)],
+);
+
 export const conversations = pgTable("conversations", {
   id: uuid("id").defaultRandom().primaryKey(),
   salonId: uuid("salon_id")
@@ -284,6 +381,9 @@ export const appointments = pgTable(
     }),
     externalId: text("external_id"), // ID in the agenda provider
     agendaProvider: text("agenda_provider").notNull(),
+    locationId: uuid("location_id").references(() => locations.id, { onDelete: "set null" }),
+    staffId: uuid("staff_id").references(() => staff.id, { onDelete: "set null" }),
+    treatmentId: uuid("treatment_id").references(() => treatments.id, { onDelete: "set null" }),
     customerName: text("customer_name").notNull(),
     customerPhone: text("customer_phone").notNull(),
     serviceType: text("service_type").notNull(),

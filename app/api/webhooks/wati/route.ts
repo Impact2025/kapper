@@ -2,8 +2,9 @@ import { createHmac } from "node:crypto";
 import { NextResponse } from "next/server";
 import { eq, and, sql } from "drizzle-orm";
 import { db } from "@/lib/db";
-import { salons, conversations, messages, appointments, users, events as eventsTable } from "@/lib/db/schema";
-import { getReceptionistReply, type SalonContext } from "@/lib/ai/receptionist";
+import { salons, conversations, messages, users, events as eventsTable } from "@/lib/db/schema";
+import { getReceptionistReply } from "@/lib/ai/receptionist";
+import { loadSalonContext } from "@/lib/salon/receptionist-context";
 import { trackEvent } from "@/lib/analytics/track";
 import { env } from "@/lib/env";
 import { decrypt } from "@/lib/crypto";
@@ -108,17 +109,11 @@ export async function POST(req: Request) {
   // Find which salon this webhook belongs to
   const salon = webhookKey ? await findSalonByWatiKey(webhookKey) : null;
   if (!salon) {
-    // If no per-salon key, try global env config (single-tenant dev mode)
-    if (!env.WATI_API_KEY || !env.WATI_BASE_URL) {
-      return NextResponse.json({ error: "Salon not found" }, { status: 404 });
-    }
+    return NextResponse.json({ error: "Salon not found" }, { status: 404 });
   }
+  const salonId = salon.id;
 
-  const salonId = salon?.id ?? "";
-  const aiSettings = ((salon?.settings ?? {}) as Record<string, unknown>)?.ai as
-    | Record<string, unknown>
-    | undefined;
-
+  const aiSettings = (salon.settings as Record<string, unknown>).ai as Record<string, unknown> | undefined;
   const watiApiKey = env.WATI_API_KEY ?? (aiSettings?.watiApiKey ? (decrypt(String(aiSettings.watiApiKey)) ?? String(aiSettings.watiApiKey)) : null);
   const watiBaseUrl = env.WATI_BASE_URL ?? "";
 
@@ -127,20 +122,18 @@ export async function POST(req: Request) {
   }
 
   // Upsert conversation
-  const existing = salonId
-    ? await db
-        .select({ id: conversations.id })
-        .from(conversations)
-        .where(
-          and(
-            eq(conversations.salonId, salonId),
-            eq(conversations.channel, "whatsapp"),
-            eq(conversations.phoneNumber, fromPhone),
-            eq(conversations.status, "active"),
-          ),
-        )
-        .limit(1)
-    : [];
+  const existing = await db
+    .select({ id: conversations.id })
+    .from(conversations)
+    .where(
+      and(
+        eq(conversations.salonId, salonId),
+        eq(conversations.channel, "whatsapp"),
+        eq(conversations.phoneNumber, fromPhone),
+        eq(conversations.status, "active"),
+      ),
+    )
+    .limit(1);
 
   let conversationId: string;
   if (existing[0]) {
@@ -175,32 +168,17 @@ export async function POST(req: Request) {
     .orderBy(messages.createdAt)
     .limit(20);
 
-  // Build salon context
-  const noShow = ((salon?.settings ?? {}) as Record<string, unknown>)?.noShow as
-    | Record<string, unknown>
-    | undefined;
+  const salonContext = await loadSalonContext(salon);
+  // The WATI credential resolved above (per-salon or global env fallback)
+  // is what actually authenticates outbound sends — keep it authoritative
+  // over whatever loadSalonContext read from settings.
+  salonContext.aiSettings.watiApiKey = watiApiKey;
 
-  const salonContext: SalonContext = {
-    name: salon?.name ?? "Salon",
-    city: salon?.city ?? null,
-    phone: salon?.phone ?? null,
-    plan: salon?.plan ?? "essential",
-    agendaProvider: salon?.agendaProvider ?? null,
-    aiSettings: {
-      agendaApiKey: aiSettings?.agendaApiKey as string | null | undefined,
-      watiApiKey: watiApiKey,
-    },
-    noShowSettings: {
-      enabled: Boolean(noShow?.enabled),
-      freeCancelHours: Number(noShow?.freeCancelHours ?? 24),
-      chargePercent: Number(noShow?.chargePercent ?? 100),
-    },
-  };
-
-  const { reply, bookedAppointment } = await getReceptionistReply(
+  const { reply, bookedAppointment, escalated } = await getReceptionistReply(
     salonContext,
     history.map((h) => ({ role: h.role, content: h.content })),
     fromPhone,
+    conversationId,
   );
 
   // Persist assistant reply
@@ -216,53 +194,15 @@ export async function POST(req: Request) {
   // Track analytics event
   await trackEvent({
     type: "whatsapp_message",
-    salonId: salonId || null,
+    salonId,
     props: { fromPhone, conversationId },
     dedupeKey: `wa:${watiConvId}:${Date.now()}`,
   });
 
-  // If a booking was detected, persist it and track
-  if (bookedAppointment && salonId) {
-    const provider = salon?.agendaProvider ?? "manual";
-    const [apt] = await db
-      .insert(appointments)
-      .values({
-        salonId,
-        conversationId,
-        agendaProvider: provider,
-        customerName: bookedAppointment.customerName,
-        customerPhone: bookedAppointment.customerPhone,
-        serviceType: bookedAppointment.serviceType,
-        appointmentTime: new Date(`${bookedAppointment.date}T${bookedAppointment.time}:00`),
-        source: "ai_whatsapp",
-      })
-      .returning({ id: appointments.id });
-
-    // Attempt to book in the actual agenda provider
-    try {
-      const rawKey = aiSettings?.agendaApiKey as string | null | undefined;
-      const apiKey = rawKey ? (decrypt(rawKey) ?? rawKey) : null;
-      const { getAgendaAdapter } = await import("@/lib/agenda");
-      const adapter = getAgendaAdapter(provider, apiKey);
-      if (adapter) {
-        const result = await adapter.bookAppointment({
-          customerName: bookedAppointment.customerName,
-          customerPhone: bookedAppointment.customerPhone,
-          serviceType: bookedAppointment.serviceType,
-          date: bookedAppointment.date,
-          time: bookedAppointment.time,
-        });
-        if (result.ok && result.externalId && apt?.id) {
-          await db
-            .update(appointments)
-            .set({ externalId: result.externalId })
-            .where(eq(appointments.id, apt.id));
-        }
-      }
-    } catch (err) {
-      captureError("wati/agenda-booking", err);
-    }
-
+  // The receptionist tool already wrote the booking straight to our own
+  // appointments table (and best-effort pushed it to the agenda adapter) —
+  // this just records the analytics event, never inserts a second time.
+  if (bookedAppointment) {
     await trackEvent({
       type: "booking_made",
       salonId,
@@ -272,6 +212,17 @@ export async function POST(req: Request) {
         date: bookedAppointment.date,
       },
       dedupeKey: `booking:${conversationId}:${bookedAppointment.date}:${bookedAppointment.time}`,
+    });
+  }
+
+  // The AI flagged this conversation for a human — surface it in Gesprekken.
+  if (escalated) {
+    await db.update(conversations).set({ status: "escalated" }).where(eq(conversations.id, conversationId));
+    await trackEvent({
+      type: "escalated",
+      salonId,
+      props: { via: "ai_whatsapp", reason: escalated.reason, conversationId },
+      dedupeKey: `escalate:${conversationId}:${Date.now()}`,
     });
   }
 

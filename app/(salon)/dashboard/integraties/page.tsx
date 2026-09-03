@@ -4,6 +4,7 @@ import { getSalonWithSubscription } from "@/lib/salon/queries";
 import { PageHeader, Card, Badge } from "@/components/admin/ui";
 import { Icon } from "@/components/ui/icon";
 import { IntegratiesForm } from "@/components/salon/integraties-form";
+import { decrypt } from "@/lib/crypto";
 
 export const metadata: Metadata = { title: "Integraties" };
 
@@ -20,9 +21,39 @@ export default async function IntegratiesPage() {
   // Show placeholder if key is stored (encrypted) — never expose raw value to client
   const hasKey = (v: unknown) => (typeof v === "string" && v.length > 0 ? "••••••••" : "");
 
+  // Salonized and Phorest have no API key — their credential blob is JSON
+  // (email/password, plus businessId/branchId/region for Phorest). Only the
+  // non-secret fields are safe to show back to the salon owner.
+  const credentialBased = salon?.agendaProvider === "salonized" || salon?.agendaProvider === "phorest";
+  let agendaEmail = "";
+  let agendaBusinessId = "";
+  let agendaBranchId = "";
+  let agendaRegion = "";
+  if (credentialBased && typeof ai.agendaApiKey === "string") {
+    try {
+      const decrypted = decrypt(ai.agendaApiKey) ?? "";
+      const blob = JSON.parse(decrypted) as {
+        email?: string;
+        businessId?: string;
+        branchId?: string;
+        region?: string;
+      };
+      agendaEmail = blob.email ?? "";
+      agendaBusinessId = blob.businessId ?? "";
+      agendaBranchId = blob.branchId ?? "";
+      agendaRegion = blob.region ?? "";
+    } catch {
+      // stored value predates the email/password format — leave blank
+    }
+  }
+
   const integrations = {
     agendaProvider: salon?.agendaProvider ?? "",
-    agendaApiKey: hasKey(ai.agendaApiKey),
+    agendaApiKey: credentialBased ? "" : hasKey(ai.agendaApiKey),
+    agendaEmail,
+    agendaBusinessId,
+    agendaBranchId,
+    agendaRegion,
     watiApiKey: hasKey(ai.watiApiKey),
     vapiApiKey: hasKey(ai.vapiApiKey),
     phoneNumber: (ai.phoneNumber as string | null) ?? "",

@@ -1,58 +1,32 @@
-import type { AgendaAdapter, TimeSlot, BookingInput, BookingResult } from "./types";
+import type { AgendaAdapter, TimeSlot, BookingResult } from "./types";
 
-const BASE = "https://api.treatwell.com/v1";
-
+/**
+ * Treatwell has no self-serve, publicly documented booking API. Their
+ * "Connect" product is only reachable today through Treatwell-approved
+ * salon-software partners (Salonized, Phorest, ...) integrating on
+ * Treatwell's side — not a bearer-token REST API a third party can call
+ * directly. There is no verified endpoint to build against (unlike
+ * Salonized's undocumented-but-working session-cookie API), so this adapter
+ * reports itself as unavailable rather than guessing one.
+ *
+ * If a salon's calendar lives in Treatwell, route them to Treatwell's own
+ * "Connect" integration with their salon software instead of via this app.
+ */
 export class TreatwellAdapter implements AgendaAdapter {
-  constructor(private apiKey: string) {}
+  // Signature matches the other adapters' `new XAdapter(credentials)` call
+  // site even though this adapter ignores the value.
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  constructor(_credentials?: string) {}
 
-  private headers() {
+  async getAvailableSlots(): Promise<TimeSlot[]> {
+    return [];
+  }
+
+  async bookAppointment(): Promise<BookingResult> {
     return {
-      Authorization: `Bearer ${this.apiKey}`,
-      Accept: "application/json",
-      "Content-Type": "application/json",
+      ok: false,
+      error:
+        "Treatwell heeft geen publieke boekings-API — koppel via Treatwell Connect met je salonssoftware.",
     };
-  }
-
-  async getAvailableSlots(days = 7): Promise<TimeSlot[]> {
-    const date = new Date().toISOString().split("T")[0];
-    const endDate = new Date(Date.now() + days * 86400_000).toISOString().split("T")[0];
-    const res = await fetch(
-      `${BASE}/availability?date=${date}&end_date=${endDate}`,
-      { headers: this.headers(), next: { revalidate: 60 } },
-    );
-    if (!res.ok) return [];
-    const data = await res.json();
-    const slots: unknown[] = Array.isArray(data?.availability) ? data.availability : [];
-
-    return slots.map((s: unknown) => {
-      const slot = s as Record<string, unknown>;
-      return {
-        date: String(slot.date ?? ""),
-        time: String(slot.time ?? ""),
-        serviceType: String(slot.service ?? "Behandeling"),
-        durationMinutes: Number(slot.duration ?? 30),
-        priceEuros: Number(slot.price ?? 0),
-      };
-    });
-  }
-
-  async bookAppointment(input: BookingInput): Promise<BookingResult> {
-    try {
-      const res = await fetch(`${BASE}/appointments`, {
-        method: "POST",
-        headers: this.headers(),
-        body: JSON.stringify({
-          date: input.date,
-          time: input.time,
-          service: input.serviceType,
-          customer: { name: input.customerName, phone: input.customerPhone },
-        }),
-      });
-      if (!res.ok) return { ok: false, error: `Treatwell ${res.status}` };
-      const data = await res.json();
-      return { ok: true, externalId: String(data?.id ?? "") };
-    } catch (err) {
-      return { ok: false, error: String(err) };
-    }
   }
 }

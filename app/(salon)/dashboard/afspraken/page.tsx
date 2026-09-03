@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { requireSalonOwner } from "@/lib/auth/dal";
 import { getSalonWithSubscription } from "@/lib/salon/queries";
-import { PageHeader, Card, Badge, EmptyState } from "@/components/admin/ui";
+import { listUpcomingAppointments } from "@/lib/salon/appointments";
+import { PageHeader, Card, Badge } from "@/components/admin/ui";
 import { Icon } from "@/components/ui/icon";
 
 export const metadata: Metadata = { title: "Afspraken" };
@@ -17,8 +18,24 @@ const DEMO_APPOINTMENTS = [
 
 export default async function AfsprakenPage() {
   const user = await requireSalonOwner();
-  const salon = await getSalonWithSubscription(user.salonId);
+  const [salon, upcoming] = await Promise.all([
+    getSalonWithSubscription(user.salonId),
+    listUpcomingAppointments(user.salonId),
+  ]);
   const hasAgenda = !!salon?.agendaProvider;
+  const isDemo = upcoming.length === 0;
+
+  const appointmentRows = isDemo
+    ? DEMO_APPOINTMENTS.map((a) => ({ id: a.id, time: a.time, client: a.client, service: a.service, duration: a.duration, location: null as string | null, reminded: a.reminded }))
+    : upcoming.map((a) => ({
+        id: a.id,
+        time: a.appointmentTime.toTimeString().slice(0, 5),
+        client: a.customerName,
+        service: a.serviceType,
+        duration: a.durationMinutes,
+        location: a.locationName,
+        reminded: a.reminded,
+      }));
 
   const today = new Date().toLocaleDateString("nl-NL", {
     weekday: "long",
@@ -33,58 +50,68 @@ export default async function AfsprakenPage() {
         subtitle="Overzicht van aankomende afspraken uit je agenda"
       />
 
-      {!hasAgenda ? (
-        <EmptyState
-          icon="calendar_month"
-          title="Geen agenda gekoppeld"
-          description="Koppel je salonssoftware (Salonized, Phorest of Treatwell) om afspraken hier te zien en herinneringen automatisch te versturen."
-          action={
-            <Link
-              href="/dashboard/integraties"
-              className="inline-flex items-center gap-base rounded-full bg-primary px-md py-sm text-label-md font-label-md text-on-primary transition-all hover:opacity-90"
-            >
-              <Icon name="cable" className="text-[18px]" />
-              Agenda koppelen
-            </Link>
-          }
-        />
-      ) : (
-        <div className="flex flex-col gap-md">
-          {/* Live sync notice */}
+      <div className="flex flex-col gap-md">
+        {isDemo ? (
+          <div className="flex items-center gap-sm rounded-xl border border-outline-variant/40 bg-surface-container px-md py-sm text-label-md text-on-surface-variant">
+            <Icon name="auto_awesome" className="text-[18px] text-primary shrink-0" />
+            Voorbeeldafspraken — worden vervangen zodra je eerste echte boeking binnenkomt.
+          </div>
+        ) : (
           <div className="flex items-center gap-sm rounded-xl border border-outline-variant/40 bg-primary-fixed/30 px-md py-sm">
             <span className="h-2 w-2 animate-pulse rounded-full bg-primary" />
             <span className="text-label-md text-on-surface">
-              Live gesynchroniseerd met{" "}
-              <strong className="capitalize">{salon.agendaProvider}</strong>
+              {hasAgenda ? (
+                <>
+                  Geboekt door je AI-receptioniste, gesynchroniseerd met{" "}
+                  <strong className="capitalize">{salon?.agendaProvider}</strong> waar dat lukt.
+                </>
+              ) : (
+                "Geboekt door je AI-receptioniste, rechtstreeks vastgelegd in KapperAssistent."
+              )}
             </span>
           </div>
+        )}
 
-          {/* Today's appointments */}
-          <Card>
-            <div className="mb-md flex items-center justify-between">
-              <h2 className="font-headline-md text-headline-md text-on-surface">Vandaag</h2>
-              <Badge tone="primary">{today}</Badge>
-            </div>
+        {/* Upcoming appointments */}
+        <Card>
+          <div className="mb-md flex items-center justify-between">
+            <h2 className="font-headline-md text-headline-md text-on-surface">
+              {isDemo ? "Vandaag" : "Aankomend"}
+            </h2>
+            {isDemo && <Badge tone="primary">{today}</Badge>}
+          </div>
 
-            <div className="flex flex-col divide-y divide-outline-variant/30">
-              {DEMO_APPOINTMENTS.map((apt) => (
-                <div key={apt.id} className="flex items-center gap-md py-sm">
-                  <div className="w-12 shrink-0">
-                    <span className="text-label-md font-label-md text-on-surface">{apt.time}</span>
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="truncate text-body-md text-on-surface">{apt.client}</div>
-                    <div className="text-label-sm text-on-surface-variant">
-                      {apt.service} · {apt.duration} min
-                    </div>
-                  </div>
-                  <Badge tone={apt.reminded ? "success" : "neutral"}>
-                    {apt.reminded ? "Herinnerd" : "Gepland"}
-                  </Badge>
+          <div className="flex flex-col divide-y divide-outline-variant/30">
+            {appointmentRows.map((apt) => (
+              <div key={apt.id} className="flex items-center gap-md py-sm">
+                <div className="w-12 shrink-0">
+                  <span className="text-label-md font-label-md text-on-surface">{apt.time}</span>
                 </div>
-              ))}
-            </div>
-          </Card>
+                <div className="flex-1 min-w-0">
+                  <div className="truncate text-body-md text-on-surface">{apt.client}</div>
+                  <div className="text-label-sm text-on-surface-variant">
+                    {apt.service} · {apt.duration} min{apt.location ? ` · ${apt.location}` : ""}
+                  </div>
+                </div>
+                <Badge tone={apt.reminded ? "success" : "neutral"}>
+                  {apt.reminded ? "Herinnerd" : "Gepland"}
+                </Badge>
+              </div>
+            ))}
+          </div>
+        </Card>
+
+        {!hasAgenda && (
+          <div className="flex items-center gap-sm rounded-xl border border-outline-variant/40 bg-surface-container-lowest px-md py-sm">
+            <Icon name="cable" className="text-[18px] text-on-surface-variant shrink-0" />
+            <span className="text-label-sm text-on-surface-variant">
+              Nog geen salonssoftware gekoppeld — boekingen blijven in KapperAssistent staan.
+            </span>
+            <Link href="/dashboard/integraties" className="ml-auto text-label-sm text-primary hover:underline">
+              Koppelen →
+            </Link>
+          </div>
+        )}
 
           {/* No-show stats */}
           <Card>
@@ -115,7 +142,6 @@ export default async function AfsprakenPage() {
             </div>
           </Card>
         </div>
-      )}
     </div>
   );
 }

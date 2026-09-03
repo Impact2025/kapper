@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { updateIntegrations } from "@/lib/salon/actions";
 import { Icon } from "@/components/ui/icon";
 
@@ -15,6 +15,10 @@ const AGENDA_PROVIDERS = [
 interface Integrations {
   agendaProvider: string;
   agendaApiKey: string;
+  agendaEmail: string;
+  agendaBusinessId: string;
+  agendaBranchId: string;
+  agendaRegion: string;
   watiApiKey: string;
   vapiApiKey: string;
   phoneNumber: string;
@@ -28,6 +32,10 @@ const cardCls =
 
 export function IntegratiesForm({ integrations }: { integrations: Integrations }) {
   const [state, action, pending] = useActionState(updateIntegrations, undefined);
+  const [provider, setProvider] = useState(integrations.agendaProvider);
+  const isSalonized = provider === "salonized";
+  const isPhorest = provider === "phorest";
+  const isTreatwell = provider === "treatwell";
 
   return (
     <form action={action} className="flex flex-col gap-md">
@@ -48,7 +56,8 @@ export function IntegratiesForm({ integrations }: { integrations: Integrations }
             </label>
             <select
               name="agendaProvider"
-              defaultValue={integrations.agendaProvider}
+              value={provider}
+              onChange={(e) => setProvider(e.target.value)}
               className={inputCls}
             >
               {AGENDA_PROVIDERS.map((p) => (
@@ -58,22 +67,132 @@ export function IntegratiesForm({ integrations }: { integrations: Integrations }
               ))}
             </select>
           </div>
-          <div>
-            <label className="mb-xs block text-label-sm text-on-surface-variant">
-              API-sleutel
-            </label>
-            <input
-              type="password"
-              name="agendaApiKey"
-              defaultValue={integrations.agendaApiKey}
-              placeholder="sk_live_…"
-              autoComplete="off"
-              className={inputCls}
-            />
-            <p className="mt-xs text-label-sm text-on-surface-variant">
-              Te vinden in de instellingen van je salonssoftware onder Integraties / API.
+          {isSalonized ? (
+            <>
+              <p className="text-label-sm text-on-surface-variant">
+                Salonized heeft geen API-sleutel — we loggen in met dezelfde gegevens waarmee je
+                op app.salonized.com inlogt. Je wachtwoord wordt versleuteld opgeslagen.
+              </p>
+              <div>
+                <label className="mb-xs block text-label-sm text-on-surface-variant">
+                  Salonized e-mailadres
+                </label>
+                <input
+                  type="email"
+                  name="agendaEmail"
+                  defaultValue={integrations.agendaEmail}
+                  placeholder="jij@salon.nl"
+                  autoComplete="off"
+                  className={inputCls}
+                />
+              </div>
+              <div>
+                <label className="mb-xs block text-label-sm text-on-surface-variant">
+                  Salonized wachtwoord
+                </label>
+                <input
+                  type="password"
+                  name="agendaPassword"
+                  placeholder="••••••••"
+                  autoComplete="off"
+                  className={inputCls}
+                />
+              </div>
+            </>
+          ) : isPhorest ? (
+            <>
+              <p className="text-label-sm text-on-surface-variant">
+                Phorest geeft geen zelfbedienings-API-sleutel uit — vraag toegang aan bij Phorest
+                support (met je accountnummer); zij koppelen een e-mail + wachtwoord aan je
+                business- en vestigings-ID.
+              </p>
+              <div className="grid grid-cols-1 gap-sm sm:grid-cols-2">
+                <div>
+                  <label className="mb-xs block text-label-sm text-on-surface-variant">
+                    Business ID
+                  </label>
+                  <input
+                    type="text"
+                    name="agendaBusinessId"
+                    defaultValue={integrations.agendaBusinessId}
+                    autoComplete="off"
+                    className={inputCls}
+                  />
+                </div>
+                <div>
+                  <label className="mb-xs block text-label-sm text-on-surface-variant">
+                    Vestiging (branch) ID
+                  </label>
+                  <input
+                    type="text"
+                    name="agendaBranchId"
+                    defaultValue={integrations.agendaBranchId}
+                    autoComplete="off"
+                    className={inputCls}
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="mb-xs block text-label-sm text-on-surface-variant">Regio</label>
+                <select
+                  name="agendaRegion"
+                  defaultValue={integrations.agendaRegion || "eu"}
+                  className={inputCls}
+                >
+                  <option value="eu">Europa</option>
+                  <option value="us">VS / Canada / Australië</option>
+                </select>
+              </div>
+              <div>
+                <label className="mb-xs block text-label-sm text-on-surface-variant">
+                  Phorest e-mailadres
+                </label>
+                <input
+                  type="email"
+                  name="agendaEmail"
+                  defaultValue={integrations.agendaEmail}
+                  placeholder="jij@salon.nl"
+                  autoComplete="off"
+                  className={inputCls}
+                />
+              </div>
+              <div>
+                <label className="mb-xs block text-label-sm text-on-surface-variant">
+                  Phorest wachtwoord
+                </label>
+                <input
+                  type="password"
+                  name="agendaPassword"
+                  placeholder="••••••••"
+                  autoComplete="off"
+                  className={inputCls}
+                />
+              </div>
+            </>
+          ) : isTreatwell ? (
+            <p className="text-label-sm text-on-surface-variant">
+              Treatwell heeft geen directe boekings-API voor derden. Koppel Treatwell via hun eigen
+              &ldquo;Connect&rdquo;-integratie met je salonssoftware — deze AI kan er (nog) niet
+              rechtstreeks in boeken.
             </p>
-          </div>
+          ) : (
+            <div>
+              <label className="mb-xs block text-label-sm text-on-surface-variant">
+                API-sleutel
+              </label>
+              <input
+                type="password"
+                name="agendaApiKey"
+                defaultValue={integrations.agendaApiKey}
+                placeholder="sk_live_…"
+                autoComplete="off"
+                className={inputCls}
+              />
+              <p className="mt-xs text-label-sm text-on-surface-variant">
+                Te vinden in de instellingen van je salonssoftware onder Integraties / API.
+              </p>
+            </div>
+          )}
         </div>
       </div>
 
