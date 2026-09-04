@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
 import { ElixirChatWidget } from "@/components/demo/elixir-chat-widget";
 
@@ -78,7 +79,14 @@ export default function ElixirAtelierPage() {
 
             <div className="mx-auto mt-16 grid max-w-6xl grid-cols-1 gap-4 sm:grid-cols-5 sm:gap-5">
               <div className="group relative col-span-1 h-[280px] overflow-hidden rounded-3xl sm:col-span-3 sm:h-[420px]">
-                <div className="absolute inset-0 scale-105 bg-gradient-to-br from-[#2b241d] via-[#4a3c2c] to-[#8a6f4c] transition-transform duration-700 group-hover:scale-110"></div>
+                <Image
+                  src="/demo/elixir-atelier/hero-interior.png"
+                  alt="Interieur van Élixir Atelier aan de Willemsparkweg"
+                  fill
+                  priority
+                  sizes="(min-width: 640px) 60vw, 100vw"
+                  className="scale-105 object-cover transition-transform duration-700 group-hover:scale-110"
+                />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/0 to-black/0"></div>
                 <span className="absolute right-5 top-5 flex h-11 w-11 items-center justify-center rounded-full bg-white/15 text-white backdrop-blur-sm">
                   <span className="material-symbols-outlined !text-[20px]">location_on</span>
@@ -89,7 +97,13 @@ export default function ElixirAtelierPage() {
               </div>
               <div className="col-span-1 grid grid-cols-2 gap-4 sm:col-span-2 sm:grid-cols-1 sm:gap-5">
                 <div className="group relative h-[130px] overflow-hidden rounded-3xl sm:h-[200px]">
-                  <div className="absolute inset-0 scale-105 bg-gradient-to-br from-[#e7d6b8] via-[#d9bd8e] to-[#b6976f] transition-transform duration-700 group-hover:scale-110"></div>
+                  <Image
+                    src="/demo/elixir-atelier/elixirs.png"
+                    alt="Bespoke Elixirs — botanische apothekersflacons"
+                    fill
+                    sizes="(min-width: 640px) 40vw, 50vw"
+                    className="scale-105 object-cover transition-transform duration-700 group-hover:scale-110"
+                  />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-black/0 to-black/0"></div>
                   <div className="absolute bottom-4 left-4 right-4">
                     <p className={`${display} text-[13px] italic text-white/95`}>Bespoke Elixirs</p>
@@ -97,7 +111,13 @@ export default function ElixirAtelierPage() {
                   </div>
                 </div>
                 <div className="group relative h-[130px] overflow-hidden rounded-3xl sm:h-[200px]">
-                  <div className="absolute inset-0 scale-105 bg-gradient-to-br from-[#1b1c1a] via-[#32302c] to-[#5a5148] transition-transform duration-700 group-hover:scale-110"></div>
+                  <Image
+                    src="/demo/elixir-atelier/handwork.png"
+                    alt="Artisanaal handwerk met Japans staal"
+                    fill
+                    sizes="(min-width: 640px) 40vw, 50vw"
+                    className="scale-105 object-cover transition-transform duration-700 group-hover:scale-110"
+                  />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/0 to-black/0"></div>
                   <div className="absolute bottom-4 left-4 right-4">
                     <p className={`${display} text-[13px] italic text-white/95`}>Artisanaal Handwerk</p>
@@ -247,14 +267,18 @@ export default function ElixirAtelierPage() {
             </div>
             <div className="mt-14 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
               {[
-                { initials: "EV", name: "Elena Vance", role: "Creative Director", sub: "Master Colorist — Parijs", rating: "5.0", from: "#eadfcb", to: "#c8a877" },
-                { initials: "JV", name: "Julian de Vries", role: "Senior Hair Sculptor", sub: "Precisiesnitten — Londen", rating: "4.9", from: "#3c3630", to: "#171613" },
-                { initials: "CL", name: "Chloé Laurent", role: "Botanical Ritual Specialist", sub: "Huidrituelen — Milaan", rating: "5.0", from: "#f2e2c8", to: "#d8b98d" },
-                { initials: "LM", name: "Lucas Moreau", role: "Master Stylist", sub: "Texturist — Antwerpen", rating: "4.9", from: "#8a6f4c", to: "#4a3c2c" },
+                { initials: "EV", name: "Elena Vance", role: "Creative Director", sub: "Master Colorist — Parijs", rating: "5.0", from: "#eadfcb", to: "#c8a877", photo: "/demo/elixir-atelier/elena-vance.png" },
+                { initials: "JV", name: "Julian de Vries", role: "Senior Hair Sculptor", sub: "Precisiesnitten — Londen", rating: "4.9", from: "#3c3630", to: "#171613", photo: null },
+                { initials: "CL", name: "Chloé Laurent", role: "Botanical Ritual Specialist", sub: "Huidrituelen — Milaan", rating: "5.0", from: "#f2e2c8", to: "#d8b98d", photo: "/demo/elixir-atelier/chloe-laurent.png" },
+                { initials: "LM", name: "Lucas Moreau", role: "Master Stylist", sub: "Texturist — Antwerpen", rating: "4.9", from: "#8a6f4c", to: "#4a3c2c", photo: "/demo/elixir-atelier/lucas-moreau.png" },
               ].map((s) => (
                 <article key={s.name} className="overflow-hidden rounded-3xl bg-white shadow-[0_8px_24px_-4px_rgba(28,24,21,0.04)]">
                   <div className="relative h-56" style={{ background: `linear-gradient(to bottom right, ${s.from}, ${s.to})` }}>
-                    <div className={`${display} absolute inset-0 flex items-center justify-center text-6xl italic text-white/90`}>{s.initials}</div>
+                    {s.photo ? (
+                      <Image src={s.photo} alt={s.name} fill sizes="(min-width: 1024px) 25vw, 50vw" className="object-cover" />
+                    ) : (
+                      <div className={`${display} absolute inset-0 flex items-center justify-center text-6xl italic text-white/90`}>{s.initials}</div>
+                    )}
                     <span className="absolute right-3 top-3 flex items-center gap-1 rounded-full bg-white/90 px-2.5 py-1 text-[11.5px] font-bold text-[#1b1c1a]">
                       <span className="material-symbols-outlined !text-[14px] text-[#725b38]" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>{s.rating}
                     </span>
