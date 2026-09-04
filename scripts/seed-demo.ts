@@ -28,6 +28,7 @@ async function main() {
     appointments,
   } = await import("../lib/db/schema");
   const { hashPassword } = await import("../lib/auth/password");
+  const { amsterdamWallTimeToUtc } = await import("../lib/salon/timezone");
 
   const SLUG = "huidzorg-clinics-demo";
   const EMAIL = (process.env.DEMO_EMAIL ?? "demo@kappersassistent.nl").toLowerCase().trim();
@@ -136,12 +137,10 @@ async function main() {
   console.log(`✓ Kennisbank gevuld`);
 
   // --- A few realistic upcoming appointments so /dashboard/afspraken shows real data ---
-  const inDays = (d: number, h: number, m: number) => {
-    const dt = new Date();
-    dt.setDate(dt.getDate() + d);
-    dt.setHours(h, m, 0, 0);
-    return dt;
-  };
+  // Amsterdam wall-clock time regardless of which machine/runtime runs this
+  // script — a local run and a Vercel (UTC) run must produce the same
+  // appointment times.
+  const inDays = (d: number, h: number, m: number) => amsterdamWallTimeToUtc(new Date(), d, h * 60 + m);
   await db.insert(appointments).values([
     { salonId, agendaProvider: "manual", locationId: loc["Huidzorg Clinics Den Bosch"], staffId: st["Sanne de Groot"], treatmentId: treat["Chemisch peeling (medium-depth)"], customerName: "Marieke de Wit", customerPhone: "+31612345678", serviceType: "Chemisch peeling (medium-depth)", appointmentTime: inDays(1, 10, 0), durationMinutes: 30, source: "ai_whatsapp" },
     { salonId, agendaProvider: "manual", locationId: loc["Huidzorg Clinics Eindhoven"], staffId: st["Rosa Bakker"], treatmentId: treat["Laserontharing (per zone)"], customerName: "Youssef El Amrani", customerPhone: "+31687654321", serviceType: "Laserontharing (per zone)", appointmentTime: inDays(2, 14, 30), durationMinutes: 30, source: "ai_phone" },

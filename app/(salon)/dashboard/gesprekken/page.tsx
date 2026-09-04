@@ -8,7 +8,7 @@ import { Icon } from "@/components/ui/icon";
 export const metadata: Metadata = { title: "Gesprekken" };
 
 function fmt(date: Date) {
-  return date.toLocaleDateString("nl-NL", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
+  return date.toLocaleDateString("nl-NL", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", timeZone: "Europe/Amsterdam" });
 }
 
 const CHANNEL_LABEL: Record<string, string> = { whatsapp: "WhatsApp", phone: "Telefoon" };

@@ -11,11 +11,11 @@ export const metadata: Metadata = { title: "Gesprek" };
 const CHANNEL_LABEL: Record<string, string> = { whatsapp: "WhatsApp", phone: "Telefoon" };
 
 function fmt(date: Date) {
-  return date.toLocaleTimeString("nl-NL", { hour: "2-digit", minute: "2-digit" });
+  return date.toLocaleTimeString("nl-NL", { hour: "2-digit", minute: "2-digit", timeZone: "Europe/Amsterdam" });
 }
 
 function fmtDate(date: Date) {
-  return date.toLocaleDateString("nl-NL", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
+  return date.toLocaleDateString("nl-NL", { weekday: "long", day: "numeric", month: "long", year: "numeric", timeZone: "Europe/Amsterdam" });
 }
 
 export default async function ConversationDetailPage({

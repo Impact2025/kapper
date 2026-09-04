@@ -26,10 +26,12 @@ async function sendWatiReminder(
     weekday: "long",
     day: "numeric",
     month: "long",
+    timeZone: "Europe/Amsterdam",
   });
   const time = appointmentTime.toLocaleTimeString("nl-NL", {
     hour: "2-digit",
     minute: "2-digit",
+    timeZone: "Europe/Amsterdam",
   });
 
   const message =

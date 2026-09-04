@@ -3,6 +3,7 @@ import { and, eq, gte, ne } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { appointments, locations, staff, treatments } from "@/lib/db/schema";
 import { decodeSlot } from "@/lib/salon/availability";
+import { amsterdamDateKey, amsterdamTimeKey } from "@/lib/salon/timezone";
 
 /** `__implicit__<salonId>` slot ids (no locations/treatments/staff configured
  * yet) don't exist as real rows — never write them as a foreign key. */
@@ -58,8 +59,8 @@ export async function findAppointmentsByPhone(
     treatmentName: r.serviceType,
     locationName: r.locationName ?? "Salon",
     staffName: r.staffName ?? "",
-    date: r.appointmentTime.toISOString().slice(0, 10),
-    time: r.appointmentTime.toTimeString().slice(0, 5),
+    date: amsterdamDateKey(r.appointmentTime),
+    time: amsterdamTimeKey(r.appointmentTime),
     startISO: r.appointmentTime.toISOString(),
   }));
 }
@@ -116,8 +117,8 @@ export async function bookFromSlot(input: BookInput) {
     appointmentId: row!.id,
     treatment: serviceType,
     location: locationName,
-    date: decoded.startISO.slice(0, 10),
-    time: new Date(decoded.startISO).toTimeString().slice(0, 5),
+    date: amsterdamDateKey(new Date(decoded.startISO)),
+    time: amsterdamTimeKey(new Date(decoded.startISO)),
   };
 }
 
@@ -159,8 +160,8 @@ export async function rescheduleToSlot(salonId: string, appointmentId: string, n
     ok: true as const,
     treatment: treatmentRow?.name ?? existing.serviceType,
     location: locationRow?.name ?? "Salon",
-    date: decoded.startISO.slice(0, 10),
-    time: new Date(decoded.startISO).toTimeString().slice(0, 5),
+    date: amsterdamDateKey(new Date(decoded.startISO)),
+    time: amsterdamTimeKey(new Date(decoded.startISO)),
   };
 }
 
@@ -177,8 +178,8 @@ export async function cancelById(salonId: string, appointmentId: string) {
   return {
     ok: true as const,
     treatment: existing.serviceType,
-    date: existing.appointmentTime.toISOString().slice(0, 10),
-    time: existing.appointmentTime.toTimeString().slice(0, 5),
+    date: amsterdamDateKey(existing.appointmentTime),
+    time: amsterdamTimeKey(existing.appointmentTime),
   };
 }
 

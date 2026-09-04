@@ -3,6 +3,7 @@ import Link from "next/link";
 import { requireSalonOwner } from "@/lib/auth/dal";
 import { getSalonWithSubscription } from "@/lib/salon/queries";
 import { listUpcomingAppointments } from "@/lib/salon/appointments";
+import { SALON_TIMEZONE, amsterdamTimeKey } from "@/lib/salon/timezone";
 import { PageHeader, Card, Badge } from "@/components/admin/ui";
 import { Icon } from "@/components/ui/icon";
 
@@ -29,7 +30,7 @@ export default async function AfsprakenPage() {
     ? DEMO_APPOINTMENTS.map((a) => ({ id: a.id, time: a.time, client: a.client, service: a.service, duration: a.duration, location: null as string | null, reminded: a.reminded }))
     : upcoming.map((a) => ({
         id: a.id,
-        time: a.appointmentTime.toTimeString().slice(0, 5),
+        time: amsterdamTimeKey(a.appointmentTime),
         client: a.customerName,
         service: a.serviceType,
         duration: a.durationMinutes,
@@ -41,6 +42,7 @@ export default async function AfsprakenPage() {
     weekday: "long",
     day: "numeric",
     month: "long",
+    timeZone: SALON_TIMEZONE,
   });
 
   return (

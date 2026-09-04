@@ -118,6 +118,7 @@ export default async function AbonnementPage() {
                   day: "numeric",
                   month: "long",
                   year: "numeric",
+                  timeZone: "Europe/Amsterdam",
                 })}
               </span>
             </div>

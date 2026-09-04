@@ -67,6 +67,7 @@ export async function GET(req: Request) {
         day: "numeric",
         month: "long",
         year: "numeric",
+        timeZone: "Europe/Amsterdam",
       });
 
       await sendEmail({

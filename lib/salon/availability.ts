@@ -9,6 +9,7 @@ import {
   staffTreatments,
   treatments,
 } from "@/lib/db/schema";
+import { amsterdamDateKey, amsterdamDayOfWeek, amsterdamTimeKey, amsterdamWallTimeToUtc } from "@/lib/salon/timezone";
 
 const DOW_KEYS = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"] as const;
 export const DEFAULT_HOURS: Record<string, [number, number] | null> = {
@@ -144,16 +145,16 @@ export function computeAvailableSlots(input: ComputeSlotsInput): AvailableSlot[]
 
   const results: AvailableSlot[] = [];
   outer: for (let d = 0; d < nDays; d++) {
-    const day = new Date(now);
-    day.setDate(day.getDate() + d);
-    const hours = workingHours[DOW_KEYS[day.getDay()]!];
+    // Working hours are Amsterdam wall-clock hours regardless of which
+    // timezone this process happens to run in (a laptop vs. Vercel's UTC
+    // functions) — resolve the day-of-week the same way.
+    const dayStartUtc = amsterdamWallTimeToUtc(now, d, 0);
+    const hours = workingHours[DOW_KEYS[amsterdamDayOfWeek(dayStartUtc)]!];
     if (!hours) continue;
 
     for (const member of eligibleStaff) {
       for (let mins = hours[0] * 60; mins + treatment.durationMinutes <= hours[1] * 60; mins += SLOT_STEP_MIN) {
-        const start = new Date(day);
-        start.setHours(0, 0, 0, 0);
-        start.setMinutes(mins);
+        const start = amsterdamWallTimeToUtc(now, d, mins);
         if (start.getTime() < now.getTime() + MIN_LEAD_MIN * 60_000) continue;
 
         const conflict = existingAppointments.some((a) => {
@@ -173,8 +174,8 @@ export function computeAvailableSlots(input: ComputeSlotsInput): AvailableSlot[]
           treatmentName: treatment.name,
           durationMinutes: treatment.durationMinutes,
           priceCents: treatment.priceCents,
-          date: start.toISOString().slice(0, 10),
-          time: start.toTimeString().slice(0, 5),
+          date: amsterdamDateKey(start),
+          time: amsterdamTimeKey(start),
           startISO: start.toISOString(),
         });
         if (results.length >= MAX_SLOTS) break outer;
