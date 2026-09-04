@@ -60,7 +60,7 @@ export default function ElixirAtelierPage() {
               <h1 className={`${display} mt-5 text-[2.6rem] font-semibold leading-[1.08] tracking-tight text-[#1b1c1a] sm:text-6xl lg:text-[4.25rem]`} style={{ textWrap: "balance" }}>
                 Haarkunst &amp; <em className={`${display} not-italic italic text-[#725b38]`}>Zuivere Schoonheid</em> in Harmonie
               </h1>
-              <p className="mx-auto mt-6 max-w-xl text-[15.5px] leading-relaxed text-[#4d4540]">
+              <p className="mx-auto mt-6 max-w-[36rem] text-[15.5px] leading-relaxed text-[#4d4540]">
                 Aan de statige Willemsparkweg vindt u een herenhuis gewijd aan rust, botanische
                 verzorging en vakmanschap zonder compromis. Elke behandeling bij Élixir Atelier is
                 een rituaal — nooit gehaast, altijd op maat van uw haar en uw huid.
@@ -348,7 +348,7 @@ export default function ElixirAtelierPage() {
               <div>
                 <p className="text-[12px] font-semibold uppercase tracking-[0.28em] text-[#e0c298]">Élixir Privé Membership</p>
                 <h2 className={`${display} mt-4 text-4xl font-semibold tracking-tight sm:text-[2.75rem]`} style={{ textWrap: "balance" }}>Klaar voor uw transformatie?</h2>
-                <p className="mt-4 max-w-md text-[15px] leading-relaxed text-white/70">
+                <p className="mt-4 max-w-[28rem] text-[15px] leading-relaxed text-white/70">
                   Word lid van Élixir Privé en ontvang toegang tot voorrechten die verder reiken dan
                   de stoel — of chat rechtsonder direct met onze AI-receptioniste voor een afspraak.
                 </p>
@@ -396,7 +396,7 @@ export default function ElixirAtelierPage() {
             <div>
               <span className={`${display} text-2xl font-semibold text-[#1b1c1a]`}>Élixir Atelier</span>
               <p className="mt-2 text-[11px] uppercase tracking-[0.18em] text-[#725b38]">Maison de Beauté</p>
-              <p className="mt-4 max-w-xs text-[13.5px] leading-relaxed text-[#4d4540]">
+              <p className="mt-4 max-w-[20rem] text-[13.5px] leading-relaxed text-[#4d4540]">
                 Haute coiffure &amp; beauté, gewijd aan botanische zuiverheid en stille
                 vakkundigheid.
               </p>
