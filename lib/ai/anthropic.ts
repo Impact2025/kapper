@@ -8,9 +8,10 @@ export function getAnthropic(): Anthropic | null {
   if (!client) {
     client = new Anthropic({
       apiKey: env.ANTHROPIC_API_KEY,
-      // Unset: defaults to https://api.anthropic.com. Set to OpenRouter's
-      // Anthropic-protocol endpoint to route through OpenRouter instead —
-      // same Messages API, same tool-use format, just a different gateway.
+      // Unset: defaults to https://api.anthropic.com. Set to any gateway
+      // implementing the same Messages API (OpenModel, OpenRouter, ...) to
+      // route through it instead — same request/response shape, same
+      // tool-use format, just a different gateway. See lib/env.ts.
       baseURL: env.ANTHROPIC_BASE_URL || undefined,
     });
   }
