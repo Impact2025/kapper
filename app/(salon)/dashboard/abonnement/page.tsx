@@ -94,7 +94,7 @@ export default async function AbonnementPage() {
               <div className="mt-xs text-label-sm text-on-surface-variant">{plan.tagline}</div>
             </div>
             <div className="shrink-0 text-right">
-              <div className="font-headline-md text-headline-md text-on-surface">
+              <div className="stat-figure text-headline-md text-on-surface">
                 {formatEur(plan.price)}
               </div>
               <div className="text-label-sm text-on-surface-variant">/maand</div>
@@ -168,7 +168,7 @@ export default async function AbonnementPage() {
                       <div className="mt-xs text-label-sm text-on-surface-variant">{up.tagline}</div>
                     </div>
                     <div className="shrink-0 text-right">
-                      <div className="font-headline-md text-headline-md text-on-surface">
+                      <div className="stat-figure text-headline-md text-on-surface">
                         {formatEur(up.price)}
                       </div>
                       <div className="text-label-sm text-on-surface-variant">/maand</div>

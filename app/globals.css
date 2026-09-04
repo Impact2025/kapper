@@ -101,7 +101,7 @@
   --text-label-md--letter-spacing: 0.01em;
   --text-label-md--font-weight: 600;
 
-  --text-label-sm: 12px;
+  --text-label-sm: 13px;
   --text-label-sm--line-height: 1.4;
   --text-label-sm--font-weight: 500;
 
@@ -140,6 +140,13 @@ body {
 
 @utility soft-shadow {
   box-shadow: 0px 4px 20px rgba(143, 161, 139, 0.08);
+}
+
+/* KPI/prijs-cijfers: geen serif-oldstyle-cijfers op dashboardgetallen —
+   Hanken Grotesk met tabular/lining figures scant sneller dan Garamond. */
+@utility stat-figure {
+  font-family: var(--font-hanken), "Hanken Grotesk", sans-serif;
+  font-variant-numeric: tabular-nums lining-nums;
 }
 
 @utility hover-lift {

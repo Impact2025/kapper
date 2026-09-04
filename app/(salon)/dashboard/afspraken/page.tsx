@@ -120,15 +120,15 @@ export default async function AfsprakenPage() {
             </h2>
             <div className="grid grid-cols-3 gap-md text-center">
               <div>
-                <div className="font-headline-md text-headline-md text-primary">94%</div>
+                <div className="stat-figure text-headline-md text-primary">94%</div>
                 <div className="text-label-sm text-on-surface-variant">Klanten verschijnt</div>
               </div>
               <div>
-                <div className="font-headline-md text-headline-md text-secondary">4</div>
+                <div className="stat-figure text-headline-md text-secondary">4</div>
                 <div className="text-label-sm text-on-surface-variant">No-shows</div>
               </div>
               <div>
-                <div className="font-headline-md text-headline-md text-on-surface">87%</div>
+                <div className="stat-figure text-headline-md text-on-surface">87%</div>
                 <div className="text-label-sm text-on-surface-variant">Herinnerd</div>
               </div>
             </div>

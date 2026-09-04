@@ -63,7 +63,7 @@ export function StatCard({
         <div className="text-label-sm uppercase tracking-wide text-on-surface-variant">
           {label}
         </div>
-        <div className="font-headline-md text-headline-md text-on-surface">{value}</div>
+        <div className="stat-figure text-headline-md text-on-surface">{value}</div>
         {hint && <div className="text-label-sm text-on-surface-variant">{hint}</div>}
       </div>
     </Card>

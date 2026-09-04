@@ -138,7 +138,7 @@ export default async function AiReceptiePage() {
 
             <div className="flex items-center gap-sm rounded-lg bg-surface-container p-sm">
               <Icon name="bar_chart" className="text-[20px] text-on-surface-variant" />
-              <span className="font-headline-md text-headline-md text-on-surface">{ch.stat}</span>
+              <span className="stat-figure text-headline-md text-on-surface">{ch.stat}</span>
               <span className="text-label-sm text-on-surface-variant">{ch.statLabel}</span>
             </div>
 
