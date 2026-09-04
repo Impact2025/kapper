@@ -18,7 +18,7 @@ export default function SalonError({
         <h2 className="font-headline-md text-headline-md text-on-surface mb-xs">
           Er is iets misgegaan
         </h2>
-        <p className="max-w-sm text-body-md text-on-surface-variant">
+        <p className="max-w-[24rem] text-body-md text-on-surface-variant">
           Probeer het opnieuw of neem contact op als het probleem aanhoudt.
         </p>
         {error.digest && (

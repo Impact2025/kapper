@@ -37,7 +37,7 @@ export default async function GesprekkenPage() {
           <p className="font-headline-md text-headline-md text-on-surface mb-xs">
             Nog geen gesprekken
           </p>
-          <p className="text-body-md text-on-surface-variant max-w-xs">
+          <p className="text-body-md text-on-surface-variant max-w-[20rem]">
             Zodra klanten contact opnemen via WhatsApp of telefoon verschijnen de gesprekken hier.
           </p>
           <Link

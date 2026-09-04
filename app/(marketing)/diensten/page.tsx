@@ -375,7 +375,7 @@ export default function DienstenPage() {
             <h2 className="font-headline-lg text-headline-lg text-on-surface mb-sm">
               Van aanmelding tot volle agenda in 4 stappen.
             </h2>
-            <p className="font-body-md text-on-surface-variant max-w-xl mx-auto">
+            <p className="font-body-md text-on-surface-variant max-w-[36rem] mx-auto">
               Geen technische kennis nodig. Ons team regelt de setup, jij plukt de vruchten.
             </p>
           </div>

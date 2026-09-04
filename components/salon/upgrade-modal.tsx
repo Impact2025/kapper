@@ -53,7 +53,7 @@ export function UpgradeModal({
       <dialog
         ref={dialogRef}
         onClose={() => setOpen(false)}
-        className="m-auto max-h-[90dvh] w-full max-w-lg overflow-y-auto rounded-2xl border border-outline-variant/40 bg-surface p-0 shadow-xl backdrop:bg-black/40"
+        className="m-auto max-h-[90dvh] w-full max-w-[32rem] overflow-y-auto rounded-2xl border border-outline-variant/40 bg-surface p-0 shadow-xl backdrop:bg-black/40"
       >
         <div className="sticky top-0 z-10 flex items-center justify-between border-b border-outline-variant/40 bg-surface px-lg py-md">
           <h2 className="font-headline-md text-headline-md text-on-surface">Plan kiezen</h2>

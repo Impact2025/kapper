@@ -45,7 +45,7 @@ export function OnboardingWizard({ steps, salonId }: OnboardingWizardProps) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-margin-mobile py-xl">
-      <div className="w-full max-w-md rounded-2xl bg-surface shadow-2xl">
+      <div className="w-full max-w-[28rem] rounded-2xl bg-surface shadow-2xl">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-outline-variant/40 px-lg py-md">
           <div>

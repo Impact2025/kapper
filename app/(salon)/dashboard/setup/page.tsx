@@ -6,7 +6,7 @@ export const metadata: Metadata = { title: "Account wordt ingericht" };
 
 export default function SetupPage() {
   return (
-    <div className="mx-auto flex max-w-lg flex-col items-center gap-md py-xl text-center">
+    <div className="mx-auto flex max-w-[32rem] flex-col items-center gap-md py-xl text-center">
       <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary-fixed">
         <Icon name="pending" className="text-[32px] text-on-primary-fixed" />
       </div>
