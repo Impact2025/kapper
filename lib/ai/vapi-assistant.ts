@@ -59,7 +59,9 @@ export interface VapiAssistantPayload {
 export function buildVapiAssistantPayload(salon: SalonContext, toolsWebhookUrl: string): VapiAssistantPayload {
   return {
     name: `${salon.name} — AI-receptioniste`,
-    firstMessage: `Hoi, u spreekt met de AI-receptioniste van ${salon.name}. Waarmee kan ik u helpen?`,
+    // Artikel 50 EU AI Act: onmiskenbare AI-identificatie, hardcoded — dit
+    // mag nooit afhangen van of het model dit zelf besluit te zeggen.
+    firstMessage: `Goedendag, u spreekt met de digitale AI-assistent van ${salon.name}. Waarmee kan ik u helpen?`,
     model: {
       provider: "anthropic",
       model: VAPI_ANTHROPIC_MODEL,

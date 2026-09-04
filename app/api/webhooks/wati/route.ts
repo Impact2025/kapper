@@ -3,8 +3,11 @@ import { NextResponse } from "next/server";
 import { eq, and, sql } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { salons, conversations, messages, users, events as eventsTable } from "@/lib/db/schema";
-import { getReceptionistReply } from "@/lib/ai/receptionist";
+import { getReceptionistReply, type WatiConfirmationPayload } from "@/lib/ai/receptionist";
 import { loadSalonContext } from "@/lib/salon/receptionist-context";
+import { confirmAppointment, setExternalId } from "@/lib/salon/appointments";
+import { getAgendaAdapter } from "@/lib/agenda";
+import { amsterdamDateKey, amsterdamTimeKey } from "@/lib/salon/timezone";
 import { trackEvent } from "@/lib/analytics/track";
 import { env } from "@/lib/env";
 import { decrypt } from "@/lib/crypto";
@@ -16,8 +19,8 @@ import { captureError } from "@/lib/observability";
 export const runtime = "nodejs";
 export const maxDuration = 30;
 
-/** Verify WATI HMAC-SHA256 webhook signature. */
-function verifyWatiSignature(body: string, signature: string | null, secret: string): boolean {
+/** Verify WATI HMAC-SHA256 webhook signature. Exported for tests. */
+export function verifyWatiSignature(body: string, signature: string | null, secret: string): boolean {
   if (!signature) return false;
   const expected = createHmac("sha256", secret).update(body).digest("hex");
   return signature === expected;
@@ -38,6 +41,27 @@ async function sendWatiMessage(
       "Content-Type": "application/json",
     },
     body: JSON.stringify({ messageText: message }),
+  });
+}
+
+/** Send a WhatsApp interactive-button message via WATI (Middelburg-norm booking confirmation). */
+async function sendWatiInteractiveMessage(
+  baseUrl: string,
+  apiKey: string,
+  phoneNumber: string,
+  payload: WatiConfirmationPayload,
+): Promise<void> {
+  const url = `${baseUrl}/api/v1/sendInteractiveButtonsMessage/${encodeURIComponent(phoneNumber)}`;
+  await fetch(url, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      body: payload.text,
+      buttons: [{ text: payload.buttonTitle, id: payload.buttonId }],
+    }),
   });
 }
 
@@ -95,6 +119,77 @@ export async function POST(req: Request) {
   const fromPhone = String(
     body.waId ?? body.from ?? messageObj.from ?? "",
   ).replace(/[^\d+]/g, "");
+
+  // Middelburg-norm confirmation: the customer tapped "Akkoord & Bevestigen"
+  // on the interactive booking message. Handle this before the plain-text
+  // conversational flow below — a button reply carries no free-text body.
+  const buttonReplyObj = (messageObj.button ?? messageObj.interactiveButtonReply ?? messageObj.buttonReply) as
+    | Record<string, unknown>
+    | undefined;
+  const buttonReplyId = String(
+    body.buttonReplyId ?? buttonReplyObj?.payload ?? buttonReplyObj?.id ?? "",
+  );
+  if (buttonReplyId.startsWith("confirm_booking_")) {
+    const appointmentId = buttonReplyId.slice("confirm_booking_".length);
+    const confirmed = await confirmAppointment(appointmentId, "whatsapp_button");
+    if (!confirmed) {
+      // Already confirmed, cancelled, or unknown id — ignore idempotently.
+      return NextResponse.json({ ok: true, alreadyHandled: true });
+    }
+
+    const confirmedSalonRows = await db.select().from(salons).where(eq(salons.id, confirmed.salonId)).limit(1);
+    const confirmedSalon = confirmedSalonRows[0];
+    const ai = (confirmedSalon?.settings as Record<string, unknown> | undefined)?.ai as
+      | Record<string, unknown>
+      | undefined;
+
+    // Only now — after the customer explicitly accepted the cancellation
+    // policy — push the booking to the connected agenda provider.
+    try {
+      const rawKey = ai?.agendaApiKey ? String(ai.agendaApiKey) : null;
+      const apiKey = rawKey ? (decrypt(rawKey) ?? rawKey) : null;
+      const adapter = getAgendaAdapter(confirmedSalon?.agendaProvider, apiKey);
+      if (adapter) {
+        const pushResult = await adapter.bookAppointment({
+          customerName: confirmed.customerName,
+          customerPhone: confirmed.customerPhone,
+          serviceType: confirmed.serviceType,
+          date: amsterdamDateKey(confirmed.appointmentTime),
+          time: amsterdamTimeKey(confirmed.appointmentTime),
+        });
+        if (pushResult.ok && pushResult.externalId) {
+          await setExternalId(confirmed.id, pushResult.externalId);
+        }
+      }
+    } catch (err) {
+      captureError("wati/confirm-agenda-push", err);
+    }
+
+    await trackEvent({
+      type: "booking_confirmed",
+      salonId: confirmed.salonId,
+      props: { via: "ai_whatsapp", appointmentId: confirmed.id },
+      dedupeKey: `booking-confirmed:${confirmed.id}`,
+    });
+
+    try {
+      const watiApiKeyForReply =
+        env.WATI_API_KEY ?? (ai?.watiApiKey ? (decrypt(String(ai.watiApiKey)) ?? String(ai.watiApiKey)) : null);
+      if (watiApiKeyForReply && env.WATI_BASE_URL) {
+        await sendWatiMessage(
+          env.WATI_BASE_URL,
+          watiApiKeyForReply,
+          fromPhone,
+          `Bedankt! Je afspraak op ${amsterdamDateKey(confirmed.appointmentTime)} om ${amsterdamTimeKey(confirmed.appointmentTime)} is definitief bevestigd.`,
+        );
+      }
+    } catch (err) {
+      captureError("wati/confirm-reply", err);
+    }
+
+    return NextResponse.json({ ok: true, confirmed: true });
+  }
+
   const messageText = String(
     messageObj.text ?? messageObj.body ?? body.text ?? "",
   ).trim();
@@ -135,6 +230,7 @@ export async function POST(req: Request) {
     )
     .limit(1);
 
+  const isNewConversation = !existing[0];
   let conversationId: string;
   if (existing[0]) {
     conversationId = existing[0].id;
@@ -179,6 +275,7 @@ export async function POST(req: Request) {
     history.map((h) => ({ role: h.role, content: h.content })),
     fromPhone,
     conversationId,
+    isNewConversation,
   );
 
   // Persist assistant reply
@@ -188,8 +285,14 @@ export async function POST(req: Request) {
     content: reply,
   });
 
-  // Send reply via WATI
-  await sendWatiMessage(watiBaseUrl, watiApiKey, fromPhone, reply);
+  // Send reply via WATI — a fresh booking gets the Middelburg-norm
+  // interactive confirmation message (with its accept button) instead of
+  // the assistant's plain-text reply for this turn.
+  if (bookedAppointment) {
+    await sendWatiInteractiveMessage(watiBaseUrl, watiApiKey, fromPhone, bookedAppointment.confirmationPayload);
+  } else {
+    await sendWatiMessage(watiBaseUrl, watiApiKey, fromPhone, reply);
+  }
 
   // Track analytics event
   await trackEvent({
@@ -200,8 +303,8 @@ export async function POST(req: Request) {
   });
 
   // The receptionist tool already wrote the booking straight to our own
-  // appointments table (and best-effort pushed it to the agenda adapter) —
-  // this just records the analytics event, never inserts a second time.
+  // appointments table as pending_confirmation — the external agenda push
+  // only happens once the customer taps the confirmation button above.
   if (bookedAppointment) {
     await trackEvent({
       type: "booking_made",

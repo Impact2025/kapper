@@ -1,17 +1,14 @@
 import "server-only";
 import Anthropic from "@anthropic-ai/sdk";
 import { getAnthropic } from "@/lib/ai/anthropic";
-import { getAgendaAdapter } from "@/lib/agenda";
 import { findAvailableSlots } from "@/lib/salon/availability";
 import {
   findAppointmentsByPhone,
   bookFromSlot,
   rescheduleToSlot,
   cancelById,
-  setExternalId,
 } from "@/lib/salon/appointments";
-import { decrypt } from "@/lib/crypto";
-import { env } from "@/lib/env";
+import { env, publicEnv } from "@/lib/env";
 
 export interface SalonLocation {
   id: string;
@@ -75,15 +72,28 @@ export interface ConversationMessage {
   content: string;
 }
 
+export interface WatiConfirmationPayload {
+  text: string;
+  buttonId: string;
+  buttonTitle: string;
+}
+
 export interface ReceptionistResponse {
   reply: string;
   bookedAppointment?: {
+    appointmentId: string;
     customerName: string;
     customerPhone: string;
     serviceType: string;
     date: string;
     time: string;
+    cancellationDeadline: string;
     externalId?: string;
+    /** Present for AI-WhatsApp bookings: the Middelburg-norm confirmation
+     * message with an explicit accept button — the webhook sends this via
+     * WATI's interactive-message endpoint instead of pushing the booking
+     * straight to the agenda adapter. */
+    confirmationPayload: WatiConfirmationPayload;
   };
   /** Set when the model called escalate_to_staff — the caller (webhook) can
    * tag the conversation for a human to pick up. */
@@ -95,6 +105,39 @@ const FALLBACK_NL =
 
 const MAX_TOOL_ROUNDS = 4;
 const KNOWLEDGE_CHAR_BUDGET = 6000;
+/** Sliding window: keep at most the last 10 interactions (10 user + 10
+ * assistant messages) so token cost and stale-context hallucinations stay bounded. */
+const MAX_HISTORY_MESSAGES = 20;
+
+function formatDutchDate(dateISO: string): string {
+  const [y, m, d] = dateISO.split("-").map(Number);
+  return new Date(Date.UTC(y!, m! - 1, d!)).toLocaleDateString("nl-NL", {
+    day: "numeric",
+    month: "long",
+    timeZone: "UTC",
+  });
+}
+
+/** Algemene voorwaarden-link — the platform's own terms page doubles as the
+ * fallback cancellation-policy link when a salon has no own site on file. */
+const DEFAULT_TERMS_URL = `${publicEnv.NEXT_PUBLIC_SITE_URL}/voorwaarden`;
+
+/** Build the Middelburg-norm confirmation message: an explicit accept button
+ * the customer must tap before the booking becomes enforceable. Includes a
+ * link to the cancellation terms — required for the message to actually be
+ * enforceable, not just the button. */
+export function buildWatiConfirmationPayload(
+  appointmentId: string,
+  date: string,
+  time: string,
+  termsUrl: string = DEFAULT_TERMS_URL,
+): WatiConfirmationPayload {
+  return {
+    text: `Je afspraak staat gereserveerd voor ${formatDutchDate(date)} om ${time}. Kosteloos annuleren kan tot 24 uur vooraf.\nLees de voorwaarden: ${termsUrl}\nKlik op de knop om te bevestigen en akkoord te gaan.`,
+    buttonId: `confirm_booking_${appointmentId}`,
+    buttonTitle: "Akkoord & Bevestigen",
+  };
+}
 
 /** Shared tool catalogue — also the source Vapi's tool schema is derived
  * from (see lib/ai/vapi-assistant.ts) so both channels stay in sync. */
@@ -281,42 +324,31 @@ async function runTool(
         customerPhone: customerPhoneArg,
         conversationId,
         agendaProvider: salon.agendaProvider,
+        freeCancelHours: salon.noShowSettings.freeCancelHours,
       });
       if ("error" in result) return JSON.stringify(result);
 
-      // Best-effort push to the connected agenda provider — our own DB
-      // stays the source of truth regardless of whether this succeeds.
-      let externalId: string | undefined;
-      try {
-        const rawKey = salon.aiSettings.agendaApiKey ?? null;
-        const apiKey = rawKey ? (decrypt(rawKey) ?? rawKey) : null;
-        const adapter = getAgendaAdapter(salon.agendaProvider, apiKey);
-        if (adapter) {
-          const pushResult = await adapter.bookAppointment({
-            customerName,
-            customerPhone: customerPhoneArg,
-            serviceType: result.treatment,
-            date: result.date,
-            time: result.time,
-          });
-          if (pushResult.ok && pushResult.externalId) {
-            externalId = pushResult.externalId;
-            await setExternalId(result.appointmentId, externalId);
-          }
-        }
-      } catch {
-        // Non-fatal: the booking already exists in our own DB.
-      }
-
+      // Middelburg-norm: the appointment stays pending_confirmation and is
+      // NOT pushed to the agenda adapter until the customer taps the WATI
+      // confirmation button (app/api/webhooks/wati/route.ts handles that).
       state.bookedAppointment = {
+        appointmentId: result.appointmentId,
         customerName,
         customerPhone: customerPhoneArg,
         serviceType: result.treatment,
         date: result.date,
         time: result.time,
-        externalId,
+        cancellationDeadline: result.cancellationDeadline,
+        confirmationPayload: buildWatiConfirmationPayload(result.appointmentId, result.date, result.time),
       };
-      return JSON.stringify({ ok: true, treatment: result.treatment, location: result.location, date: result.date, time: result.time });
+      return JSON.stringify({
+        ok: true,
+        pending_confirmation: true,
+        treatment: result.treatment,
+        location: result.location,
+        date: result.date,
+        time: result.time,
+      });
     }
     case "reschedule_appointment": {
       const result = await rescheduleToSlot(
@@ -363,19 +395,32 @@ export async function executeReceptionistTool(
   return { resultText, bookedAppointment: state.bookedAppointment, escalated: state.escalated };
 }
 
+/** Artikel 50 EU AI Act: onmiskenbare AI-identificatie bij het allereerste
+ * bericht van een nieuwe conversatie. Deterministisch toegevoegd in code
+ * (niet aan het model overgelaten) zodat dit gegarandeerd is. */
+function aiDisclosure(salonName: string): string {
+  return `Je spreekt met de virtuele AI-assistent van ${salonName}.`;
+}
+
+function withDisclosure(reply: string, isNewConversation: boolean, salonName: string): string {
+  if (!isNewConversation) return reply;
+  return `${aiDisclosure(salonName)} ${reply}`;
+}
+
 export async function getReceptionistReply(
   salon: SalonContext,
   history: ConversationMessage[],
   customerPhone: string,
   conversationId?: string | null,
+  isNewConversation = false,
 ): Promise<ReceptionistResponse> {
   const anthropic = getAnthropic();
   if (!anthropic) {
-    return { reply: FALLBACK_NL };
+    return { reply: withDisclosure(FALLBACK_NL, isNewConversation, salon.name) };
   }
 
   const systemPrompt = buildSystemPrompt(salon);
-  const messages: Anthropic.MessageParam[] = history.slice(-10).map((m) => ({
+  const messages: Anthropic.MessageParam[] = history.slice(-MAX_HISTORY_MESSAGES).map((m) => ({
     role: m.role,
     content: m.content,
   }));
@@ -395,7 +440,7 @@ export async function getReceptionistReply(
       const toolUses = response.content.filter((b): b is Anthropic.ToolUseBlock => b.type === "tool_use");
 
       if (!toolUses.length || round === MAX_TOOL_ROUNDS) {
-        const reply = textOf(response) || FALLBACK_NL;
+        const reply = withDisclosure(textOf(response) || FALLBACK_NL, isNewConversation, salon.name);
         return { reply, bookedAppointment: state.bookedAppointment, escalated: state.escalated };
       }
 
@@ -416,9 +461,13 @@ export async function getReceptionistReply(
       messages.push({ role: "user", content: toolResults });
     }
 
-    return { reply: FALLBACK_NL, bookedAppointment: state.bookedAppointment, escalated: state.escalated };
+    return {
+      reply: withDisclosure(FALLBACK_NL, isNewConversation, salon.name),
+      bookedAppointment: state.bookedAppointment,
+      escalated: state.escalated,
+    };
   } catch (err) {
     console.error("[receptionist] Claude error:", err);
-    return { reply: FALLBACK_NL };
+    return { reply: withDisclosure(FALLBACK_NL, isNewConversation, salon.name) };
   }
 }

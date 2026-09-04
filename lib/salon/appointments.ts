@@ -72,6 +72,8 @@ interface BookInput {
   customerPhone: string;
   conversationId?: string | null;
   agendaProvider: string | null;
+  /** Uren vóór de afspraak waarbinnen kosteloos annuleren nog mag — bepaalt cancellationDeadline. Standaard 24. */
+  freeCancelHours?: number;
 }
 
 export async function bookFromSlot(input: BookInput) {
@@ -93,7 +95,13 @@ export async function bookFromSlot(input: BookInput) {
   const durationMinutes = treatmentRow[0]?.durationMinutes ?? 30;
   const serviceType = treatmentRow[0]?.name ?? "Afspraak";
   const locationName = locationRow[0]?.name ?? "Salon";
+  const appointmentTime = new Date(decoded.startISO);
+  const freeCancelHours = input.freeCancelHours ?? 24;
+  const cancellationDeadline = new Date(appointmentTime.getTime() - freeCancelHours * 60 * 60 * 1000);
 
+  // Middelburg-norm: bookings start unconfirmed (default status) and are
+  // pushed to the external agenda only after the customer accepts the
+  // cancellation policy — see the WATI button_reply webhook.
   const [row] = await db
     .insert(appointments)
     .values({
@@ -106,9 +114,10 @@ export async function bookFromSlot(input: BookInput) {
       customerName: input.customerName,
       customerPhone: input.customerPhone,
       serviceType,
-      appointmentTime: new Date(decoded.startISO),
+      appointmentTime,
       durationMinutes,
       source: "ai_whatsapp",
+      cancellationDeadline,
     })
     .returning();
 
@@ -117,13 +126,44 @@ export async function bookFromSlot(input: BookInput) {
     appointmentId: row!.id,
     treatment: serviceType,
     location: locationName,
-    date: amsterdamDateKey(new Date(decoded.startISO)),
-    time: amsterdamTimeKey(new Date(decoded.startISO)),
+    date: amsterdamDateKey(appointmentTime),
+    time: amsterdamTimeKey(appointmentTime),
+    cancellationDeadline: cancellationDeadline.toISOString(),
   };
 }
 
 export async function setExternalId(appointmentId: string, externalId: string): Promise<void> {
   await db.update(appointments).set({ externalId }).where(eq(appointments.id, appointmentId));
+}
+
+/**
+ * Confirm a pending_confirmation appointment after the customer accepts the
+ * cancellation policy (Middelburg-norm). Returns null if the appointment
+ * doesn't exist or was already confirmed/cancelled — callers must not push
+ * to the agenda adapter or resend confirmations in that case.
+ */
+export async function confirmAppointment(
+  appointmentId: string,
+  confirmationChannel: string,
+): Promise<typeof appointments.$inferSelect | null> {
+  const [existing] = await db
+    .select()
+    .from(appointments)
+    .where(and(eq(appointments.id, appointmentId), eq(appointments.status, "pending_confirmation")))
+    .limit(1);
+  if (!existing) return null;
+
+  const [updated] = await db
+    .update(appointments)
+    .set({
+      status: "confirmed",
+      policyAcceptedAt: new Date(),
+      confirmationChannel,
+    })
+    .where(eq(appointments.id, appointmentId))
+    .returning();
+
+  return updated ?? null;
 }
 
 export async function rescheduleToSlot(salonId: string, appointmentId: string, newSlotId: string) {

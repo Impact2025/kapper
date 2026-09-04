@@ -235,6 +235,7 @@ export const conversationStatusEnum = pgEnum("conversation_status", [
 ]);
 export const messageRoleEnum = pgEnum("message_role", ["user", "assistant"]);
 export const appointmentStatusEnum = pgEnum("appointment_status", [
+  "pending_confirmation",
   "confirmed",
   "completed",
   "no_show",
@@ -389,9 +390,14 @@ export const appointments = pgTable(
     serviceType: text("service_type").notNull(),
     appointmentTime: timestamp("appointment_time", { withTimezone: true }).notNull(),
     durationMinutes: integer("duration_minutes").notNull().default(30),
-    status: appointmentStatusEnum("status").default("confirmed").notNull(),
+    status: appointmentStatusEnum("status").default("pending_confirmation").notNull(),
     source: appointmentSourceEnum("source").notNull(),
     reminderSentAt: timestamp("reminder_sent_at", { withTimezone: true }),
+    // Middelburg-norm: appointment is not enforceable against the customer
+    // until they explicitly accept the cancellation policy.
+    policyAcceptedAt: timestamp("policy_accepted_at", { withTimezone: true }),
+    confirmationChannel: text("confirmation_channel"), // 'whatsapp_button' | 'sms_link' | 'voice_otp'
+    cancellationDeadline: timestamp("cancellation_deadline", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   },
   (t) => [

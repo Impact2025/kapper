@@ -97,8 +97,8 @@ describe("getReceptionistReply — tool-based receptionist", () => {
       location: "Den Bosch",
       date: "2026-09-10",
       time: "14:00",
+      cancellationDeadline: "2026-09-09T14:00:00.000Z",
     });
-    bookAppointmentMock.mockResolvedValue({ ok: true, externalId: "ext-1" });
 
     createMock
       .mockResolvedValueOnce(toolUseResponse("check_availability", { location_id: "loc-1", treatment_id: "treat-1" }))
@@ -130,13 +130,21 @@ describe("getReceptionistReply — tool-based receptionist", () => {
         conversationId: "conv-1",
       }),
     );
-    expect(setExternalIdMock).toHaveBeenCalledWith("apt-1", "ext-1");
+    // Middelburg-norm: no push to the agenda adapter yet — the booking is
+    // pending_confirmation until the customer taps the WATI accept button.
+    expect(bookAppointmentMock).not.toHaveBeenCalled();
+    expect(setExternalIdMock).not.toHaveBeenCalled();
     expect(result.bookedAppointment).toMatchObject({
+      appointmentId: "apt-1",
       customerName: "Anna Jansen",
       serviceType: "Chemisch peeling",
       date: "2026-09-10",
       time: "14:00",
-      externalId: "ext-1",
+      cancellationDeadline: "2026-09-09T14:00:00.000Z",
+      confirmationPayload: {
+        buttonId: "confirm_booking_apt-1",
+        buttonTitle: "Akkoord & Bevestigen",
+      },
     });
     expect(result.reply).toContain("genoteerd");
   });
@@ -205,6 +213,40 @@ describe("getReceptionistReply — tool-based receptionist", () => {
     expect(result.bookedAppointment).toBeUndefined();
   });
 
+  it("caps the conversation history at the last 10 interactions (20 messages) before calling Claude", async () => {
+    createMock.mockResolvedValueOnce(textResponse("Prima, tot dan!"));
+
+    const history = Array.from({ length: 30 }, (_, i) => ({
+      role: (i % 2 === 0 ? "user" : "assistant") as "user" | "assistant",
+      content: `bericht ${i}`,
+    }));
+
+    await getReceptionistReply(salon, history, "0612345678");
+
+    const sentMessages = createMock.mock.calls[0]![0].messages as { content: string }[];
+    expect(sentMessages).toHaveLength(20);
+    // Only the most recent 20 survive the sliding window — oldest 10 are cut off.
+    expect(sentMessages[0]!.content).toBe("bericht 10");
+    expect(sentMessages.at(-1)!.content).toBe("bericht 29");
+  });
+
+  it("Artikel 50 AI Act: identifies itself as an AI assistant at the start of a new conversation", async () => {
+    createMock.mockResolvedValueOnce(textResponse("Welkom! Waarmee kan ik u helpen?"));
+
+    const result = await getReceptionistReply(salon, [{ role: "user", content: "hoi" }], "0612345678", null, true);
+
+    expect(result.reply).toMatch(/virtuele AI-assistent van Huidzorg Clinics/);
+    expect(result.reply).toContain("Welkom! Waarmee kan ik u helpen?");
+  });
+
+  it("does not repeat the AI-identification on a follow-up message in the same conversation", async () => {
+    createMock.mockResolvedValueOnce(textResponse("Natuurlijk, om hoe laat schikt het?"));
+
+    const result = await getReceptionistReply(salon, [{ role: "user", content: "ik wil een afspraak" }], "0612345678", "conv-1", false);
+
+    expect(result.reply).not.toMatch(/virtuele AI-assistent/);
+  });
+
   it("returns the fallback line when Claude keeps calling tools forever, instead of looping unbounded", async () => {
     bookFromSlotMock.mockResolvedValue({ error: "Ongeldig slot_id." });
     createMock.mockResolvedValue(toolUseResponse("book_appointment", { slot_id: "x", customer_name: "A", customer_phone: "B" }));
@@ -232,8 +274,8 @@ describe("executeReceptionistTool — direct tool execution for the voice channe
       location: "Den Bosch",
       date: "2026-09-10",
       time: "14:00",
+      cancellationDeadline: "2026-09-09T14:00:00.000Z",
     });
-    bookAppointmentMock.mockResolvedValue({ ok: true, externalId: "ext-9" });
 
     const { resultText, bookedAppointment } = await executeReceptionistTool(
       "book_appointment",
@@ -244,9 +286,15 @@ describe("executeReceptionistTool — direct tool execution for the voice channe
     );
 
     expect(bookFromSlotMock).toHaveBeenCalledWith(expect.objectContaining({ conversationId: "call-1" }));
-    expect(setExternalIdMock).toHaveBeenCalledWith("apt-1", "ext-9");
-    expect(JSON.parse(resultText)).toMatchObject({ ok: true, treatment: "Chemisch peeling" });
-    expect(bookedAppointment).toMatchObject({ customerName: "Anna Jansen", externalId: "ext-9" });
+    // Middelburg-norm: no agenda push from the tool call itself.
+    expect(bookAppointmentMock).not.toHaveBeenCalled();
+    expect(setExternalIdMock).not.toHaveBeenCalled();
+    expect(JSON.parse(resultText)).toMatchObject({ ok: true, pending_confirmation: true, treatment: "Chemisch peeling" });
+    expect(bookedAppointment).toMatchObject({
+      appointmentId: "apt-1",
+      customerName: "Anna Jansen",
+      confirmationPayload: { buttonId: "confirm_booking_apt-1" },
+    });
   });
 
   it("returns an error result instead of throwing for an unknown tool name", async () => {
