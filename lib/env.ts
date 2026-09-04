@@ -17,8 +17,13 @@ const serverSchema = z.object({
   MAIL_FROM: z.string().default("KapperAssistent <no-reply@kappersassistent.nl>"),
   REPORT_RECIPIENT: z.string().default("v.munster@weareimpact.nl"),
 
-  // AI
+  // AI — Anthropic by default; point ANTHROPIC_BASE_URL at OpenRouter's
+  // Anthropic-protocol endpoint (https://openrouter.ai/api, no /v1) to route
+  // through OpenRouter instead. ANTHROPIC_API_KEY becomes the OpenRouter key
+  // in that case, and the model ids need the "anthropic/" prefix OpenRouter
+  // expects (e.g. "anthropic/claude-haiku-4-5-20251001").
   ANTHROPIC_API_KEY: z.string().optional(),
+  ANTHROPIC_BASE_URL: z.string().url().optional(),
   ANTHROPIC_MODEL_LONGFORM: z.string().default("claude-opus-4-8"),
   ANTHROPIC_MODEL_FAST: z.string().default("claude-haiku-4-5-20251001"),
 

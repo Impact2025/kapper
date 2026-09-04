@@ -5,7 +5,15 @@ let client: Anthropic | null = null;
 
 export function getAnthropic(): Anthropic | null {
   if (!env.ANTHROPIC_API_KEY) return null;
-  if (!client) client = new Anthropic({ apiKey: env.ANTHROPIC_API_KEY });
+  if (!client) {
+    client = new Anthropic({
+      apiKey: env.ANTHROPIC_API_KEY,
+      // Unset: defaults to https://api.anthropic.com. Set to OpenRouter's
+      // Anthropic-protocol endpoint to route through OpenRouter instead —
+      // same Messages API, same tool-use format, just a different gateway.
+      baseURL: env.ANTHROPIC_BASE_URL || undefined,
+    });
+  }
   return client;
 }
 
