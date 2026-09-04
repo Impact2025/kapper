@@ -51,6 +51,7 @@ async function main() {
       city: "'s-Hertogenbosch",
       phone: "+31 73 123 4567",
       settings: {
+        publicDemo: true,
         noShow: { enabled: true, freeCancelHours: 24, chargePercent: 100 },
       },
     })
@@ -150,9 +151,10 @@ async function main() {
   console.log(`✓ 4 afspraken`);
 
   console.log("\n— Demo klaar —");
-  console.log(`URL:      https://kappersassistent.nl/login`);
-  console.log(`E-mail:   ${EMAIL}`);
-  console.log(`Wachtwoord: ${PASSWORD}`);
+  console.log(`Klant-gesprek (publiek, geen login): https://kappersassistent.nl/demo/${SLUG}`);
+  console.log(`Salon-dashboard (login):             https://kappersassistent.nl/login`);
+  console.log(`  E-mail:     ${EMAIL}`);
+  console.log(`  Wachtwoord: ${PASSWORD}`);
 }
 
 main()
