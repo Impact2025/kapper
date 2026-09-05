@@ -42,15 +42,15 @@ describe("buildVapiAssistantPayload", () => {
 
     // All 6 receptionist tools stay in the array — one (escalate_to_staff)
     // is mapped to a native transferCall tool instead of a function tool,
-    // but every name must still be present.
-    const toolNames = payload.model.tools.map((t) => t.function.name);
+    // but every one must still be present in some form.
+    const toolNames = payload.model.tools.map((t) => (t.type === "function" ? t.function.name : t.name));
     expect(toolNames).toEqual([
       "check_availability",
       "find_appointments",
       "book_appointment",
       "reschedule_appointment",
       "cancel_appointment",
-      "escalate_to_staff",
+      "transferCall",
     ]);
 
     // Every ordinary function tool carries a real JSON schema, not an empty stub.
@@ -74,53 +74,65 @@ describe("buildVapiAssistantPayload", () => {
     expect(payload.model.messages[0]!.content).toMatch(/virtuele AI-assistent/);
   });
 
-  it("configures Deepgram (STT) and Cartesia (TTS) for sub-300ms latency", () => {
+  it("configures Deepgram Flux (STT) and Cartesia Sonic 3.5 (TTS) per the official Vapi schema", () => {
     const payload = buildVapiAssistantPayload(salon, "https://x/api/webhooks/vapi");
 
     expect(payload.transcriber).toMatchObject({
       provider: "deepgram",
+      model: "flux-general-multi",
       language: "nl",
-      languageHint: "nl",
-      smartEndpointing: true,
     });
+    // No smartEndpointing/smartEndpointingPlan field anywhere on the
+    // transcriber — Flux's acoustic end-of-turn detection is native.
+    expect(payload.transcriber).not.toHaveProperty("smartEndpointing");
+    expect(payload.transcriber).not.toHaveProperty("languageHint");
     expect(payload.transcriber.endpointing).toBeLessThanOrEqual(100);
 
+    // Vapi validates this against a strict enum: 'sonic-3.5' | 'sonic-3' | 'sonic-2'.
     expect(payload.voice).toMatchObject({
       provider: "cartesia",
-      model: "sonic-3-5",
+      model: "sonic-3.5",
       language: "nl",
     });
     expect(payload.voice.voiceId).toBeTruthy();
   });
 
-  it("enables full-duplex barge-in and a tight silence timeout", () => {
+  it("enables full-duplex barge-in and a tight silence timeout, without a software smartEndpointing layer", () => {
     const payload = buildVapiAssistantPayload(salon, "https://x/api/webhooks/vapi");
 
     expect(payload.stopSpeakingPlan.numWords).toBe(0);
-    expect(payload.startSpeakingPlan.smartEndpointingEnabled).toBe(true);
     expect(payload.silenceTimeoutSeconds).toBe(0.5);
+    // Deepgram Flux handles end-of-turn natively — startSpeakingPlan must
+    // not also run a software smartEndpointing layer alongside it.
+    expect(payload.startSpeakingPlan).not.toHaveProperty("smartEndpointingEnabled");
+    expect(payload.startSpeakingPlan).not.toHaveProperty("smartEndpointingPlan");
   });
 
-  it("maps escalate_to_staff to a native transferCall tool targeting the salon's phone number", () => {
+  it("maps escalate_to_staff to a native transferCall tool with the exact Vapi destinations structure", () => {
     const payload = buildVapiAssistantPayload(salon, "https://x/api/webhooks/vapi");
 
-    const transferTool = payload.model.tools.find((t) => t.function.name === "escalate_to_staff");
-    expect(transferTool?.type).toBe("transferCall");
+    const transferTool = payload.model.tools.find((t) => t.type === "transferCall");
+    expect(transferTool).toBeDefined();
     if (transferTool?.type !== "transferCall") throw new Error("expected a transferCall tool");
 
-    expect(transferTool.destinations).toHaveLength(1);
-    expect(transferTool.destinations[0]).toMatchObject({
-      type: "number",
-      number: salon.phone,
-      transferPlan: { mode: "blind-transfer" },
+    expect(transferTool).toEqual({
+      type: "transferCall",
+      name: "transferCall",
+      destinations: [
+        {
+          type: "number",
+          number: salon.phone,
+          message: "Ik verbind u nu direct door met een van onze stylisten in de salon. Een ogenblik geduld.",
+        },
+      ],
     });
-    expect(transferTool.destinations[0]!.message).toMatch(/verbind u nu direct door/);
   });
 
   it("falls back to a plain function tool for escalate_to_staff when the salon has no phone number on file", () => {
     const payload = buildVapiAssistantPayload({ ...salon, phone: null }, "https://x/api/webhooks/vapi");
 
-    const escalateTool = payload.model.tools.find((t) => t.function.name === "escalate_to_staff");
+    expect(payload.model.tools.some((t) => t.type === "transferCall")).toBe(false);
+    const escalateTool = payload.model.tools.find((t) => t.type === "function" && t.function.name === "escalate_to_staff");
     expect(escalateTool?.type).toBe("function");
   });
 });

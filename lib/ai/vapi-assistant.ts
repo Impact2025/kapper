@@ -35,21 +35,19 @@ interface VapiFunctionTool {
 
 /**
  * Vapi's native call-transfer tool: performs the handoff at the telephony
- * (PSTN/carrier) level via a blind transfer (SIP REFER) instead of the AI
- * staying bridged on the line — this frees the AI's channel immediately so
- * the salon isn't billed for two simultaneous call legs.
+ * (PSTN/carrier) level instead of the AI staying bridged on the line — this
+ * frees the AI's channel immediately so the salon isn't billed for two
+ * simultaneous call legs. Shape follows Vapi's own transferCall tool schema
+ * exactly (flat `name`, no `function` wrapper, no extra fields on the
+ * destination beyond type/number/message).
  */
 interface VapiTransferCallTool {
   type: "transferCall";
-  function: {
-    name: string;
-    description: string;
-  };
+  name: "transferCall";
   destinations: {
     type: "number";
     number: string;
     message: string;
-    transferPlan: { mode: "blind-transfer" };
   }[];
 }
 
@@ -67,13 +65,12 @@ function toVapiTools(salon: SalonContext): VapiTool[] {
     if (t.name === "escalate_to_staff" && salon.phone) {
       return {
         type: "transferCall",
-        function: { name: t.name, description: t.description ?? "" },
+        name: "transferCall",
         destinations: [
           {
             type: "number",
             number: salon.phone,
             message: TRANSFER_ANNOUNCEMENT,
-            transferPlan: { mode: "blind-transfer" },
           },
         ],
       };
@@ -93,17 +90,18 @@ interface VapiTranscriberConfig {
   provider: "deepgram";
   model: string;
   language: string;
-  languageHint: string;
-  /** ms of trailing silence before end-of-turn — Deepgram Flux's acoustic
-   * confidence signals let this be ~3x shorter than a fixed-timer default
-   * (~300ms) without cutting callers off mid-sentence. */
-  endpointing: number;
-  smartEndpointing: boolean;
+  /** ms of trailing silence before end-of-turn — Deepgram Flux handles
+   * acoustic end-of-turn detection natively, so this is just an optional
+   * upper bound, ~3x shorter than a fixed-timer default (~300ms). No
+   * software smartEndpointing layer belongs in startSpeakingPlan alongside
+   * it — Vapi docs call out that the two must not run at the same time. */
+  endpointing?: number;
 }
 
 interface VapiVoiceConfig {
   provider: "cartesia";
-  model: string;
+  /** Vapi validates this against a strict enum: 'sonic-3.5' | 'sonic-3' | 'sonic-2'. */
+  model: "sonic-3.5" | "sonic-3" | "sonic-2";
   voiceId: string;
   language: string;
 }
@@ -114,11 +112,12 @@ export interface VapiAssistantPayload {
   transcriber: VapiTranscriberConfig;
   voice: VapiVoiceConfig;
   /** How long the assistant waits after the caller stops talking before
-   * responding — smartEndpointingEnabled defers to the transcriber's
-   * acoustic end-of-turn signal instead of only this fixed wait. */
+   * responding. No smartEndpointingEnabled/smartEndpointingPlan here —
+   * Deepgram Flux's native acoustic end-of-turn detection on the
+   * transcriber already handles that; layering a second one on top is
+   * exactly what Vapi's docs warn against. */
   startSpeakingPlan: {
     waitSeconds: number;
-    smartEndpointingEnabled: boolean;
   };
   /** Full-duplex barge-in: numWords 0 means the assistant's audio output
    * stops the instant the caller starts speaking, no minimum word count. */
@@ -168,19 +167,16 @@ export function buildVapiAssistantPayload(salon: SalonContext, toolsWebhookUrl: 
       // Vapi/Deepgram account isn't provisioned for Flux yet.
       model: "flux-general-multi",
       language: "nl",
-      languageHint: "nl",
       endpointing: 100,
-      smartEndpointing: true,
     },
     voice: {
       provider: "cartesia",
-      model: "sonic-3-5",
+      model: "sonic-3.5",
       voiceId: env.CARTESIA_VOICE_ID_NL,
       language: "nl",
     },
     startSpeakingPlan: {
       waitSeconds: 0.1,
-      smartEndpointingEnabled: true,
     },
     stopSpeakingPlan: {
       numWords: 0,
