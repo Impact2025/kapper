@@ -276,6 +276,14 @@ export const treatments = pgTable(
     name: text("name").notNull(),
     category: text("category"),
     durationMinutes: integer("duration_minutes").notNull().default(30),
+    // Intelligent Double-Booking (Pro): optional phase breakdown for
+    // treatments with a processing/inwerktijd window (e.g. hair color) where
+    // the stylist is free for another client. When set, application +
+    // processing + finishing should add up to durationMinutes; when null,
+    // the treatment is treated as one continuous block of durationMinutes.
+    applicationMinutes: integer("application_minutes"),
+    processingMinutes: integer("processing_minutes"),
+    finishingMinutes: integer("finishing_minutes"),
     priceCents: integer("price_cents").notNull().default(0),
     description: text("description"),
     prepInfo: text("prep_info"),

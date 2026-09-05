@@ -22,6 +22,12 @@ export interface SalonTreatment {
   name: string;
   category: string | null;
   durationMinutes: number;
+  /** Intelligent Double-Booking (Pro): when all three are set, the stylist
+   * is free during processingMinutes (e.g. hair color inwerktijd) for a
+   * parallel booking — see RECEPTIONISTS rule below and buildSystemPrompt. */
+  applicationMinutes?: number | null;
+  processingMinutes?: number | null;
+  finishingMinutes?: number | null;
   priceCents: number;
   description: string | null;
   prepInfo: string | null;
@@ -225,16 +231,30 @@ export function buildSystemPrompt(salon: SalonContext): string {
     salon.locations.map((l) => ({ id: l.id, name: l.name, city: l.city })),
   );
   const treatmentsJson = JSON.stringify(
-    salon.treatments.map((t) => ({
-      id: t.id,
-      name: t.name,
-      category: t.category,
-      duration_min: t.durationMinutes,
-      price_eur: Math.round(t.priceCents / 100),
-      description: t.description,
-      prep: t.prepInfo,
-      aftercare: t.aftercareInfo,
-    })),
+    salon.treatments.map((t) => {
+      // Intelligent Double-Booking (Pro): only a treatment with all three
+      // phases set (e.g. hair color) leaves the stylist free during
+      // processing — a plain treatment has no inwerktijd_min at all.
+      const heeftInwerktijd = Boolean(t.applicationMinutes && t.processingMinutes && t.finishingMinutes);
+      return {
+        id: t.id,
+        name: t.name,
+        category: t.category,
+        duration_min: t.durationMinutes,
+        ...(heeftInwerktijd
+          ? {
+              aanbreng_min: t.applicationMinutes,
+              inwerktijd_min: t.processingMinutes,
+              afwerk_min: t.finishingMinutes,
+              stylist_vrij_tijdens_inwerktijd: true,
+            }
+          : {}),
+        price_eur: Math.round(t.priceCents / 100),
+        description: t.description,
+        prep: t.prepInfo,
+        aftercare: t.aftercareInfo,
+      };
+    }),
   );
   const staffJson = JSON.stringify(
     salon.staff.map((s) => ({
@@ -278,7 +298,8 @@ GEDRAGSREGELS:
 8. EU AI Act (vanaf augustus 2026): bevestig eerlijk dat je een AI bent als de klant dat vraagt. Bied bij medische complexiteit, klachten, twijfel of een expliciet verzoek altijd aan om door te verbinden — gebruik dan escalate_to_staff.
 9. Voor concrete medische diagnoses verwijs je door naar een intake in plaats van zelf te diagnosticeren.
 10. Annuleringsbeleid: ${salon.noShowSettings.enabled ? `Klanten kunnen gratis annuleren tot ${salon.noShowSettings.freeCancelHours ?? 24} uur voor de afspraak.` : "Neem contact op met de salon voor het annuleringsbeleid."}
-11. Sluit een geslaagde boeking, wijziging of annulering af met een korte, warme bevestiging.`;
+11. Sluit een geslaagde boeking, wijziging of annulering af met een korte, warme bevestiging.
+12. Intelligent Double-Booking: als een behandeling \`stylist_vrij_tijdens_inwerktijd\` heeft (bijv. kleuring), is de behandelaar tijdens \`inwerktijd_min\` vrij voor iets korts bij dezelfde klant of zelfs een andere klant. check_availability houdt hier al rekening mee door slots in dat venster aan te bieden — vertel de beller dit gerust actief, bijvoorbeeld: "Terwijl uw kleur inwerkt, heeft styliste Sarah tijd voor uw föhnbeurt."`;
 }
 
 function textOf(response: Anthropic.Message): string {

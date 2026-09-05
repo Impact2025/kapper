@@ -69,15 +69,34 @@ export async function deleteLocation(_prev: ActionState | undefined, formData: F
 
 /* ---------------------------- Behandelingen ------------------------------ */
 
+// Intelligent Double-Booking (Pro): the three phase fields are optional —
+// leave them blank and the treatment stays one continuous durationMinutes
+// block, exactly like before this feature existed.
+const phaseMinutes = z
+  .number()
+  .int()
+  .min(0)
+  .max(480)
+  .optional();
+
 const treatmentSchema = z.object({
   name: z.string().min(1).max(200),
   category: z.string().max(100),
   durationMinutes: z.number().int().min(5).max(480),
+  applicationMinutes: phaseMinutes,
+  processingMinutes: phaseMinutes,
+  finishingMinutes: phaseMinutes,
   priceEuros: z.number().min(0).max(10_000),
   description: z.string().max(2000),
   prepInfo: z.string().max(2000),
   aftercareInfo: z.string().max(2000),
 });
+
+function parseOptionalMinutes(formData: FormData, field: string): number | undefined {
+  const raw = formData.get(field);
+  if (raw === null || raw === "") return undefined;
+  return Number(raw);
+}
 
 export async function addTreatment(_prev: ActionState | undefined, formData: FormData): Promise<ActionState> {
   const user = await requireSalonOwner();
@@ -85,6 +104,9 @@ export async function addTreatment(_prev: ActionState | undefined, formData: For
     name: formData.get("name") ?? "",
     category: formData.get("category") ?? "",
     durationMinutes: Number(formData.get("durationMinutes") ?? 30),
+    applicationMinutes: parseOptionalMinutes(formData, "applicationMinutes"),
+    processingMinutes: parseOptionalMinutes(formData, "processingMinutes"),
+    finishingMinutes: parseOptionalMinutes(formData, "finishingMinutes"),
     priceEuros: Number(formData.get("priceEuros") ?? 0),
     description: formData.get("description") ?? "",
     prepInfo: formData.get("prepInfo") ?? "",
@@ -97,6 +119,9 @@ export async function addTreatment(_prev: ActionState | undefined, formData: For
     name: parsed.data.name,
     category: parsed.data.category || null,
     durationMinutes: parsed.data.durationMinutes,
+    applicationMinutes: parsed.data.applicationMinutes ?? null,
+    processingMinutes: parsed.data.processingMinutes ?? null,
+    finishingMinutes: parsed.data.finishingMinutes ?? null,
     priceCents: Math.round(parsed.data.priceEuros * 100),
     description: parsed.data.description || null,
     prepInfo: parsed.data.prepInfo || null,

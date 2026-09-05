@@ -60,10 +60,42 @@ export function decodeSlot(slotId: string): DecodedSlot | null {
   return { locationId, treatmentId, staffId, startISO };
 }
 
-function overlaps(aStartMin: number, aDur: number, bStartMin: number, bDur: number): boolean {
-  const aEnd = aStartMin + aDur;
-  const bEnd = bStartMin + bDur;
-  return aStartMin < bEnd + BUFFER_MIN && bStartMin < aEnd + BUFFER_MIN;
+interface TreatmentPhases {
+  applicationMinutes?: number | null;
+  processingMinutes?: number | null;
+  finishingMinutes?: number | null;
+}
+
+interface BusySegment {
+  startMin: number;
+  endMin: number;
+}
+
+/** A treatment is "phased" only when all three legs are set and the
+ * processing leg actually leaves a gap — otherwise it's just one block. */
+function isPhasedTreatment(t: TreatmentPhases): boolean {
+  return (t.applicationMinutes ?? 0) > 0 && (t.processingMinutes ?? 0) > 0 && (t.finishingMinutes ?? 0) > 0;
+}
+
+/**
+ * Intelligent Double-Booking (Pro): a phased treatment (e.g. hair color)
+ * only occupies the stylist during application and finishing — the
+ * processing/inwerktijd window in between is free for another client. A
+ * treatment without a full phase breakdown stays one continuous busy block.
+ */
+function busySegments(startMin: number, durationMinutes: number, phases: TreatmentPhases): BusySegment[] {
+  if (!isPhasedTreatment(phases)) return [{ startMin, endMin: startMin + durationMinutes }];
+  const phase1End = startMin + phases.applicationMinutes!;
+  const phase2End = phase1End + phases.processingMinutes!;
+  const phase3End = phase2End + phases.finishingMinutes!;
+  return [
+    { startMin, endMin: phase1End },
+    { startMin: phase2End, endMin: phase3End },
+  ];
+}
+
+function segmentsOverlap(a: BusySegment, b: BusySegment): boolean {
+  return a.startMin < b.endMin && b.startMin < a.endMin;
 }
 
 /**
@@ -92,6 +124,9 @@ export function implicitTreatment(salonId: string) {
     name: "Afspraak",
     category: null as string | null,
     durationMinutes: 30,
+    applicationMinutes: null as number | null,
+    processingMinutes: null as number | null,
+    finishingMinutes: null as number | null,
     priceCents: 0,
     description: null as string | null,
     prepInfo: null as string | null,
@@ -106,7 +141,7 @@ export interface AvailabilityLocation {
   name: string;
   workingHours: Record<string, [number, number] | null>;
 }
-export interface AvailabilityTreatment {
+export interface AvailabilityTreatment extends TreatmentPhases {
   id: string;
   name: string;
   durationMinutes: number;
@@ -116,7 +151,7 @@ export interface AvailabilityStaff {
   id: string;
   name: string;
 }
-export interface AvailabilityAppointment {
+export interface AvailabilityAppointment extends TreatmentPhases {
   staffId: string | null;
   appointmentTime: Date;
   durationMinutes: number;
@@ -157,10 +192,20 @@ export function computeAvailableSlots(input: ComputeSlotsInput): AvailableSlot[]
         const start = amsterdamWallTimeToUtc(now, d, mins);
         if (start.getTime() < now.getTime() + MIN_LEAD_MIN * 60_000) continue;
 
+        const candidateSegments = busySegments(start.getTime() / 60_000, treatment.durationMinutes, treatment);
         const conflict = existingAppointments.some((a) => {
           if (a.staffId !== member.id) return false;
           const aStartMin = a.appointmentTime.getTime() / 60_000;
-          return overlaps(start.getTime() / 60_000, treatment.durationMinutes, aStartMin, a.durationMinutes ?? 30);
+          const phased = isPhasedTreatment(a);
+          const existingSegs = busySegments(aStartMin, a.durationMinutes ?? 30, a);
+          // Buffer time between distinct bookings only applies to a plain
+          // continuous block — a phased treatment's processing window is a
+          // precise chemical timing, not a stylist transition, so a
+          // parallel booking may butt right up against its boundaries.
+          const buffered = phased
+            ? existingSegs
+            : existingSegs.map((s) => ({ startMin: s.startMin - BUFFER_MIN, endMin: s.endMin + BUFFER_MIN }));
+          return buffered.some((es) => candidateSegments.some((cs) => segmentsOverlap(es, cs)));
         });
         if (conflict) continue;
 
@@ -262,15 +307,34 @@ export async function findAvailableSlots(input: FindSlotsInput): Promise<FindSlo
       )
     : [];
 
+  // Existing appointments only carry their own durationMinutes — look up
+  // the booked treatment's phase breakdown so a color appointment's
+  // processing window can free up the stylist for a double-booking.
+  const treatmentsById = new Map(allTreatments.map((t) => [t.id, t]));
+
   const slots = computeAvailableSlots({
     location: { id: location.id, name: location.name, workingHours: location.workingHours as Record<string, [number, number] | null> },
-    treatment: { id: treatment.id, name: treatment.name, durationMinutes: treatment.durationMinutes, priceCents: treatment.priceCents },
+    treatment: {
+      id: treatment.id,
+      name: treatment.name,
+      durationMinutes: treatment.durationMinutes,
+      priceCents: treatment.priceCents,
+      applicationMinutes: treatment.applicationMinutes,
+      processingMinutes: treatment.processingMinutes,
+      finishingMinutes: treatment.finishingMinutes,
+    },
     eligibleStaff: staffRows.map((s) => ({ id: s.id, name: s.name })),
-    existingAppointments: existing.map((a) => ({
-      staffId: a.staffId,
-      appointmentTime: new Date(a.appointmentTime),
-      durationMinutes: a.durationMinutes,
-    })),
+    existingAppointments: existing.map((a) => {
+      const bookedTreatment = a.treatmentId ? treatmentsById.get(a.treatmentId) : undefined;
+      return {
+        staffId: a.staffId,
+        appointmentTime: new Date(a.appointmentTime),
+        durationMinutes: a.durationMinutes,
+        applicationMinutes: bookedTreatment?.applicationMinutes,
+        processingMinutes: bookedTreatment?.processingMinutes,
+        finishingMinutes: bookedTreatment?.finishingMinutes,
+      };
+    }),
     days,
   });
 

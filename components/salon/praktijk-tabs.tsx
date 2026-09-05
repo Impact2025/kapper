@@ -190,6 +190,11 @@ function BehandelingenTab({ data }: { data: PraktijkData }) {
                     {t.category ? `${t.category} · ` : ""}
                     {t.durationMinutes} min · €{(t.priceCents / 100).toFixed(2)}
                   </div>
+                  {t.applicationMinutes && t.processingMinutes && t.finishingMinutes && (
+                    <div className="mt-xs text-label-sm text-primary">
+                      {t.applicationMinutes}m aanbrengen · {t.processingMinutes}m inwerktijd (stylist vrij) · {t.finishingMinutes}m afwerken
+                    </div>
+                  )}
                 </div>
                 <DeleteForm action={deleteTreatment} id={t.id} />
               </div>
@@ -222,6 +227,28 @@ function BehandelingenTab({ data }: { data: PraktijkData }) {
               <label className={labelCls}>Prijs (€)</label>
               <input name="priceEuros" type="number" min={0} step={0.5} defaultValue={0} className={inputCls} />
             </div>
+          </div>
+          <div>
+            <div className={labelCls}>
+              Gefaseerde tijden (optioneel — voor Intelligent Double-Booking, bijv. bij kleurbehandelingen)
+            </div>
+            <div className="grid grid-cols-3 gap-sm">
+              <div>
+                <label className={labelCls}>Aanbrengen (min)</label>
+                <input name="applicationMinutes" type="number" min={0} max={480} placeholder="30" className={inputCls} />
+              </div>
+              <div>
+                <label className={labelCls}>Inwerktijd (min)</label>
+                <input name="processingMinutes" type="number" min={0} max={480} placeholder="45" className={inputCls} />
+              </div>
+              <div>
+                <label className={labelCls}>Afwerken (min)</label>
+                <input name="finishingMinutes" type="number" min={0} max={480} placeholder="20" className={inputCls} />
+              </div>
+            </div>
+            <p className="mt-xs text-label-sm text-on-surface-variant">
+              Ingevuld? Dan mag de AI tijdens de inwerktijd een andere klant bij dezelfde stylist inplannen. Leeg laten voor een gewone, doorlopende behandeling.
+            </p>
           </div>
           <div>
             <label className={labelCls}>Omschrijving</label>

@@ -107,6 +107,120 @@ describe("computeAvailableSlots", () => {
   });
 });
 
+describe("computeAvailableSlots — Intelligent Double-Booking (gefaseerde behandeltijden)", () => {
+  // Scenario A: staff-a has a color treatment 10:00–11:35 (30m aanbrengen,
+  // 45m inwerktijd — stylist vrij, 20m afwerken). The processing window
+  // (10:30–11:15) should be bookable for another treatment on the same
+  // stylist without the usual 15-minute buffer, since it's not a stylist
+  // transition — it's precise chemical timing.
+  const colorAppointment = {
+    staffId: "staff-a",
+    appointmentTime: new Date(2026, 8, 7, 10, 0, 0), // mon 10:00
+    durationMinutes: 95,
+    applicationMinutes: 30,
+    processingMinutes: 45,
+    finishingMinutes: 20,
+  };
+  const narrowLocation = { ...location, workingHours: { ...location.workingHours, mon: [9, 12] as [number, number] } };
+
+  it("offers a 30-minute haircut slot at 10:30, fully inside the 10:30–11:15 processing window", () => {
+    const haircut = { id: "treat-knip", name: "Knipbeurt", durationMinutes: 30, priceCents: 3000 };
+    const slots = computeAvailableSlots({
+      location: narrowLocation,
+      treatment: haircut,
+      eligibleStaff: [staffA],
+      existingAppointments: [colorAppointment],
+      days: 1,
+      now: NOW,
+    });
+
+    const at1030 = slots.find((s) => new Date(s.startISO).getHours() === 10 && new Date(s.startISO).getMinutes() === 30);
+    expect(at1030).toBeDefined();
+  });
+
+  it("does not offer a 60-minute haircut at 10:30 — it would run into the finishing phase", () => {
+    const longHaircut = { id: "treat-knip-lang", name: "Knip + styling", durationMinutes: 60, priceCents: 5000 };
+    const slots = computeAvailableSlots({
+      location: narrowLocation,
+      treatment: longHaircut,
+      eligibleStaff: [staffA],
+      existingAppointments: [colorAppointment],
+      days: 1,
+      now: NOW,
+    });
+
+    const at1030 = slots.find((s) => new Date(s.startISO).getHours() === 10 && new Date(s.startISO).getMinutes() === 30);
+    expect(at1030).toBeUndefined();
+  });
+
+  it("never offers a slot overlapping phase 1 (application, 10:00–10:30) or phase 3 (finishing, 11:15–11:35)", () => {
+    const haircut = { id: "treat-knip", name: "Knipbeurt", durationMinutes: 30, priceCents: 3000 };
+    const slots = computeAvailableSlots({
+      location: narrowLocation,
+      treatment: haircut,
+      eligibleStaff: [staffA],
+      existingAppointments: [colorAppointment],
+      days: 1,
+      now: NOW,
+    });
+
+    for (const slot of slots) {
+      const start = new Date(slot.startISO).getTime();
+      const end = start + haircut.durationMinutes * 60_000;
+      const phase1 = [new Date(2026, 8, 7, 10, 0).getTime(), new Date(2026, 8, 7, 10, 30).getTime()];
+      const phase3 = [new Date(2026, 8, 7, 11, 15).getTime(), new Date(2026, 8, 7, 11, 35).getTime()];
+      const overlapsPhase1 = start < phase1[1]! && phase1[0]! < end;
+      const overlapsPhase3 = start < phase3[1]! && phase3[0]! < end;
+      expect(overlapsPhase1).toBe(false);
+      expect(overlapsPhase3).toBe(false);
+    }
+  });
+
+  it("treats a treatment without a full phase breakdown as one continuous block (no double-booking gap)", () => {
+    // Only applicationMinutes set — not a valid phase breakdown, so the
+    // whole 95-minute appointment should stay one busy block.
+    const partiallyPhased = { ...colorAppointment, processingMinutes: undefined, finishingMinutes: undefined };
+    const haircut = { id: "treat-knip", name: "Knipbeurt", durationMinutes: 30, priceCents: 3000 };
+    const slots = computeAvailableSlots({
+      location: narrowLocation,
+      treatment: haircut,
+      eligibleStaff: [staffA],
+      existingAppointments: [partiallyPhased],
+      days: 1,
+      now: NOW,
+    });
+
+    const at1030 = slots.find((s) => new Date(s.startISO).getHours() === 10 && new Date(s.startISO).getMinutes() === 30);
+    expect(at1030).toBeUndefined();
+  });
+
+  it("lets the double-booked treatment itself be phased, checking only its own busy segments against the gap", () => {
+    // A second, shorter color touch-up (10m apply, 10m process, 5m finish)
+    // dropped entirely inside the first client's 45-minute processing
+    // window — every one of its own busy minutes must still fit inside it.
+    const quickTouchUp = {
+      id: "treat-touchup",
+      name: "Uitgroei bijwerken",
+      durationMinutes: 25,
+      priceCents: 2000,
+      applicationMinutes: 10,
+      processingMinutes: 10,
+      finishingMinutes: 5,
+    };
+    const slots = computeAvailableSlots({
+      location: narrowLocation,
+      treatment: quickTouchUp,
+      eligibleStaff: [staffA],
+      existingAppointments: [colorAppointment],
+      days: 1,
+      now: NOW,
+    });
+
+    const at1030 = slots.find((s) => new Date(s.startISO).getHours() === 10 && new Date(s.startISO).getMinutes() === 30);
+    expect(at1030).toBeDefined();
+  });
+});
+
 describe("slot id encode/decode", () => {
   it("round-trips location/treatment/staff/time through a slot id", () => {
     const id = encodeSlot("loc-1", "treat-1", "staff-a", "2026-09-10T14:00:00.000Z");
