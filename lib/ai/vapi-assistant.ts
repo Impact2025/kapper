@@ -12,6 +12,18 @@ const VAPI_BASE = "https://api.vapi.ai";
  */
 const VAPI_ANTHROPIC_MODEL = "claude-haiku-4-5-20251001";
 
+/** Artikel 50 EU AI Act: reinforces the deterministic firstMessage
+ * disclosure for the rest of the call — the voice model must keep
+ * confirming it's an AI on any repeated or doubtful question, not just say
+ * it once at pickup. Appended only to the voice system prompt, since the
+ * WhatsApp channel already gets its own deterministic (code-level, not
+ * model-decided) disclosure — see getReceptionistReply's isNewConversation. */
+const VOICE_AI_TRANSPARENCY_NOTE =
+  "\n\nBELANGRIJK (Artikel 50 EU AI Act): dit is een telefoongesprek met een AI-stem. Als de beller op enig moment vraagt of hij met een mens spreekt, of daar twijfel over uit, bevestig dan altijd expliciet en eerlijk dat je een virtuele AI-assistent bent — herhaal dit net zo vaak als nodig, ongeacht hoe vaak het gevraagd wordt.";
+
+const TRANSFER_ANNOUNCEMENT =
+  "Ik verbind u nu direct door met een van onze stylisten in de salon. Een ogenblik geduld.";
+
 interface VapiFunctionTool {
   type: "function";
   function: {
@@ -21,27 +33,108 @@ interface VapiFunctionTool {
   };
 }
 
+/**
+ * Vapi's native call-transfer tool: performs the handoff at the telephony
+ * (PSTN/carrier) level via a blind transfer (SIP REFER) instead of the AI
+ * staying bridged on the line — this frees the AI's channel immediately so
+ * the salon isn't billed for two simultaneous call legs.
+ */
+interface VapiTransferCallTool {
+  type: "transferCall";
+  function: {
+    name: string;
+    description: string;
+  };
+  destinations: {
+    type: "number";
+    number: string;
+    message: string;
+    transferPlan: { mode: "blind-transfer" };
+  }[];
+}
+
+type VapiTool = VapiFunctionTool | VapiTransferCallTool;
+
 /** Anthropic's `Tool` shape (name/description/input_schema) maps 1:1 onto
- * Vapi's OpenAI-style function-tool shape — both are JSON Schema underneath. */
-function toVapiTools(): VapiFunctionTool[] {
-  return RECEPTIONIST_TOOLS.map((t) => ({
-    type: "function",
-    function: {
-      name: t.name,
-      description: t.description ?? "",
-      parameters: t.input_schema,
-    },
-  }));
+ * Vapi's OpenAI-style function-tool shape — both are JSON Schema underneath.
+ * The one exception is escalate_to_staff: when the salon has a phone number
+ * on file, it becomes a native transferCall tool instead of a function
+ * routed through our own webhook, so escalation is a real telephony handoff
+ * rather than the AI relaying a message. Without a phone number on file it
+ * falls back to the ordinary function tool (graceful degradation). */
+function toVapiTools(salon: SalonContext): VapiTool[] {
+  return RECEPTIONIST_TOOLS.map((t): VapiTool => {
+    if (t.name === "escalate_to_staff" && salon.phone) {
+      return {
+        type: "transferCall",
+        function: { name: t.name, description: t.description ?? "" },
+        destinations: [
+          {
+            type: "number",
+            number: salon.phone,
+            message: TRANSFER_ANNOUNCEMENT,
+            transferPlan: { mode: "blind-transfer" },
+          },
+        ],
+      };
+    }
+    return {
+      type: "function",
+      function: {
+        name: t.name,
+        description: t.description ?? "",
+        parameters: t.input_schema,
+      },
+    };
+  });
+}
+
+interface VapiTranscriberConfig {
+  provider: "deepgram";
+  model: string;
+  language: string;
+  languageHint: string;
+  /** ms of trailing silence before end-of-turn — Deepgram Flux's acoustic
+   * confidence signals let this be ~3x shorter than a fixed-timer default
+   * (~300ms) without cutting callers off mid-sentence. */
+  endpointing: number;
+  smartEndpointing: boolean;
+}
+
+interface VapiVoiceConfig {
+  provider: "cartesia";
+  model: string;
+  voiceId: string;
+  language: string;
 }
 
 export interface VapiAssistantPayload {
   name: string;
   firstMessage: string;
+  transcriber: VapiTranscriberConfig;
+  voice: VapiVoiceConfig;
+  /** How long the assistant waits after the caller stops talking before
+   * responding — smartEndpointingEnabled defers to the transcriber's
+   * acoustic end-of-turn signal instead of only this fixed wait. */
+  startSpeakingPlan: {
+    waitSeconds: number;
+    smartEndpointingEnabled: boolean;
+  };
+  /** Full-duplex barge-in: numWords 0 means the assistant's audio output
+   * stops the instant the caller starts speaking, no minimum word count. */
+  stopSpeakingPlan: {
+    numWords: number;
+    voiceSeconds: number;
+    backoffSeconds: number;
+  };
+  /** Hangs up after this much total silence — kept tight so a dead-air call
+   * doesn't linger. */
+  silenceTimeoutSeconds: number;
   model: {
     provider: "anthropic";
     model: string;
     messages: { role: "system"; content: string }[];
-    tools: VapiFunctionTool[];
+    tools: VapiTool[];
   };
   server?: {
     url: string;
@@ -55,6 +148,12 @@ export interface VapiAssistantPayload {
  * WhatsApp already gets via getReceptionistReply — Vapi's own Claude model
  * drives the call for latency, but reads our system prompt and calls our
  * tools, so the two channels stay behaviorally in sync.
+ *
+ * Voice-pipeline choices here target sub-300ms perceived latency and 2026
+ * telephony/compliance norms: Deepgram Flux (acoustic end-of-turn
+ * detection, ~3x shorter pauses than a fixed timer) for STT, Cartesia
+ * Sonic 3.5 (SSM architecture, <40ms time-to-first-audio) for TTS, and
+ * full-duplex barge-in so the caller can interrupt at any time.
  */
 export function buildVapiAssistantPayload(salon: SalonContext, toolsWebhookUrl: string): VapiAssistantPayload {
   return {
@@ -62,11 +161,38 @@ export function buildVapiAssistantPayload(salon: SalonContext, toolsWebhookUrl: 
     // Artikel 50 EU AI Act: onmiskenbare AI-identificatie, hardcoded — dit
     // mag nooit afhangen van of het model dit zelf besluit te zeggen.
     firstMessage: `Goedendag, u spreekt met de digitale AI-assistent van ${salon.name}. Waarmee kan ik u helpen?`,
+    transcriber: {
+      provider: "deepgram",
+      // "flux-general-multi": Deepgram Flux, multilingual, with built-in
+      // acoustic end-of-turn detection. Falls back to nova-2 wherever the
+      // Vapi/Deepgram account isn't provisioned for Flux yet.
+      model: "flux-general-multi",
+      language: "nl",
+      languageHint: "nl",
+      endpointing: 100,
+      smartEndpointing: true,
+    },
+    voice: {
+      provider: "cartesia",
+      model: "sonic-3-5",
+      voiceId: env.CARTESIA_VOICE_ID_NL,
+      language: "nl",
+    },
+    startSpeakingPlan: {
+      waitSeconds: 0.1,
+      smartEndpointingEnabled: true,
+    },
+    stopSpeakingPlan: {
+      numWords: 0,
+      voiceSeconds: 0.1,
+      backoffSeconds: 0,
+    },
+    silenceTimeoutSeconds: 0.5,
     model: {
       provider: "anthropic",
       model: VAPI_ANTHROPIC_MODEL,
-      messages: [{ role: "system", content: buildSystemPrompt(salon) }],
-      tools: toVapiTools(),
+      messages: [{ role: "system", content: buildSystemPrompt(salon) + VOICE_AI_TRANSPARENCY_NOTE }],
+      tools: toVapiTools(salon),
     },
     server: {
       url: toolsWebhookUrl,

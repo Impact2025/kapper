@@ -45,6 +45,10 @@ const serverSchema = z.object({
   WATI_BASE_URL: z.string().url().optional(), // e.g. https://live-server-XXX.wati.io
   WATI_API_KEY: z.string().optional(),        // WATI Bearer token / webhook signing key
   VAPI_API_KEY: z.string().optional(),        // Vapi webhook auth Bearer token
+  // Cartesia voice id for the Sonic voice model — pick a natural nl-NL voice
+  // in the Cartesia dashboard and set this per deployment; this default is a
+  // placeholder until a salon-specific voice is configured.
+  CARTESIA_VOICE_ID_NL: z.string().default("nl-NL-natural-female-1"),
   ENCRYPTION_KEY: z.string().optional(),      // 64 hex chars = 32 bytes for AES-256-GCM
 
   // Observability
