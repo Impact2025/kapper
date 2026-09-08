@@ -141,6 +141,10 @@ export interface VapiAssistantPayload {
     model: string;
     messages: { role: "system"; content: string }[];
     tools: VapiTool[];
+    /** Capped well below Vapi's default so generation finishes faster —
+     * spoken replies stay short anyway (system prompt rule 1), and this
+     * is still well above what a few-sentence Dutch reply needs. */
+    maxTokens: number;
   };
   server?: {
     url: string;
@@ -201,6 +205,7 @@ export function buildVapiAssistantPayload(salon: SalonContext, toolsWebhookUrl: 
         },
       ],
       tools: toVapiTools(salon),
+      maxTokens: 200,
     },
     server: {
       url: toolsWebhookUrl,
