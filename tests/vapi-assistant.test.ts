@@ -139,6 +139,22 @@ describe("buildVapiAssistantPayload", () => {
 describe("syncVapiAssistant", () => {
   let fetchMock: ReturnType<typeof vi.fn>;
 
+  // salon.phone is "+31201234567" — the phone-number lookup below returns a
+  // matching entry so the post-sync assistant-to-number linking succeeds.
+  function stubHappyPath() {
+    fetchMock.mockImplementation((url: string, init?: RequestInit) => {
+      if (url === "https://api.vapi.ai/phone-number") {
+        return Promise.resolve(
+          new Response(JSON.stringify([{ id: "phone_1", number: "+31201234567" }]), { status: 200 }),
+        );
+      }
+      if (url === "https://api.vapi.ai/phone-number/phone_1") {
+        return Promise.resolve(new Response(JSON.stringify({ id: "phone_1" }), { status: 200 }));
+      }
+      return Promise.resolve(new Response(JSON.stringify({ id: "asst_123" }), { status: 200 }));
+    });
+  }
+
   beforeEach(() => {
     fetchMock = vi.fn();
     vi.stubGlobal("fetch", fetchMock);
@@ -148,7 +164,7 @@ describe("syncVapiAssistant", () => {
   });
 
   it("POSTs to /assistant when there is no existing assistant id", async () => {
-    fetchMock.mockResolvedValue(new Response(JSON.stringify({ id: "asst_123" }), { status: 200 }));
+    stubHappyPath();
 
     const result = await syncVapiAssistant(salon, "vapi-key", "https://x/api/webhooks/vapi", null);
 
@@ -160,13 +176,26 @@ describe("syncVapiAssistant", () => {
   });
 
   it("PATCHes the existing assistant instead of creating a duplicate", async () => {
-    fetchMock.mockResolvedValue(new Response(JSON.stringify({ id: "asst_123" }), { status: 200 }));
+    stubHappyPath();
 
     await syncVapiAssistant(salon, "vapi-key", "https://x/api/webhooks/vapi", "asst_123");
 
     const [url, init] = fetchMock.mock.calls[0]!;
     expect(url).toBe("https://api.vapi.ai/assistant/asst_123");
     expect(init.method).toBe("PATCH");
+  });
+
+  it("looks up and assigns the assistant to the salon's phone number after a successful sync", async () => {
+    stubHappyPath();
+
+    await syncVapiAssistant(salon, "vapi-key", "https://x/api/webhooks/vapi", null);
+
+    const [listUrl] = fetchMock.mock.calls[1]!;
+    expect(listUrl).toBe("https://api.vapi.ai/phone-number");
+    const [patchUrl, patchInit] = fetchMock.mock.calls[2]!;
+    expect(patchUrl).toBe("https://api.vapi.ai/phone-number/phone_1");
+    expect(patchInit.method).toBe("PATCH");
+    expect(JSON.parse(patchInit.body as string)).toEqual({ assistantId: "asst_123" });
   });
 
   it("surfaces a clear error instead of throwing when Vapi rejects the request", async () => {

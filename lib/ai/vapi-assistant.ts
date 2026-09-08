@@ -202,10 +202,62 @@ export interface VapiSyncResult {
   error?: string;
 }
 
+/** Strips everything but digits and a leading "+" so phone numbers entered
+ * with spaces/parens/dashes still match Vapi's stored E.164 format. */
+function normalizePhone(s: string): string {
+  return s.replace(/[^\d+]/g, "");
+}
+
+/**
+ * Assigns the assistant to the salon's phone number in Vapi so incoming
+ * calls actually reach it — creating/updating the assistant alone does NOT
+ * attach it to any number. Looks the number up by matching salon.phone
+ * against Vapi's phone-number list (only the number is stored locally, not
+ * Vapi's internal phone-number id).
+ */
+async function linkPhoneNumberToAssistant(
+  vapiApiKey: string,
+  phoneNumber: string,
+  assistantId: string,
+): Promise<{ ok: boolean; error?: string }> {
+  try {
+    const listRes = await fetch(`${VAPI_BASE}/phone-number`, {
+      headers: { Authorization: `Bearer ${vapiApiKey}` },
+    });
+    if (!listRes.ok) {
+      const text = await listRes.text();
+      return { ok: false, error: `Vapi phone-number opzoeken ${listRes.status}: ${text.slice(0, 300)}` };
+    }
+    const numbers = (await listRes.json()) as { id: string; number?: string }[];
+    const target = normalizePhone(phoneNumber);
+    const match = numbers.find((n) => n.number && normalizePhone(n.number) === target);
+    if (!match) {
+      return {
+        ok: false,
+        error: `Geen Vapi-telefoonnummer gevonden dat overeenkomt met ${phoneNumber} — controleer dat het nummer bij Integraties exact overeenkomt met het nummer in je Vapi-dashboard.`,
+      };
+    }
+
+    const patchRes = await fetch(`${VAPI_BASE}/phone-number/${match.id}`, {
+      method: "PATCH",
+      headers: { Authorization: `Bearer ${vapiApiKey}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ assistantId }),
+    });
+    if (!patchRes.ok) {
+      const text = await patchRes.text();
+      return { ok: false, error: `Vapi telefoonnummer koppelen ${patchRes.status}: ${text.slice(0, 300)}` };
+    }
+    return { ok: true };
+  } catch (err) {
+    return { ok: false, error: String(err) };
+  }
+}
+
 /**
  * Creates the assistant on first sync, updates it in place afterwards (the
  * assistant id is stored in salons.settings.ai.vapiAssistantId so repeated
- * syncs don't pile up duplicate assistants in the salon's Vapi account).
+ * syncs don't pile up duplicate assistants in the salon's Vapi account),
+ * then assigns it to the salon's phone number so calls actually reach it.
  * Uses the salon's OWN Vapi API key — this calls out to their account, so
  * only ever run it from an explicit "Synchroniseren" action, never silently.
  */
@@ -231,6 +283,12 @@ export async function syncVapiAssistant(
     }
     const data = (await res.json()) as { id?: string };
     if (!data.id) return { ok: false, error: "Vapi gaf geen assistant-id terug." };
+
+    if (salon.phone) {
+      const linkResult = await linkPhoneNumberToAssistant(vapiApiKey, salon.phone, data.id);
+      if (!linkResult.ok) return { ok: false, assistantId: data.id, error: linkResult.error };
+    }
+
     return { ok: true, assistantId: data.id };
   } catch (err) {
     return { ok: false, error: String(err) };
