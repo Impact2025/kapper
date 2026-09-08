@@ -288,7 +288,7 @@ export async function POST(req: Request) {
   // Send reply via WATI — a fresh booking gets the Middelburg-norm
   // interactive confirmation message (with its accept button) instead of
   // the assistant's plain-text reply for this turn.
-  if (bookedAppointment) {
+  if (bookedAppointment?.confirmationPayload) {
     await sendWatiInteractiveMessage(watiBaseUrl, watiApiKey, fromPhone, bookedAppointment.confirmationPayload);
   } else {
     await sendWatiMessage(watiBaseUrl, watiApiKey, fromPhone, reply);

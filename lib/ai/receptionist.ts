@@ -95,11 +95,12 @@ export interface ReceptionistResponse {
     time: string;
     cancellationDeadline: string;
     externalId?: string;
-    /** Present for AI-WhatsApp bookings: the Middelburg-norm confirmation
-     * message with an explicit accept button — the webhook sends this via
-     * WATI's interactive-message endpoint instead of pushing the booking
-     * straight to the agenda adapter. */
-    confirmationPayload: WatiConfirmationPayload;
+    /** Present only for AI-WhatsApp bookings: the Middelburg-norm
+     * confirmation message with an explicit accept button — the webhook
+     * sends this via WATI's interactive-message endpoint instead of
+     * pushing the booking straight to the agenda adapter. Absent for phone
+     * bookings, which are confirmed immediately (no button to tap mid-call). */
+    confirmationPayload?: WatiConfirmationPayload;
   };
   /** Set when the model called escalate_to_staff — the caller (webhook) can
    * tag the conversation for a human to pick up. */
@@ -317,6 +318,7 @@ async function runTool(
   customerPhone: string,
   conversationId: string | null | undefined,
   state: { bookedAppointment?: ReceptionistResponse["bookedAppointment"]; escalated?: ReceptionistResponse["escalated"] },
+  channel: "whatsapp" | "phone" = "whatsapp",
 ): Promise<string> {
   switch (name) {
     case "check_availability": {
@@ -346,12 +348,16 @@ async function runTool(
         conversationId,
         agendaProvider: salon.agendaProvider,
         freeCancelHours: salon.noShowSettings.freeCancelHours,
+        channel,
       });
       if ("error" in result) return JSON.stringify(result);
 
-      // Middelburg-norm: the appointment stays pending_confirmation and is
-      // NOT pushed to the agenda adapter until the customer taps the WATI
-      // confirmation button (app/api/webhooks/wati/route.ts handles that).
+      // Middelburg-norm (WhatsApp only): the appointment stays
+      // pending_confirmation and is NOT pushed to the agenda adapter until
+      // the customer taps the WATI confirmation button
+      // (app/api/webhooks/wati/route.ts handles that). A phone booking has
+      // no button to tap — bookFromSlot already confirmed it immediately,
+      // so the caller hears it's booked, not "we'll call you back".
       state.bookedAppointment = {
         appointmentId: result.appointmentId,
         customerName,
@@ -360,11 +366,13 @@ async function runTool(
         date: result.date,
         time: result.time,
         cancellationDeadline: result.cancellationDeadline,
-        confirmationPayload: buildWatiConfirmationPayload(result.appointmentId, result.date, result.time),
+        ...(result.pendingConfirmation
+          ? { confirmationPayload: buildWatiConfirmationPayload(result.appointmentId, result.date, result.time) }
+          : {}),
       };
       return JSON.stringify({
         ok: true,
-        pending_confirmation: true,
+        ...(result.pendingConfirmation ? { pending_confirmation: true } : { confirmed: true }),
         treatment: result.treatment,
         location: result.location,
         date: result.date,
@@ -412,7 +420,7 @@ export async function executeReceptionistTool(
   conversationId?: string | null,
 ): Promise<ToolExecutionResult> {
   const state: { bookedAppointment?: ReceptionistResponse["bookedAppointment"]; escalated?: ReceptionistResponse["escalated"] } = {};
-  const resultText = await runTool(name, args, salon, customerPhone, conversationId, state);
+  const resultText = await runTool(name, args, salon, customerPhone, conversationId, state, "phone");
   return { resultText, bookedAppointment: state.bookedAppointment, escalated: state.escalated };
 }
 

@@ -74,6 +74,14 @@ interface BookInput {
   agendaProvider: string | null;
   /** Uren vóór de afspraak waarbinnen kosteloos annuleren nog mag — bepaalt cancellationDeadline. Standaard 24. */
   freeCancelHours?: number;
+  /** Middelburg-norm double-confirmation (pending_confirmation + a WhatsApp
+   * button tap) only makes sense on a channel with a tappable button. A
+   * phone caller can't tap anything mid-call — the AI already verbally
+   * confirms name and phone before calling this (system prompt rule 5), so
+   * a "phone" booking is confirmed immediately instead of left stuck in
+   * pending_confirmation forever. Defaults to "whatsapp" for every other
+   * caller (unchanged behavior). */
+  channel?: "whatsapp" | "phone";
 }
 
 export async function bookFromSlot(input: BookInput) {
@@ -99,9 +107,13 @@ export async function bookFromSlot(input: BookInput) {
   const freeCancelHours = input.freeCancelHours ?? 24;
   const cancellationDeadline = new Date(appointmentTime.getTime() - freeCancelHours * 60 * 60 * 1000);
 
-  // Middelburg-norm: bookings start unconfirmed (default status) and are
-  // pushed to the external agenda only after the customer accepts the
-  // cancellation policy — see the WATI button_reply webhook.
+  const isPhone = input.channel === "phone";
+
+  // Middelburg-norm: WhatsApp bookings start unconfirmed and are pushed to
+  // the external agenda only after the customer taps the confirm button —
+  // see the WATI button_reply webhook. There's no equivalent tap on a phone
+  // call, so a phone booking is confirmed immediately (the AI already got
+  // verbal name/phone confirmation before calling this).
   const [row] = await db
     .insert(appointments)
     .values({
@@ -116,14 +128,16 @@ export async function bookFromSlot(input: BookInput) {
       serviceType,
       appointmentTime,
       durationMinutes,
-      source: "ai_whatsapp",
+      source: isPhone ? "ai_phone" : "ai_whatsapp",
       cancellationDeadline,
+      ...(isPhone ? { status: "confirmed" as const, policyAcceptedAt: new Date(), confirmationChannel: "voice" } : {}),
     })
     .returning();
 
   return {
     ok: true as const,
     appointmentId: row!.id,
+    pendingConfirmation: !isPhone,
     treatment: serviceType,
     location: locationName,
     date: amsterdamDateKey(appointmentTime),

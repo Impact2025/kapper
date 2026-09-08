@@ -93,6 +93,7 @@ describe("getReceptionistReply — tool-based receptionist", () => {
     bookFromSlotMock.mockResolvedValue({
       ok: true,
       appointmentId: "apt-1",
+      pendingConfirmation: true,
       treatment: "Chemisch peeling",
       location: "Den Bosch",
       date: "2026-09-10",
@@ -266,10 +267,11 @@ describe("executeReceptionistTool — direct tool execution for the voice channe
     setExternalIdMock.mockReset();
   });
 
-  it("runs a single tool without going through Claude's tool loop, and surfaces the booking", async () => {
+  it("runs a single tool without going through Claude's tool loop, and confirms the booking immediately (no WhatsApp button on a phone call)", async () => {
     bookFromSlotMock.mockResolvedValue({
       ok: true,
       appointmentId: "apt-1",
+      pendingConfirmation: false,
       treatment: "Chemisch peeling",
       location: "Den Bosch",
       date: "2026-09-10",
@@ -285,16 +287,14 @@ describe("executeReceptionistTool — direct tool execution for the voice channe
       "call-1",
     );
 
-    expect(bookFromSlotMock).toHaveBeenCalledWith(expect.objectContaining({ conversationId: "call-1" }));
-    // Middelburg-norm: no agenda push from the tool call itself.
-    expect(bookAppointmentMock).not.toHaveBeenCalled();
-    expect(setExternalIdMock).not.toHaveBeenCalled();
-    expect(JSON.parse(resultText)).toMatchObject({ ok: true, pending_confirmation: true, treatment: "Chemisch peeling" });
+    expect(bookFromSlotMock).toHaveBeenCalledWith(expect.objectContaining({ conversationId: "call-1", channel: "phone" }));
+    expect(JSON.parse(resultText)).toMatchObject({ ok: true, confirmed: true, treatment: "Chemisch peeling" });
     expect(bookedAppointment).toMatchObject({
       appointmentId: "apt-1",
       customerName: "Anna Jansen",
-      confirmationPayload: { buttonId: "confirm_booking_apt-1" },
     });
+    // No Middelburg-norm WhatsApp button for a phone booking — it's already confirmed.
+    expect(bookedAppointment?.confirmationPayload).toBeUndefined();
   });
 
   it("returns an error result instead of throwing for an unknown tool name", async () => {
