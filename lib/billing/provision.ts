@@ -1,9 +1,19 @@
 import "server-only";
 import { randomBytes, createHash } from "node:crypto";
 import type Stripe from "stripe";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { db } from "@/lib/db";
-import { salons, subscriptions, events, users, verificationTokens } from "@/lib/db/schema";
+import {
+  salons,
+  subscriptions,
+  events,
+  users,
+  verificationTokens,
+  products,
+  orders,
+  orderItems,
+  inventoryMovements,
+} from "@/lib/db/schema";
 import { redeemCoupon } from "@/lib/coupons/service";
 import { PLANS, type PlanId } from "@/lib/plans";
 import { slugify } from "@/lib/utils";
@@ -78,7 +88,95 @@ async function handleUpgrade(salonId: string, plan: (typeof PLANS)[number], sess
   });
 }
 
+/**
+ * Webwinkel (Pro): a one-time product-checkout session (mode "payment",
+ * tagged via metadata.kind) instead of a subscription. Creates the order +
+ * its line items and decrements stock, logging an inventory_movements row
+ * per product so the AI reorder agent's sales-velocity calc stays accurate.
+ */
+async function handleWebshopOrder(session: Stripe.Checkout.Session) {
+  const salonId = session.metadata?.salonId;
+  if (!salonId) return;
+
+  const [existing] = await db
+    .select({ id: orders.id })
+    .from(orders)
+    .where(eq(orders.stripeSessionId, session.id))
+    .limit(1);
+  if (existing) return; // idempotent — Stripe may retry the webhook
+
+  let cart: { productId: string; quantity: number }[] = [];
+  try {
+    cart = JSON.parse(session.metadata?.cart ?? "[]");
+  } catch {
+    cart = [];
+  }
+  if (!cart.length) return;
+
+  const productRows = await db
+    .select({ id: products.id, name: products.name, priceCents: products.priceCents })
+    .from(products)
+    .where(eq(products.salonId, salonId));
+  const byId = new Map(productRows.map((p) => [p.id, p]));
+
+  const totalCents = cart.reduce((sum, item) => {
+    const product = byId.get(item.productId);
+    return sum + (product ? product.priceCents * item.quantity : 0);
+  }, 0);
+
+  const [order] = await db
+    .insert(orders)
+    .values({
+      salonId,
+      customerName: session.metadata?.customerName || "Klant",
+      customerEmail: session.metadata?.customerEmail || session.customer_email || "",
+      customerPhone: session.metadata?.customerPhone || null,
+      status: "paid",
+      totalCents,
+      stripeSessionId: session.id,
+    })
+    .returning({ id: orders.id });
+
+  for (const item of cart) {
+    const product = byId.get(item.productId);
+    if (!product) continue;
+
+    await db.insert(orderItems).values({
+      orderId: order.id,
+      productId: product.id,
+      productName: product.name,
+      unitPriceCents: product.priceCents,
+      quantity: item.quantity,
+    });
+
+    await db
+      .update(products)
+      .set({ stockQuantity: sql`greatest(0, ${products.stockQuantity} - ${item.quantity})` })
+      .where(eq(products.id, product.id));
+
+    await db.insert(inventoryMovements).values({
+      salonId,
+      productId: product.id,
+      type: "sale",
+      quantityDelta: -item.quantity,
+      reason: `Webwinkelbestelling ${order.id}`,
+    });
+  }
+
+  await db.insert(events).values({
+    type: "webshop_order_paid",
+    salonId,
+    props: { orderId: order.id, totalCents },
+    dedupeKey: `checkout:${session.id}`,
+  });
+}
+
 async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
+  if (session.metadata?.kind === "webshop_order") {
+    await handleWebshopOrder(session);
+    return;
+  }
+
   const planId = session.metadata?.plan as PlanId | undefined;
   const salonName = session.metadata?.salonName ?? "Nieuwe salon";
   const couponId = session.metadata?.couponId || undefined;

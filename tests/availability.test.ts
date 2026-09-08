@@ -1,8 +1,19 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 
 vi.mock("server-only", () => ({}));
 
-import { computeAvailableSlots, encodeSlot, decodeSlot } from "@/lib/salon/availability";
+const getAgendaAdapterMock = vi.fn();
+const captureErrorMock = vi.fn();
+vi.mock("@/lib/agenda", () => ({
+  getAgendaAdapter: (...args: unknown[]) => getAgendaAdapterMock(...args),
+  resolveAgendaApiKey: (raw: string | null | undefined) => raw ?? null,
+  LIVE_AVAILABILITY_PROVIDERS: new Set(["acuity", "phorest"]),
+}));
+vi.mock("@/lib/observability", () => ({
+  captureError: (...args: unknown[]) => captureErrorMock(...args),
+}));
+
+import { computeAvailableSlots, encodeSlot, decodeSlot, crossCheckLiveAgenda, type AvailableSlot } from "@/lib/salon/availability";
 
 // Fixed "now": Monday 2026-09-07 08:00 local — every test's working-hours
 // window and lead-time math is computed relative to this.
@@ -235,5 +246,72 @@ describe("slot id encode/decode", () => {
   it("rejects a malformed slot id instead of guessing", () => {
     expect(decodeSlot("not-a-real-slot-id")).toBeNull();
     expect(decodeSlot("")).toBeNull();
+  });
+});
+
+describe("crossCheckLiveAgenda — narrows our own slots against a connected agenda's real availability", () => {
+  const getAvailableSlotsMock = vi.fn();
+  const slotAt = (date: string, time: string): AvailableSlot => ({
+    slotId: `loc-1::treat-1::staff-a::${date}T${time}:00.000Z`,
+    locationId: "loc-1",
+    treatmentId: "treat-1",
+    staffId: "staff-a",
+    staffName: "Sanne de Groot",
+    locationName: "Den Bosch",
+    treatmentName: "Chemisch peeling",
+    durationMinutes: 30,
+    priceCents: 12000,
+    date,
+    time,
+    startISO: `${date}T${time}:00.000Z`,
+  });
+  const ourSlots = [slotAt("2026-09-10", "10:00"), slotAt("2026-09-10", "14:00")];
+
+  beforeEach(() => {
+    getAgendaAdapterMock.mockReset();
+    getAvailableSlotsMock.mockReset();
+    captureErrorMock.mockReset();
+  });
+
+  it("passes our slots through untouched when no agenda provider is connected", async () => {
+    const result = await crossCheckLiveAgenda(ourSlots, null, null, 10);
+    expect(result).toEqual(ourSlots);
+    expect(getAgendaAdapterMock).not.toHaveBeenCalled();
+  });
+
+  it("passes our slots through untouched for a provider without a real availability endpoint (e.g. salonized)", async () => {
+    const result = await crossCheckLiveAgenda(ourSlots, "salonized", "key", 10);
+    expect(result).toEqual(ourSlots);
+    expect(getAgendaAdapterMock).not.toHaveBeenCalled();
+  });
+
+  it("narrows to only the slots the live agenda also reports as free", async () => {
+    getAgendaAdapterMock.mockReturnValue({ getAvailableSlots: getAvailableSlotsMock });
+    getAvailableSlotsMock.mockResolvedValue([
+      { date: "2026-09-10", time: "10:00", serviceType: "x", durationMinutes: 30, priceEuros: 0, slotId: "s1" },
+    ]);
+
+    const result = await crossCheckLiveAgenda(ourSlots, "acuity", "key", 10);
+
+    expect(result).toEqual([ourSlots[0]]);
+  });
+
+  it("fails open (keeps our own slots) when the live agenda reports nothing — caps in the adapter's own query can under-report", async () => {
+    getAgendaAdapterMock.mockReturnValue({ getAvailableSlots: getAvailableSlotsMock });
+    getAvailableSlotsMock.mockResolvedValue([]);
+
+    const result = await crossCheckLiveAgenda(ourSlots, "phorest", "key", 10);
+
+    expect(result).toEqual(ourSlots);
+  });
+
+  it("fails open and captures the error when the live agenda call throws", async () => {
+    getAgendaAdapterMock.mockReturnValue({ getAvailableSlots: getAvailableSlotsMock });
+    getAvailableSlotsMock.mockRejectedValue(new Error("Acuity 401: invalid key"));
+
+    const result = await crossCheckLiveAgenda(ourSlots, "acuity", "key", 10);
+
+    expect(result).toEqual(ourSlots);
+    expect(captureErrorMock).toHaveBeenCalledWith("availability/agenda-cross-check", expect.any(Error));
   });
 });

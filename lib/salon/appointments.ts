@@ -4,6 +4,8 @@ import { db } from "@/lib/db";
 import { appointments, locations, staff, treatments } from "@/lib/db/schema";
 import { decodeSlot } from "@/lib/salon/availability";
 import { amsterdamDateKey, amsterdamTimeKey } from "@/lib/salon/timezone";
+import { getAgendaAdapter, resolveAgendaApiKey } from "@/lib/agenda";
+import { captureError } from "@/lib/observability";
 
 /** `__implicit__<salonId>` slot ids (no locations/treatments/staff configured
  * yet) don't exist as real rows — never write them as a foreign key. */
@@ -148,6 +150,35 @@ export async function bookFromSlot(input: BookInput) {
 
 export async function setExternalId(appointmentId: string, externalId: string): Promise<void> {
   await db.update(appointments).set({ externalId }).where(eq(appointments.id, appointmentId));
+}
+
+/**
+ * Best-effort push of an already-confirmed booking to the salon's connected
+ * agenda software. Used both by the WATI button-confirm webhook (WhatsApp,
+ * Middelburg-norm) and immediately after a phone booking (no button to tap
+ * mid-call, so the booking is confirmed the moment it's made). Never throws
+ * — a failed push must not undo an appointment that's already confirmed to
+ * the customer; it's captured for observability instead, and the appointment
+ * simply stays without an externalId until fixed manually.
+ */
+export async function pushBookingToAgenda(
+  agendaProvider: string | null | undefined,
+  rawApiKey: string | null | undefined,
+  appointmentId: string,
+  booking: { customerName: string; customerPhone: string; serviceType: string; date: string; time: string },
+): Promise<void> {
+  try {
+    const adapter = getAgendaAdapter(agendaProvider, resolveAgendaApiKey(rawApiKey));
+    if (!adapter) return;
+    const result = await adapter.bookAppointment(booking);
+    if (result.ok) {
+      if (result.externalId) await setExternalId(appointmentId, result.externalId);
+    } else {
+      captureError("agenda-sync/push-booking", new Error(result.error ?? "onbekende fout bij push naar agenda"));
+    }
+  } catch (err) {
+    captureError("agenda-sync/push-booking", err);
+  }
 }
 
 /**

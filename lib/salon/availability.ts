@@ -10,6 +10,8 @@ import {
   treatments,
 } from "@/lib/db/schema";
 import { amsterdamDateKey, amsterdamDayOfWeek, amsterdamTimeKey, amsterdamWallTimeToUtc } from "@/lib/salon/timezone";
+import { getAgendaAdapter, resolveAgendaApiKey, LIVE_AVAILABILITY_PROVIDERS } from "@/lib/agenda";
+import { captureError } from "@/lib/observability";
 
 const DOW_KEYS = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"] as const;
 export const DEFAULT_HOURS: Record<string, [number, number] | null> = {
@@ -173,9 +175,13 @@ export interface ComputeSlotsInput {
  * `MAX_SLOTS` bookable slots with a 15-minute buffer around existing
  * bookings and at least an hour of lead time from `now`.
  */
+export function clampDays(days: number | undefined): number {
+  return Math.min(Math.max(Number(days) || 10, 1), 14);
+}
+
 export function computeAvailableSlots(input: ComputeSlotsInput): AvailableSlot[] {
   const { location, treatment, eligibleStaff, existingAppointments, days, now = new Date() } = input;
-  const nDays = Math.min(Math.max(Number(days) || 10, 1), 14);
+  const nDays = clampDays(days);
   const workingHours = location.workingHours ?? DEFAULT_HOURS;
 
   const results: AvailableSlot[] = [];
@@ -238,6 +244,12 @@ interface FindSlotsInput {
   treatmentId: string;
   staffName?: string;
   days?: number;
+  /** When the salon has a connected agenda provider with real availability
+   * (see LIVE_AVAILABILITY_PROVIDERS), cross-check our own computed slots
+   * against it so a walk-in or a booking made directly in that software
+   * doesn't get double-booked by the AI. */
+  agendaProvider?: string | null;
+  agendaApiKey?: string | null;
 }
 
 export interface FindSlotsResult {
@@ -247,9 +259,47 @@ export interface FindSlotsResult {
   note?: string;
 }
 
+/**
+ * Cross-check our own computed slots against the salon's connected agenda
+ * software, when it's one of LIVE_AVAILABILITY_PROVIDERS (a real
+ * availability endpoint, not just a booking one) — a walk-in or a booking
+ * taken directly in that software is otherwise invisible to us, since
+ * computeAvailableSlots only knows about appointments *this app* made.
+ *
+ * Only ever narrows the result, never adds to it. Two failure modes both
+ * fail open (keep our own slots, unfiltered) rather than risk hiding real
+ * availability: a thrown error (auth/network issue), and an empty response
+ * — the adapters cap how many services/dates they probe per call (see
+ * acuity.ts / phorest.ts), so "returned nothing" can mean "didn't check
+ * that far" as easily as "genuinely fully booked", and we'd rather offer a
+ * slot the adapter didn't get to than wrongly zero out every option.
+ */
+export async function crossCheckLiveAgenda(
+  slots: AvailableSlot[],
+  agendaProvider: string | null | undefined,
+  rawApiKey: string | null | undefined,
+  days: number,
+): Promise<AvailableSlot[]> {
+  if (!slots.length || !agendaProvider || !LIVE_AVAILABILITY_PROVIDERS.has(agendaProvider)) return slots;
+
+  try {
+    const adapter = getAgendaAdapter(agendaProvider, resolveAgendaApiKey(rawApiKey));
+    if (!adapter) return slots;
+
+    const liveSlots = await adapter.getAvailableSlots(days);
+    if (!liveSlots.length) return slots;
+
+    const free = new Set(liveSlots.map((s) => `${s.date}|${s.time}`));
+    return slots.filter((s) => free.has(`${s.date}|${s.time}`));
+  } catch (err) {
+    captureError("availability/agenda-cross-check", err);
+    return slots;
+  }
+}
+
 /** DB-backed wrapper around {@link computeAvailableSlots}. */
 export async function findAvailableSlots(input: FindSlotsInput): Promise<FindSlotsResult> {
-  const { salonId, salonName, salonCity, locationId, treatmentId, staffName, days } = input;
+  const { salonId, salonName, salonCity, locationId, treatmentId, staffName, days, agendaProvider, agendaApiKey } = input;
 
   const [locRows, treatRows] = await Promise.all([
     db.select().from(locations).where(eq(locations.salonId, salonId)),
@@ -338,5 +388,7 @@ export async function findAvailableSlots(input: FindSlotsInput): Promise<FindSlo
     days,
   });
 
-  return { location: location.name, treatment: treatment.name, slots };
+  const liveChecked = await crossCheckLiveAgenda(slots, agendaProvider, agendaApiKey, clampDays(days));
+
+  return { location: location.name, treatment: treatment.name, slots: liveChecked };
 }

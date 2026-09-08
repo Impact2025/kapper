@@ -15,6 +15,48 @@
       "when": 1782070497912,
       "tag": "0001_misty_wasp",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1782380926000,
+      "tag": "0002_ai_receptionist",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1782380926001,
+      "tag": "0003_audit_timestamps",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1788546317000,
+      "tag": "0004_middelburg_norm",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1788546317001,
+      "tag": "0005_middelburg_norm_default",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1788585726000,
+      "tag": "0006_treatment_phases",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1788890647187,
+      "tag": "0007_sloppy_lilith",
+      "breakpoints": true
     }
   ]
 }

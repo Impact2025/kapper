@@ -7,6 +7,7 @@ import {
   bookFromSlot,
   rescheduleToSlot,
   cancelById,
+  pushBookingToAgenda,
 } from "@/lib/salon/appointments";
 import { env, publicEnv } from "@/lib/env";
 import { captureError } from "@/lib/observability";
@@ -390,6 +391,8 @@ async function runTool(
         treatmentId: String(args.treatment_id ?? ""),
         staffName: args.staff_name ? String(args.staff_name) : undefined,
         days: args.days ? Number(args.days) : undefined,
+        agendaProvider: salon.agendaProvider,
+        agendaApiKey: salon.aiSettings.agendaApiKey,
       });
       return JSON.stringify(result);
     }
@@ -417,7 +420,19 @@ async function runTool(
       // the customer taps the WATI confirmation button
       // (app/api/webhooks/wati/route.ts handles that). A phone booking has
       // no button to tap — bookFromSlot already confirmed it immediately,
-      // so the caller hears it's booked, not "we'll call you back".
+      // so the caller hears it's booked, not "we'll call you back" — push it
+      // to the connected agenda software right away instead of leaving it
+      // stuck in this app's own database only.
+      if (!result.pendingConfirmation) {
+        await pushBookingToAgenda(salon.agendaProvider, salon.aiSettings.agendaApiKey, result.appointmentId, {
+          customerName,
+          customerPhone: customerPhoneArg,
+          serviceType: result.treatment,
+          date: result.date,
+          time: result.time,
+        });
+      }
+
       state.bookedAppointment = {
         appointmentId: result.appointmentId,
         customerName,

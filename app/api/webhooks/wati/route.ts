@@ -5,8 +5,7 @@ import { db } from "@/lib/db";
 import { salons, conversations, messages, users, events as eventsTable } from "@/lib/db/schema";
 import { getReceptionistReply, type WatiConfirmationPayload } from "@/lib/ai/receptionist";
 import { loadSalonContext } from "@/lib/salon/receptionist-context";
-import { confirmAppointment, setExternalId } from "@/lib/salon/appointments";
-import { getAgendaAdapter } from "@/lib/agenda";
+import { confirmAppointment, pushBookingToAgenda } from "@/lib/salon/appointments";
 import { amsterdamDateKey, amsterdamTimeKey } from "@/lib/salon/timezone";
 import { trackEvent } from "@/lib/analytics/track";
 import { env } from "@/lib/env";
@@ -145,25 +144,18 @@ export async function POST(req: Request) {
 
     // Only now — after the customer explicitly accepted the cancellation
     // policy — push the booking to the connected agenda provider.
-    try {
-      const rawKey = ai?.agendaApiKey ? String(ai.agendaApiKey) : null;
-      const apiKey = rawKey ? (decrypt(rawKey) ?? rawKey) : null;
-      const adapter = getAgendaAdapter(confirmedSalon?.agendaProvider, apiKey);
-      if (adapter) {
-        const pushResult = await adapter.bookAppointment({
-          customerName: confirmed.customerName,
-          customerPhone: confirmed.customerPhone,
-          serviceType: confirmed.serviceType,
-          date: amsterdamDateKey(confirmed.appointmentTime),
-          time: amsterdamTimeKey(confirmed.appointmentTime),
-        });
-        if (pushResult.ok && pushResult.externalId) {
-          await setExternalId(confirmed.id, pushResult.externalId);
-        }
-      }
-    } catch (err) {
-      captureError("wati/confirm-agenda-push", err);
-    }
+    await pushBookingToAgenda(
+      confirmedSalon?.agendaProvider,
+      ai?.agendaApiKey ? String(ai.agendaApiKey) : null,
+      confirmed.id,
+      {
+        customerName: confirmed.customerName,
+        customerPhone: confirmed.customerPhone,
+        serviceType: confirmed.serviceType,
+        date: amsterdamDateKey(confirmed.appointmentTime),
+        time: amsterdamTimeKey(confirmed.appointmentTime),
+      },
+    );
 
     await trackEvent({
       type: "booking_confirmed",

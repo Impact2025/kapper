@@ -29,12 +29,14 @@ const bookFromSlotMock = vi.fn();
 const rescheduleToSlotMock = vi.fn();
 const cancelByIdMock = vi.fn();
 const setExternalIdMock = vi.fn();
+const pushBookingToAgendaMock = vi.fn();
 vi.mock("@/lib/salon/appointments", () => ({
   findAppointmentsByPhone: (...args: unknown[]) => findAppointmentsByPhoneMock(...args),
   bookFromSlot: (...args: unknown[]) => bookFromSlotMock(...args),
   rescheduleToSlot: (...args: unknown[]) => rescheduleToSlotMock(...args),
   cancelById: (...args: unknown[]) => cancelByIdMock(...args),
   setExternalId: (...args: unknown[]) => setExternalIdMock(...args),
+  pushBookingToAgenda: (...args: unknown[]) => pushBookingToAgendaMock(...args),
 }));
 
 import { getReceptionistReply, executeReceptionistTool, type SalonContext } from "@/lib/ai/receptionist";
@@ -82,6 +84,7 @@ describe("getReceptionistReply — tool-based receptionist", () => {
     rescheduleToSlotMock.mockReset();
     cancelByIdMock.mockReset();
     setExternalIdMock.mockReset();
+    pushBookingToAgendaMock.mockReset();
   });
 
   it("checks availability via the tool and then books the exact slot_id returned", async () => {
@@ -135,6 +138,7 @@ describe("getReceptionistReply — tool-based receptionist", () => {
     // pending_confirmation until the customer taps the WATI accept button.
     expect(bookAppointmentMock).not.toHaveBeenCalled();
     expect(setExternalIdMock).not.toHaveBeenCalled();
+    expect(pushBookingToAgendaMock).not.toHaveBeenCalled();
     expect(result.bookedAppointment).toMatchObject({
       appointmentId: "apt-1",
       customerName: "Anna Jansen",
@@ -265,6 +269,7 @@ describe("executeReceptionistTool — direct tool execution for the voice channe
     findAvailableSlotsMock.mockReset();
     bookFromSlotMock.mockReset();
     setExternalIdMock.mockReset();
+    pushBookingToAgendaMock.mockReset();
   });
 
   it("runs a single tool without going through Claude's tool loop, and confirms the booking immediately (no WhatsApp button on a phone call)", async () => {
@@ -289,6 +294,21 @@ describe("executeReceptionistTool — direct tool execution for the voice channe
 
     expect(bookFromSlotMock).toHaveBeenCalledWith(expect.objectContaining({ conversationId: "call-1", channel: "phone" }));
     expect(JSON.parse(resultText)).toMatchObject({ ok: true, confirmed: true, treatment: "Chemisch peeling" });
+    // A phone booking is confirmed the moment it's made — no WhatsApp button
+    // to wait for — so it must be pushed to the connected agenda software
+    // right away instead of sitting only in this app's own database.
+    expect(pushBookingToAgendaMock).toHaveBeenCalledWith(
+      "salonized",
+      "irrelevant-because-decrypt-is-mocked",
+      "apt-1",
+      {
+        customerName: "Anna Jansen",
+        customerPhone: "+31611112222",
+        serviceType: "Chemisch peeling",
+        date: "2026-09-10",
+        time: "14:00",
+      },
+    );
     expect(bookedAppointment).toMatchObject({
       appointmentId: "apt-1",
       customerName: "Anna Jansen",

@@ -39,6 +39,17 @@ export const mailDirectionEnum = pgEnum("mail_direction", ["outbound", "inbound"
 export const postStatusEnum = pgEnum("post_status", ["draft", "review", "published"]);
 export const couponTypeEnum = pgEnum("coupon_type", ["percent", "fixed", "trial"]);
 export const reportPeriodEnum = pgEnum("report_period", ["daily", "monthly"]);
+export const inventoryMovementTypeEnum = pgEnum("inventory_movement_type", [
+  "restock",
+  "sale",
+  "adjustment",
+]);
+export const orderStatusEnum = pgEnum("order_status", [
+  "pending",
+  "paid",
+  "fulfilled",
+  "canceled",
+]);
 
 /* ============================ Auth / Users ============================ */
 export const salons = pgTable("salons", {
@@ -412,6 +423,82 @@ export const appointments = pgTable(
     index("appointments_salon_time_idx").on(t.salonId, t.appointmentTime),
     index("appointments_status_idx").on(t.status),
   ],
+);
+
+/* ============================ Webwinkel (Pro) ============================ */
+export const products = pgTable(
+  "products",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    salonId: uuid("salon_id")
+      .notNull()
+      .references(() => salons.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    description: text("description"),
+    sku: text("sku"),
+    category: text("category"),
+    priceCents: integer("price_cents").notNull().default(0),
+    imageUrl: text("image_url"),
+    stockQuantity: integer("stock_quantity").notNull().default(0),
+    lowStockThreshold: integer("low_stock_threshold").notNull().default(5),
+    active: boolean("active").default(true).notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull().$onUpdate(() => new Date()),
+  },
+  (t) => [index("products_salon_idx").on(t.salonId)],
+);
+
+export const inventoryMovements = pgTable(
+  "inventory_movements",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    salonId: uuid("salon_id")
+      .notNull()
+      .references(() => salons.id, { onDelete: "cascade" }),
+    productId: uuid("product_id")
+      .notNull()
+      .references(() => products.id, { onDelete: "cascade" }),
+    type: inventoryMovementTypeEnum("type").notNull(),
+    quantityDelta: integer("quantity_delta").notNull(), // positive = in, negative = out
+    reason: text("reason"),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [index("inventory_movements_product_idx").on(t.productId)],
+);
+
+export const orders = pgTable(
+  "orders",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    salonId: uuid("salon_id")
+      .notNull()
+      .references(() => salons.id, { onDelete: "cascade" }),
+    customerName: text("customer_name").notNull(),
+    customerEmail: text("customer_email").notNull(),
+    customerPhone: text("customer_phone"),
+    status: orderStatusEnum("status").default("pending").notNull(),
+    totalCents: integer("total_cents").notNull().default(0),
+    stripeSessionId: text("stripe_session_id").unique(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull().$onUpdate(() => new Date()),
+  },
+  (t) => [index("orders_salon_idx").on(t.salonId)],
+);
+
+export const orderItems = pgTable(
+  "order_items",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    orderId: uuid("order_id")
+      .notNull()
+      .references(() => orders.id, { onDelete: "cascade" }),
+    // set null on product delete so past orders keep their history
+    productId: uuid("product_id").references(() => products.id, { onDelete: "set null" }),
+    productName: text("product_name").notNull(),
+    unitPriceCents: integer("unit_price_cents").notNull(),
+    quantity: integer("quantity").notNull(),
+  },
+  (t) => [index("order_items_order_idx").on(t.orderId)],
 );
 
 /* ============================ Analytics & Reports ============================ */
