@@ -225,9 +225,65 @@ export const RECEPTIONIST_TOOLS: Anthropic.Tool[] = [
   },
 ];
 
+const DUTCH_ONES = [
+  "nul", "een", "twee", "drie", "vier", "vijf", "zes", "zeven", "acht", "negen", "tien",
+  "elf", "twaalf", "dertien", "veertien", "vijftien", "zestien", "zeventien", "achttien", "negentien",
+];
+const DUTCH_TENS = ["", "", "twintig", "dertig", "veertig", "vijftig", "zestig", "zeventig", "tachtig", "negentig"];
+
+/** Spells out a number in Dutch words (0-999) so voice-channel text never
+ * hands the model a raw digit to mispronounce or read as an abbreviation
+ * ("120min") — see VOICE_SPEECH_FORMATTING_NOTE in lib/ai/vapi-assistant.ts,
+ * which this function backs up at the data level instead of relying on the
+ * model reliably reformatting on its own. */
+function numberToDutchWords(n: number): string {
+  if (n < 0) return `min ${numberToDutchWords(-n)}`;
+  if (n < 20) return DUTCH_ONES[n]!;
+  if (n < 100) {
+    const tens = Math.floor(n / 10);
+    const units = n % 10;
+    return units === 0 ? DUTCH_TENS[tens]! : `${DUTCH_ONES[units]}en${DUTCH_TENS[tens]}`;
+  }
+  if (n < 1000) {
+    const hundreds = Math.floor(n / 100);
+    const rest = n % 100;
+    const hundredsWord = hundreds === 1 ? "honderd" : `${DUTCH_ONES[hundreds]}honderd`;
+    return rest === 0 ? hundredsWord : `${hundredsWord}${numberToDutchWords(rest)}`;
+  }
+  return String(n);
+}
+
+function spokenMinutes(n: number): string {
+  return `${numberToDutchWords(n)} minuten`;
+}
+function spokenEuros(n: number): string {
+  return `${numberToDutchWords(Math.round(n))} euro`;
+}
+
+/** Plain-language treatment list for the voice channel — durations and
+ * prices are pre-spelled-out in Dutch words so pronunciation never depends
+ * on the model reformatting raw JSON numbers correctly mid-call. */
+function buildVoiceTreatmentsText(treatments: SalonTreatment[]): string {
+  return treatments
+    .map((t) => {
+      const heeftInwerktijd = Boolean(t.applicationMinutes && t.processingMinutes && t.finishingMinutes);
+      let line = `- ${t.name} (id: ${t.id}) — ${spokenEuros(t.priceCents / 100)}, ${spokenMinutes(t.durationMinutes)}.`;
+      if (heeftInwerktijd) {
+        line += ` Waarvan ${spokenMinutes(t.applicationMinutes!)} aanbrengen, ${spokenMinutes(t.processingMinutes!)} inwerktijd (behandelaar vrij voor iets anders), ${spokenMinutes(t.finishingMinutes!)} afwerken — stylist_vrij_tijdens_inwerktijd.`;
+      }
+      if (t.description) line += ` ${t.description}`;
+      return line;
+    })
+    .join("\n");
+}
+
 /** Exported so the voice channel (lib/ai/vapi-assistant.ts) can give Vapi's
- * own model the exact same practice knowledge and behavior rules. */
-export function buildSystemPrompt(salon: SalonContext): string {
+ * own model the exact same practice knowledge and behavior rules. Pass
+ * `voice: true` there — it swaps the treatments block from raw JSON (fine
+ * for the WhatsApp text channel) to a plain-language list with pre-spelled
+ * durations/prices, since a caller hears mispronounced numbers a text
+ * reader never would. */
+export function buildSystemPrompt(salon: SalonContext, opts?: { voice?: boolean }): string {
   const locationsJson = JSON.stringify(
     salon.locations.map((l) => ({ id: l.id, name: l.name, city: l.city })),
   );
@@ -257,6 +313,9 @@ export function buildSystemPrompt(salon: SalonContext): string {
       };
     }),
   );
+  const treatmentsBlock = opts?.voice
+    ? `BEHANDELINGEN (enige kennisbron voor prijs/duur/voorbereiding/nazorg — prijzen en tijden staan al voluit in woorden, lees ze exact zo over):\n${buildVoiceTreatmentsText(salon.treatments)}`
+    : `BEHANDELINGEN (JSON — enige kennisbron voor prijs/duur/voorbereiding/nazorg): ${treatmentsJson}`;
   const staffJson = JSON.stringify(
     salon.staff.map((s) => ({
       naam: s.name,
@@ -283,7 +342,7 @@ export function buildSystemPrompt(salon: SalonContext): string {
 
 LOCATIES (JSON): ${locationsJson}
 
-BEHANDELINGEN (JSON — enige kennisbron voor prijs/duur/voorbereiding/nazorg): ${treatmentsJson}
+${treatmentsBlock}
 
 BEHANDELAARS EN BEVOEGDHEDEN (JSON): ${staffJson}
 ${knowledgeText}

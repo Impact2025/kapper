@@ -21,20 +21,27 @@ const VAPI_ANTHROPIC_MODEL = "claude-haiku-4-5-20251001";
 const VOICE_AI_TRANSPARENCY_NOTE =
   "\n\nBELANGRIJK (Artikel 50 EU AI Act): dit is een telefoongesprek met een AI-stem. Als de beller op enig moment vraagt of hij met een mens spreekt, of daar twijfel over uit, bevestig dan altijd expliciet en eerlijk dat je een virtuele AI-assistent bent — herhaal dit net zo vaak als nodig, ongeacht hoe vaak het gevraagd wordt.";
 
-/** The system prompt's BEHANDELINGEN/LOCATIES/BEHANDELAARS blocks are raw
- * JSON (fine for the WhatsApp text channel) with compact keys like
- * `duration_min: 120` — spoken verbatim that reads as "honderdtwintig min"
- * or worse through TTS. Voice-only instruction to always reformat numbers,
- * durations and prices into full spoken Dutch words before saying them. */
+/** BEHANDELINGEN itself now hands the voice model pre-spelled-out Dutch
+ * words for every duration/price (see buildVoiceTreatmentsText in
+ * lib/ai/receptionist.ts) — this note is the remaining backstop for numbers
+ * that aren't pre-formatted (dates, times, phone numbers read back). */
 const VOICE_SPEECH_FORMATTING_NOTE =
-  "\n\nSPREEKSTIJL: je leest bovenstaande JSON-data nooit letterlijk voor. Schrijf getallen, tijdsduur en bedragen altijd voluit in natuurlijke gesproken taal — bijvoorbeeld \"120\" wordt \"honderdtwintig minuten\" (nooit \"honderdtwintig min\" of \"één twee nul\"), \"45\" wordt \"vijfenveertig minuten\", \"65 euro\" wordt \"vijfenzestig euro\". Spreek tijdstippen ook voluit uit (\"tien uur dertig\", niet \"10:30\").";
+  "\n\nSPREEKSTIJL: bedragen en behandelduur staan hierboven al voluit in woorden — lees ze exact zo over, reken nooit terug naar cijfers. Voor tijdstippen en data die je zelf noemt geldt hetzelfde: spreek volledig uit (\"tien uur dertig\", niet \"10:30\"; \"tien september\", niet \"10-09\").";
 
 /** A caller can't scan a spoken list the way they'd scan a menu on screen —
  * dumping the full BEHANDELINGEN array by name (jargon included) leaves
  * someone unfamiliar with the treatments unable to choose. Push the model
- * to ask what the caller needs first, the same way a receptionist would. */
+ * to ask what the caller needs first, the same way a receptionist would,
+ * and keep it to at most two options — this is a demo call, not a menu
+ * reading, so err toward fewer choices and a faster path to booking. */
 const VOICE_MENU_GUIDANCE_NOTE =
-  "\n\nBEHANDELINGEN NOEMEN: som nooit de volledige behandellijst op. Als een beller nog niet weet wat hij wil, vraag eerst kort naar de wens, klacht of het doel. Noem daarna hooguit twee of drie passende opties, in gewone taal zonder vakjargon, elk met één zin uitleg wat het inhoudt en voor wie het geschikt is — laat de beller daaruit kiezen in plaats van een menu op te lezen.";
+  "\n\nBEHANDELINGEN NOEMEN: som nooit de volledige behandellijst op en noem nooit vakjargon of Engelse/technische behandelnamen letterlijk — vertaal naar gewone spreektaal (bijv. \"een lichte peeling voor uw huid\" in plaats van de exacte productnaam). Als een beller nog niet weet wat hij wil, vraag eerst kort naar de wens, klacht of het doel. Noem daarna hooguit ÉÉN, hoogstens TWEE passende opties, elk met één korte zin uitleg — nooit meer. Laat de beller kiezen of om meer vragen, lees nooit uit jezelf een langere lijst op.";
+
+/** Explicit brevity override for the demo — a professional receptionist
+ * keeps calls short and businesslike, not chatty. Stacks with (doesn't
+ * replace) system-prompt rule 1's ~4-sentence cap. */
+const VOICE_BREVITY_NOTE =
+  "\n\nGESPREKSTEMPO: houd elke beurt kort en zakelijk — bij voorkeur één tot twee zinnen, drie is het absolute maximum. Geen inleidende beleefdheidszinnen of herhalingen van wat de beller al zei — ga direct ter zake, zoals een efficiënte, professionele receptioniste aan de telefoon.";
 
 const TRANSFER_ANNOUNCEMENT =
   "Ik verbind u nu direct door met een van onze medewerkers. Een ogenblik geduld.";
@@ -209,10 +216,11 @@ export function buildVapiAssistantPayload(salon: SalonContext, toolsWebhookUrl: 
         {
           role: "system",
           content:
-            buildSystemPrompt(salon) +
+            buildSystemPrompt(salon, { voice: true }) +
             VOICE_AI_TRANSPARENCY_NOTE +
             VOICE_SPEECH_FORMATTING_NOTE +
-            VOICE_MENU_GUIDANCE_NOTE,
+            VOICE_MENU_GUIDANCE_NOTE +
+            VOICE_BREVITY_NOTE,
         },
       ],
       tools: toVapiTools(salon),
