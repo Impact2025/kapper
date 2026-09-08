@@ -284,8 +284,12 @@ export async function syncVapiAssistant(
     const data = (await res.json()) as { id?: string };
     if (!data.id) return { ok: false, error: "Vapi gaf geen assistant-id terug." };
 
-    if (salon.phone) {
-      const linkResult = await linkPhoneNumberToAssistant(vapiApiKey, salon.phone, data.id);
+    // salon.phone is the salon's general contact number (transferCall
+    // destination for escalations) — the Vapi-purchased number that
+    // actually receives calls is aiSettings.phoneNumber, set on the
+    // Integraties page.
+    if (salon.aiSettings.phoneNumber) {
+      const linkResult = await linkPhoneNumberToAssistant(vapiApiKey, salon.aiSettings.phoneNumber, data.id);
       if (!linkResult.ok) return { ok: false, assistantId: data.id, error: linkResult.error };
     }
 

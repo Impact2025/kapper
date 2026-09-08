@@ -12,7 +12,7 @@ const salon: SalonContext = {
   phone: "+31201234567",
   plan: "pro",
   agendaProvider: "salonized",
-  aiSettings: {},
+  aiSettings: { phoneNumber: "+31201234567" },
   noShowSettings: { enabled: true, freeCancelHours: 24, chargePercent: 100 },
   locations: [{ id: "loc-1", name: "Den Bosch", city: "Den Bosch", workingHours: { mon: [9, 18] } }],
   treatments: [
