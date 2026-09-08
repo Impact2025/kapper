@@ -9,6 +9,7 @@ import {
   cancelById,
 } from "@/lib/salon/appointments";
 import { env, publicEnv } from "@/lib/env";
+import { captureError } from "@/lib/observability";
 
 export interface SalonLocation {
   id: string;
@@ -555,7 +556,7 @@ export async function getReceptionistReply(
       escalated: state.escalated,
     };
   } catch (err) {
-    console.error("[receptionist] Claude error:", err);
+    captureError("receptionist/claude", err);
     return { reply: withDisclosure(FALLBACK_NL, isNewConversation, salon.name) };
   }
 }
