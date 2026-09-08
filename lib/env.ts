@@ -45,14 +45,14 @@ const serverSchema = z.object({
   WATI_BASE_URL: z.string().url().optional(), // e.g. https://live-server-XXX.wati.io
   WATI_API_KEY: z.string().optional(),        // WATI Bearer token / webhook signing key
   VAPI_API_KEY: z.string().optional(),        // Vapi webhook auth Bearer token
-  // Cartesia voice id for the Sonic voice model, scoped to Vapi's own
-  // Cartesia integration — Vapi validates voiceId against a per-language
-  // allowlist there, which (confirmed via a live 400 from Vapi) is narrower
-  // than Cartesia's full Voice Library. For "nl" the only two accepted ids
-  // are 9e8db62d-056f-47f3-b3b6-1b05767f9176 and
-  // 4aa74047-d005-4463-ba2e-a0d9b261fb87 — swap to the other if this one's
-  // voice character doesn't fit the salon.
-  CARTESIA_VOICE_ID_NL: z.string().default("9e8db62d-056f-47f3-b3b6-1b05767f9176"),
+  // Cartesia voice id for the Sonic voice model. Vapi's own "allowed for nl"
+  // error-message allowlist turned out to reference ids that don't actually
+  // exist in Cartesia (even with a connected personal Cartesia account) —
+  // this id was instead picked directly from the salon's own Cartesia Voice
+  // Library (play.cartesia.ai), confirmed to exist. Sonic Multilingual
+  // speaks any voice in the language set via `language: "nl"`, so pick
+  // whichever voice character fits the salon, Dutch-labeled or not.
+  CARTESIA_VOICE_ID_NL: z.string().default("96355f3d-0179-4c9a-a8d8-11ef0779a9b8"),
   ENCRYPTION_KEY: z.string().optional(),      // 64 hex chars = 32 bytes for AES-256-GCM
 
   // Observability
