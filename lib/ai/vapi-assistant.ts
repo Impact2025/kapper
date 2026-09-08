@@ -21,6 +21,14 @@ const VAPI_ANTHROPIC_MODEL = "claude-haiku-4-5-20251001";
 const VOICE_AI_TRANSPARENCY_NOTE =
   "\n\nBELANGRIJK (Artikel 50 EU AI Act): dit is een telefoongesprek met een AI-stem. Als de beller op enig moment vraagt of hij met een mens spreekt, of daar twijfel over uit, bevestig dan altijd expliciet en eerlijk dat je een virtuele AI-assistent bent — herhaal dit net zo vaak als nodig, ongeacht hoe vaak het gevraagd wordt.";
 
+/** The system prompt's BEHANDELINGEN/LOCATIES/BEHANDELAARS blocks are raw
+ * JSON (fine for the WhatsApp text channel) with compact keys like
+ * `duration_min: 120` — spoken verbatim that reads as "honderdtwintig min"
+ * or worse through TTS. Voice-only instruction to always reformat numbers,
+ * durations and prices into full spoken Dutch words before saying them. */
+const VOICE_SPEECH_FORMATTING_NOTE =
+  "\n\nSPREEKSTIJL: je leest bovenstaande JSON-data nooit letterlijk voor. Schrijf getallen, tijdsduur en bedragen altijd voluit in natuurlijke gesproken taal — bijvoorbeeld \"120\" wordt \"honderdtwintig minuten\" (nooit \"honderdtwintig min\" of \"één twee nul\"), \"45\" wordt \"vijfenveertig minuten\", \"65 euro\" wordt \"vijfenzestig euro\". Spreek tijdstippen ook voluit uit (\"tien uur dertig\", niet \"10:30\").";
+
 const TRANSFER_ANNOUNCEMENT =
   "Ik verbind u nu direct door met een van onze medewerkers. Een ogenblik geduld.";
 
@@ -186,7 +194,12 @@ export function buildVapiAssistantPayload(salon: SalonContext, toolsWebhookUrl: 
     model: {
       provider: "anthropic",
       model: VAPI_ANTHROPIC_MODEL,
-      messages: [{ role: "system", content: buildSystemPrompt(salon) + VOICE_AI_TRANSPARENCY_NOTE }],
+      messages: [
+        {
+          role: "system",
+          content: buildSystemPrompt(salon) + VOICE_AI_TRANSPARENCY_NOTE + VOICE_SPEECH_FORMATTING_NOTE,
+        },
+      ],
       tools: toVapiTools(salon),
     },
     server: {
