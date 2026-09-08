@@ -29,6 +29,13 @@ const VOICE_AI_TRANSPARENCY_NOTE =
 const VOICE_SPEECH_FORMATTING_NOTE =
   "\n\nSPREEKSTIJL: je leest bovenstaande JSON-data nooit letterlijk voor. Schrijf getallen, tijdsduur en bedragen altijd voluit in natuurlijke gesproken taal — bijvoorbeeld \"120\" wordt \"honderdtwintig minuten\" (nooit \"honderdtwintig min\" of \"één twee nul\"), \"45\" wordt \"vijfenveertig minuten\", \"65 euro\" wordt \"vijfenzestig euro\". Spreek tijdstippen ook voluit uit (\"tien uur dertig\", niet \"10:30\").";
 
+/** A caller can't scan a spoken list the way they'd scan a menu on screen —
+ * dumping the full BEHANDELINGEN array by name (jargon included) leaves
+ * someone unfamiliar with the treatments unable to choose. Push the model
+ * to ask what the caller needs first, the same way a receptionist would. */
+const VOICE_MENU_GUIDANCE_NOTE =
+  "\n\nBEHANDELINGEN NOEMEN: som nooit de volledige behandellijst op. Als een beller nog niet weet wat hij wil, vraag eerst kort naar de wens, klacht of het doel. Noem daarna hooguit twee of drie passende opties, in gewone taal zonder vakjargon, elk met één zin uitleg wat het inhoudt en voor wie het geschikt is — laat de beller daaruit kiezen in plaats van een menu op te lezen.";
+
 const TRANSFER_ANNOUNCEMENT =
   "Ik verbind u nu direct door met een van onze medewerkers. Een ogenblik geduld.";
 
@@ -201,7 +208,11 @@ export function buildVapiAssistantPayload(salon: SalonContext, toolsWebhookUrl: 
       messages: [
         {
           role: "system",
-          content: buildSystemPrompt(salon) + VOICE_AI_TRANSPARENCY_NOTE + VOICE_SPEECH_FORMATTING_NOTE,
+          content:
+            buildSystemPrompt(salon) +
+            VOICE_AI_TRANSPARENCY_NOTE +
+            VOICE_SPEECH_FORMATTING_NOTE +
+            VOICE_MENU_GUIDANCE_NOTE,
         },
       ],
       tools: toVapiTools(salon),
