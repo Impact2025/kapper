@@ -43,7 +43,7 @@ describe("buildVapiAssistantPayload", () => {
     // All 6 receptionist tools stay in the array — one (escalate_to_staff)
     // is mapped to a native transferCall tool instead of a function tool,
     // but every one must still be present in some form.
-    const toolNames = payload.model.tools.map((t) => (t.type === "function" ? t.function.name : t.name));
+    const toolNames = payload.model.tools.map((t) => (t.type === "function" ? t.function.name : t.type));
     expect(toolNames).toEqual([
       "check_availability",
       "find_appointments",
@@ -101,7 +101,7 @@ describe("buildVapiAssistantPayload", () => {
     const payload = buildVapiAssistantPayload(salon, "https://x/api/webhooks/vapi");
 
     expect(payload.stopSpeakingPlan.numWords).toBe(0);
-    expect(payload.silenceTimeoutSeconds).toBe(0.5);
+    expect(payload.silenceTimeoutSeconds).toBe(5);
     // Deepgram Flux handles end-of-turn natively — startSpeakingPlan must
     // not also run a software smartEndpointing layer alongside it.
     expect(payload.startSpeakingPlan).not.toHaveProperty("smartEndpointingEnabled");
@@ -117,12 +117,11 @@ describe("buildVapiAssistantPayload", () => {
 
     expect(transferTool).toEqual({
       type: "transferCall",
-      name: "transferCall",
       destinations: [
         {
           type: "number",
           number: salon.phone,
-          message: "Ik verbind u nu direct door met een van onze stylisten in de salon. Een ogenblik geduld.",
+          message: "Ik verbind u nu direct door met een van onze medewerkers. Een ogenblik geduld.",
         },
       ],
     });

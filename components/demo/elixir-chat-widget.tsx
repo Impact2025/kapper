@@ -50,6 +50,18 @@ export function ElixirChatWidget() {
     logRef.current?.scrollTo({ top: logRef.current.scrollHeight, behavior: "smooth" });
   }, [messages, pending, open]);
 
+  useEffect(() => {
+    function onBookRequest(e: Event) {
+      const detail = (e as CustomEvent<{ message: string }>).detail;
+      if (!detail?.message) return;
+      setOpen(true);
+      send(detail.message);
+    }
+    window.addEventListener("elixir:book-request", onBookRequest);
+    return () => window.removeEventListener("elixir:book-request", onBookRequest);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sessionId]);
+
   function resetConversation() {
     const id = newSessionId();
     sessionStorage.setItem(sessionKey(), id);

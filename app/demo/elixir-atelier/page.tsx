@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { ElixirChatWidget } from "@/components/demo/elixir-chat-widget";
+import { ElixirBookingBar } from "@/components/demo/elixir-booking-bar";
 
 export const metadata: Metadata = {
   title: "Élixir Atelier — Live demo",
@@ -131,39 +132,9 @@ export default function ElixirAtelierPage() {
           {/* Floating quick booking bar */}
           <div id="boeken" className="mx-auto -mb-20 mt-10 max-w-5xl px-6 lg:px-10">
             <div className="rounded-3xl border border-[#1b1c1a]/[0.06] bg-white p-3 shadow-[0_24px_60px_-16px_rgba(28,24,21,0.18)] sm:p-4">
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-4 sm:gap-2 sm:divide-x sm:divide-[#1b1c1a]/[0.07]">
-                <label className="flex flex-col gap-1 px-3 py-1.5">
-                  <span className="text-[11px] font-semibold uppercase tracking-[0.1em] text-[#4d4540]">Behandeling</span>
-                  <select className="w-full appearance-none bg-transparent text-[14.5px] font-medium text-[#1b1c1a] outline-none">
-                    <option>Bespoke Balayage &amp; Toning</option>
-                    <option>Signature Haircut &amp; Sculpting</option>
-                    <option>Botanical Glossing &amp; Repair Ritual</option>
-                    <option>Couture Updo &amp; Event Styling</option>
-                  </select>
-                </label>
-                <label className="flex flex-col gap-1 px-3 py-1.5">
-                  <span className="text-[11px] font-semibold uppercase tracking-[0.1em] text-[#4d4540]">Stylist</span>
-                  <select className="w-full appearance-none bg-transparent text-[14.5px] font-medium text-[#1b1c1a] outline-none">
-                    <option>Geen voorkeur</option>
-                    <option>Elena Vance</option>
-                    <option>Julian de Vries</option>
-                    <option>Chloé Laurent</option>
-                    <option>Lucas Moreau</option>
-                  </select>
-                </label>
-                <label className="flex flex-col gap-1 px-3 py-1.5">
-                  <span className="text-[11px] font-semibold uppercase tracking-[0.1em] text-[#4d4540]">Datum</span>
-                  <input type="date" className="w-full bg-transparent text-[14.5px] font-medium text-[#1b1c1a] outline-none" />
-                </label>
-                <div className="flex items-end px-1.5 py-1.5">
-                  <a href="#chat-hint" className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[#C5A880] to-[#B6976F] px-4 py-3.5 text-[13.5px] font-semibold text-white shadow-[0_10px_20px_-8px_rgba(114,91,56,0.55)] transition-transform hover:scale-[1.02]">
-                    <span className="material-symbols-outlined !text-[18px]">search</span>
-                    Zoek Beschikbaarheid
-                  </a>
-                </div>
-              </div>
+              <ElixirBookingBar />
               <p id="chat-hint" className="mt-3 text-center text-[12px] text-[#4d4540]">
-                Gebruik de chat rechtsonder — onze AI-receptioniste boekt live in de echte agenda.
+                Onze AI-receptioniste checkt de beschikbaarheid live in de echte agenda.
               </p>
             </div>
           </div>

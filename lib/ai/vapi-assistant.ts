@@ -22,7 +22,7 @@ const VOICE_AI_TRANSPARENCY_NOTE =
   "\n\nBELANGRIJK (Artikel 50 EU AI Act): dit is een telefoongesprek met een AI-stem. Als de beller op enig moment vraagt of hij met een mens spreekt, of daar twijfel over uit, bevestig dan altijd expliciet en eerlijk dat je een virtuele AI-assistent bent — herhaal dit net zo vaak als nodig, ongeacht hoe vaak het gevraagd wordt.";
 
 const TRANSFER_ANNOUNCEMENT =
-  "Ik verbind u nu direct door met een van onze stylisten in de salon. Een ogenblik geduld.";
+  "Ik verbind u nu direct door met een van onze medewerkers. Een ogenblik geduld.";
 
 interface VapiFunctionTool {
   type: "function";
@@ -43,7 +43,6 @@ interface VapiFunctionTool {
  */
 interface VapiTransferCallTool {
   type: "transferCall";
-  name: "transferCall";
   destinations: {
     type: "number";
     number: string;
@@ -65,7 +64,6 @@ function toVapiTools(salon: SalonContext): VapiTool[] {
     if (t.name === "escalate_to_staff" && salon.phone) {
       return {
         type: "transferCall",
-        name: "transferCall",
         destinations: [
           {
             type: "number",
@@ -126,8 +124,9 @@ export interface VapiAssistantPayload {
     voiceSeconds: number;
     backoffSeconds: number;
   };
-  /** Hangs up after this much total silence — kept tight so a dead-air call
-   * doesn't linger. */
+  /** Hangs up after this much total silence. Vapi enforces a minimum of 5
+   * seconds — kept at that floor so a dead-air call doesn't linger longer
+   * than necessary. */
   silenceTimeoutSeconds: number;
   model: {
     provider: "anthropic";
@@ -183,7 +182,7 @@ export function buildVapiAssistantPayload(salon: SalonContext, toolsWebhookUrl: 
       voiceSeconds: 0.1,
       backoffSeconds: 0,
     },
-    silenceTimeoutSeconds: 0.5,
+    silenceTimeoutSeconds: 5,
     model: {
       provider: "anthropic",
       model: VAPI_ANTHROPIC_MODEL,
