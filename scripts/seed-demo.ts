@@ -26,6 +26,8 @@ async function main() {
     staffTreatments,
     knowledgeEntries,
     appointments,
+    products,
+    inventoryMovements,
   } = await import("../lib/db/schema");
   const { hashPassword } = await import("../lib/auth/password");
   const { amsterdamWallTimeToUtc } = await import("../lib/salon/timezone");
@@ -136,6 +138,30 @@ async function main() {
   ]);
   console.log(`✓ Kennisbank gevuld`);
 
+  // --- Webwinkel producten (Pro) — met voorraad, twee bewust laag zodat de
+  // AI-agent op /dashboard/webwinkel meteen herbestel-advies kan tonen. ---
+  const productRows = await db
+    .insert(products)
+    .values([
+      { salonId, name: "Vitamine C Serum 30ml", description: "Antioxidant serum tegen pigmentvlekken en voor een egalere teint.", sku: "HZ-VITC-30", category: "Serums", priceCents: 4995, stockQuantity: 24, lowStockThreshold: 8 },
+      { salonId, name: "Hyaluronzuur Booster 15ml", description: "Intensieve hydratatie-boost, geschikt na peelings en microneedling.", sku: "HZ-HYAL-15", category: "Serums", priceCents: 3995, stockQuantity: 18, lowStockThreshold: 6 },
+      { salonId, name: "Herstellende Nachtcrème 50ml", description: "Rijke nachtcrème met retinol-alternatief voor huidherstel.", sku: "HZ-NCRM-50", category: "Crèmes", priceCents: 5995, stockQuantity: 6, lowStockThreshold: 8 },
+      { salonId, name: "SPF50 Dagcrème 50ml", description: "Verplichte nazorg na laser-, peeling- en IPL-behandelingen.", sku: "HZ-SPF50-50", category: "Zonbescherming", priceCents: 3495, stockQuantity: 40, lowStockThreshold: 15 },
+      { salonId, name: "Milde Reinigingsgel 200ml", description: "Zeepvrije reiniging, geschikt voor de gevoelige huid na behandeling.", sku: "HZ-REIN-200", category: "Reiniging", priceCents: 2495, stockQuantity: 3, lowStockThreshold: 10 },
+      { salonId, name: "Littekenherstel Gel 20ml", description: "Siliconengel ter ondersteuning van littekentherapie, dagelijks gebruik.", sku: "HZ-LITT-20", category: "Aftercare", priceCents: 3295, stockQuantity: 15, lowStockThreshold: 5 },
+    ])
+    .returning({ id: products.id, name: products.name, stockQuantity: products.stockQuantity });
+  await db.insert(inventoryMovements).values(
+    productRows.map((p) => ({
+      salonId,
+      productId: p.id,
+      type: "restock" as const,
+      quantityDelta: p.stockQuantity,
+      reason: "Startvoorraad demo-seed",
+    })),
+  );
+  console.log(`✓ ${productRows.length} webwinkel-producten (met voorraad)`);
+
   // --- A few realistic upcoming appointments so /dashboard/afspraken shows real data ---
   // Amsterdam wall-clock time regardless of which machine/runtime runs this
   // script — a local run and a Vercel (UTC) run must produce the same
@@ -151,6 +177,7 @@ async function main() {
 
   console.log("\n— Demo klaar —");
   console.log(`Klant-gesprek (publiek, geen login): https://kappersassistent.nl/demo/${SLUG}`);
+  console.log(`Webwinkel (publiek, geen login):     https://kappersassistent.nl/${SLUG}/winkel`);
   console.log(`Salon-dashboard (login):             https://kappersassistent.nl/login`);
   console.log(`  E-mail:     ${EMAIL}`);
   console.log(`  Wachtwoord: ${PASSWORD}`);

@@ -88,6 +88,13 @@ async function main() {
         address: "Veerhaven 12",
         workingHours: { mon: [9, 20], tue: [9, 20], wed: [9, 20], thu: [9, 20], fri: [9, 20], sat: [9, 18], sun: null },
       },
+      {
+        salonId,
+        name: "Élixir Atelier Den Haag Zeeheldenkwartier",
+        city: "Den Haag",
+        address: "Zoutmanstraat 27",
+        workingHours: { mon: [9, 20], tue: [9, 20], wed: [9, 20], thu: [9, 20], fri: [9, 20], sat: [9, 18], sun: [11, 16] },
+      },
     ])
     .returning({ id: locations.id, name: locations.name });
   const loc = Object.fromEntries(locationRows.map((l) => [l.name, l.id])) as Record<string, string>;
@@ -150,6 +157,7 @@ async function main() {
       { salonId, name: "Julian de Vries", role: "Senior Hair Sculptor" },
       { salonId, name: "Chloé Laurent", role: "Botanical Ritual Specialist" },
       { salonId, name: "Lucas Moreau", role: "Master Stylist & Texturist" },
+      { salonId, name: "Noor van der Berg", role: "Senior Colorist & Ritual Specialist" },
     ])
     .returning({ id: staff.id, name: staff.name });
   const st = Object.fromEntries(staffRows.map((s) => [s.name, s.id])) as Record<string, string>;
@@ -160,6 +168,7 @@ async function main() {
     { staffName: "Julian de Vries", locationNames: ["Élixir Atelier Amsterdam Oud-Zuid", "Élixir Atelier Rotterdam Veerhaven"], treatmentNames: ["Signature Haircut & Sculpting", "Couture Updo & Event Styling"] },
     { staffName: "Chloé Laurent", locationNames: ["Élixir Atelier Amsterdam Oud-Zuid"], treatmentNames: ["Botanical Glossing & Repair Ritual", "Signature Haircut & Sculpting"] },
     { staffName: "Lucas Moreau", locationNames: ["Élixir Atelier Rotterdam Veerhaven"], treatmentNames: ["Signature Haircut & Sculpting", "Botanical Glossing & Repair Ritual", "Couture Updo & Event Styling"] },
+    { staffName: "Noor van der Berg", locationNames: ["Élixir Atelier Den Haag Zeeheldenkwartier"], treatmentNames: ["Bespoke Balayage & Toning", "Botanical Glossing & Repair Ritual", "Couture Updo & Event Styling"] },
   ];
   for (const a of assignments) {
     const staffId = st[a.staffName]!;
@@ -172,7 +181,7 @@ async function main() {
   await db.insert(knowledgeEntries).values([
     { salonId, title: "Filosofie: Puurheid, Passie & Privacy", category: "Filosofie", content: "Élixir Atelier werkt uitsluitend met 100% botanische, Clean Beauty-gecertificeerde producten — vrij van sulfaten, parabenen en dierproeven. Elke behandeling vindt plaats in een private suite voor volledige rust en discretie." },
     { salonId, title: "Annuleringsbeleid", category: "Beleid", content: "Kosteloos annuleren of verzetten kan tot 24 uur voor de afspraak. Bij later annuleren wordt 50% van het behandeltarief in rekening gebracht." },
-    { salonId, title: "Valet Parking & Privé Suites", category: "FAQ", content: "Bij de vestiging Amsterdam Oud-Zuid bieden we valet parking aan. Beide vestigingen beschikken over privé-suites en een botanische lounge met kruidenthee." },
+    { salonId, title: "Valet Parking & Privé Suites", category: "FAQ", content: "Bij de vestiging Amsterdam Oud-Zuid bieden we valet parking aan. Alle drie vestigingen (Amsterdam, Rotterdam, Den Haag) beschikken over privé-suites en een botanische lounge met kruidenthee." },
     { salonId, title: "Élixir Privé Membership", category: "FAQ", content: "Leden van Élixir Privé krijgen prioritaire reservaties, 500 welkomstpunten bij inschrijving en een champagne welcome bij elk bezoek. Vraag ernaar tijdens uw afspraak." },
   ]);
   console.log(`✓ Kennisbank gevuld`);
@@ -183,8 +192,9 @@ async function main() {
     { salonId, agendaProvider: "manual", locationId: loc["Élixir Atelier Amsterdam Oud-Zuid"], staffId: st["Elena Vance"], treatmentId: treat["Bespoke Balayage & Toning"], customerName: "Sophie Bergmann", customerPhone: "+31611223344", serviceType: "Bespoke Balayage & Toning", appointmentTime: inDays(1, 11, 0), durationMinutes: 120, source: "ai_whatsapp" },
     { salonId, agendaProvider: "manual", locationId: loc["Élixir Atelier Rotterdam Veerhaven"], staffId: st["Lucas Moreau"], treatmentId: treat["Signature Haircut & Sculpting"], customerName: "Daan Hermans", customerPhone: "+31622334455", serviceType: "Signature Haircut & Sculpting", appointmentTime: inDays(2, 15, 0), durationMinutes: 45, source: "ai_whatsapp" },
     { salonId, agendaProvider: "manual", locationId: loc["Élixir Atelier Amsterdam Oud-Zuid"], staffId: st["Chloé Laurent"], treatmentId: treat["Botanical Glossing & Repair Ritual"], customerName: "Fleur Willems", customerPhone: "+31633445566", serviceType: "Botanical Glossing & Repair Ritual", appointmentTime: inDays(3, 10, 30), durationMinutes: 30, source: "ai_whatsapp" },
+    { salonId, agendaProvider: "manual", locationId: loc["Élixir Atelier Den Haag Zeeheldenkwartier"], staffId: st["Noor van der Berg"], treatmentId: treat["Bespoke Balayage & Toning"], customerName: "Isabel Koning", customerPhone: "+31644556677", serviceType: "Bespoke Balayage & Toning", appointmentTime: inDays(4, 13, 0), durationMinutes: 120, source: "ai_whatsapp" },
   ]);
-  console.log(`✓ 3 afspraken`);
+  console.log(`✓ 4 afspraken`);
 
   console.log("\n— Demo klaar —");
   console.log(`Kapperswebsite (publiek, met chat-widget): https://kappersassistent.nl/demo/elixir-atelier`);

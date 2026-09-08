@@ -350,8 +350,8 @@ BEHANDELAARS EN BEVOEGDHEDEN (JSON): ${staffJson}
 ${knowledgeText}
 
 GEDRAGSREGELS:
-1. Communiceer kort — maximaal ongeveer 4 zinnen per bericht, tenzij je een lijst toont (gebruik dan bullets).
-2. Vraag naar de vestiging als die niet duidelijk is uit het gesprek, vóórdat je check_availability aanroept — sla dit over als er maar één locatie is.
+1. Communiceer kort — maximaal ongeveer 4 zinnen per bericht, tenzij je een lijst toont (gebruik dan bullets). Schrijf platte tekst zonder markdown-opmaak: geen ** of * rond woorden, geen #-koppen. Namen en behandelingen benoem je gewoon, zonder ze vet te maken.
+2. Vraag naar de vestiging als die niet duidelijk is uit het gesprek, vóórdat je check_availability aanroept — sla dit over als er maar één locatie is. Uitzondering: als je een klant moet doorverwijzen naar een andere, wél bevoegde behandelaar (bijv. de gevraagde behandelaar voert deze behandeling niet uit) en er zijn hooguit twee bevoegde alternatieven, vraag dan niet eerst welke vestiging — roep check_availability meteen aan voor elk alternatief en presenteer de klant in één bericht de concrete tijdsopties per vestiging/behandelaar, zodat hij in één keer kan kiezen.
 3. Koppel een behandeling uitsluitend aan behandelaars die volgens BEHANDELAARS bevoegd zijn — verzin dit nooit.
 4. Gebruik voor beschikbaarheid, bestaande afspraken, boeken, verzetten en annuleren ALTIJD de bijbehorende tool. Verzin nooit zelf tijden, slot_id's of appointment_id's — kopieer ze letterlijk uit een eerder tool-resultaat.
 5. Bevestig altijd de volledige naam én het telefoonnummer van de klant vóórdat je boekt, verzet of annuleert.
@@ -364,12 +364,24 @@ GEDRAGSREGELS:
 12. Intelligent Double-Booking: als een behandeling \`stylist_vrij_tijdens_inwerktijd\` heeft (bijv. kleuring), is de behandelaar tijdens \`inwerktijd_min\` vrij voor iets korts bij dezelfde klant of zelfs een andere klant. check_availability houdt hier al rekening mee door slots in dat venster aan te bieden — vertel de beller dit gerust actief, bijvoorbeeld: "Terwijl uw kleur inwerkt, heeft styliste Sarah tijd voor uw föhnbeurt."`;
 }
 
+/** Defense-in-depth: the system prompt tells the model to write plain text,
+ * but strip stray markdown emphasis anyway — WhatsApp and the demo widget
+ * both render markdown asterisks and hash-headers literally, which reads as
+ * broken formatting rather than emphasis. */
+function stripMarkdownEmphasis(text: string): string {
+  return text
+    .replace(/\*\*([^*]+)\*\*/g, "$1")
+    .replace(/(?<!\w)\*([^*\n]+)\*(?!\w)/g, "$1")
+    .replace(/^#{1,6}\s+/gm, "");
+}
+
 function textOf(response: Anthropic.Message): string {
-  return response.content
+  const raw = response.content
     .filter((b): b is Anthropic.TextBlock => b.type === "text")
     .map((b) => b.text)
     .join("\n")
     .trim();
+  return stripMarkdownEmphasis(raw);
 }
 
 async function runTool(
