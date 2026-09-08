@@ -45,10 +45,13 @@ const serverSchema = z.object({
   WATI_BASE_URL: z.string().url().optional(), // e.g. https://live-server-XXX.wati.io
   WATI_API_KEY: z.string().optional(),        // WATI Bearer token / webhook signing key
   VAPI_API_KEY: z.string().optional(),        // Vapi webhook auth Bearer token
-  // Cartesia voice id for the Sonic voice model — pick a natural nl-NL voice
-  // in the Cartesia dashboard and set this per deployment; this default is a
-  // placeholder until a salon-specific voice is configured.
-  CARTESIA_VOICE_ID_NL: z.string().default("nl-NL-natural-female-1"),
+  // Cartesia voice id for the Sonic voice model. Voice ids are opaque UUIDs
+  // from Cartesia's Voice Library (browse and copy one there) — Sonic
+  // Multilingual speaks any voice in the language set via `language: "nl"`,
+  // so the id doesn't need to be a Dutch-labeled voice. This default is
+  // Cartesia's well-known public "Barbershop Man" example voice, used only
+  // to keep Vapi sync from failing until a salon-specific voice is picked.
+  CARTESIA_VOICE_ID_NL: z.string().default("a0e99841-438c-4a64-b679-ae501e7d6091"),
   ENCRYPTION_KEY: z.string().optional(),      // 64 hex chars = 32 bytes for AES-256-GCM
 
   // Observability
