@@ -124,7 +124,7 @@ export async function runScan(input: ScanInput): Promise<ScanResult> {
 
   let summary = fallbackSummary;
   const ai = await complete({
-    model: env.ANTHROPIC_MODEL_FAST,
+    model: env.OPENMODEL_MODEL,
     maxTokens: 350,
     system:
       "Je bent een Nederlandse salon-groeiadviseur. Schrijf bondig, warm en zonder overdrijving. Max 4 zinnen.",

@@ -7,7 +7,7 @@ import { env } from "@/lib/env";
 
 export default async function NewBlogPostPage() {
   await getCurrentUser();
-  const aiAvailable = !!env.ANTHROPIC_API_KEY;
+  const aiAvailable = !!env.OPENMODEL_API_KEY;
 
   return (
     <div className="max-w-2xl">
@@ -22,7 +22,7 @@ export default async function NewBlogPostPage() {
 
       {!aiAvailable && (
         <div className="mb-md rounded-lg bg-secondary-fixed px-sm py-sm text-label-md text-on-secondary-fixed">
-          Let op: ANTHROPIC_API_KEY ontbreekt. Stel deze in om AI-generatie te gebruiken.
+          Let op: OPENMODEL_API_KEY ontbreekt. Stel deze in om AI-generatie te gebruiken.
         </div>
       )}
 

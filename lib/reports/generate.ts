@@ -84,7 +84,7 @@ export async function aggregateReport(
 async function summarize(payload: ReportPayload): Promise<string> {
   const fallback = `${payload.period === "daily" ? "Dagrapport" : "Maandrapport"} ${payload.periodKey}: ${payload.newLeads} nieuwe leads, ${payload.scans} scans, ${payload.newSalons} nieuwe salons. Actieve MRR: €${payload.activeMrr}.`;
   const ai = await complete({
-    model: env.ANTHROPIC_MODEL_FAST,
+    model: env.OPENMODEL_MODEL,
     maxTokens: 300,
     system:
       "Je bent een data-analist voor een SaaS-startup voor kapsalons. Schrijf een bondige, zakelijke samenvatting in het Nederlands (max 4 zinnen). Benoem trends en 1 concrete actie.",

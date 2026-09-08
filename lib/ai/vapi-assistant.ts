@@ -6,8 +6,8 @@ const VAPI_BASE = "https://api.vapi.ai";
 
 /**
  * Claude model id Vapi's native Anthropic provider accepts for the voice
- * assistant. Kept independent from env.ANTHROPIC_MODEL_FAST (which is our
- * own WhatsApp-path model id passed straight to the Anthropic SDK) so the
+ * assistant. Kept independent from env.OPENMODEL_MODEL (which is our own
+ * WhatsApp-path model id passed straight to the Anthropic SDK) so the
  * two can be tuned separately, even though they happen to match today.
  */
 const VAPI_ANTHROPIC_MODEL = "claude-haiku-4-5-20251001";

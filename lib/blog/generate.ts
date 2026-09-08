@@ -61,12 +61,12 @@ export async function generateBlogPost(
   topic: string,
   keywords?: string[],
 ): Promise<GeneratedPost> {
-  if (!env.ANTHROPIC_API_KEY) {
-    throw new Error("ANTHROPIC_API_KEY ontbreekt — AI-generatie niet beschikbaar.");
+  if (!env.OPENMODEL_API_KEY) {
+    throw new Error("OPENMODEL_API_KEY ontbreekt — AI-generatie niet beschikbaar.");
   }
 
   const raw = await complete({
-    model: env.ANTHROPIC_MODEL_LONGFORM,
+    model: env.OPENMODEL_MODEL,
     maxTokens: 3000,
     system: SYSTEM,
     prompt: buildPrompt(topic, keywords),

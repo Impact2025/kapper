@@ -12,7 +12,7 @@ export const runtime = "nodejs";
 export const maxDuration = 30;
 
 interface VapiMessage {
-  role: "assistant" | "user" | "bot" | "user";
+  role: "assistant" | "user" | "bot" | "system" | "tool_calls" | "tool_call_result";
   message?: string;
   content?: string;
 }
@@ -177,9 +177,13 @@ export async function POST(req: Request) {
 
   const conversationId = conv!.id;
 
-  // Persist transcript as messages
-  if (vapiMessages.length > 0) {
-    const msgRows = vapiMessages.map((m) => ({
+  // Persist transcript as messages — skip system prompts and tool-call noise,
+  // those aren't part of the conversation the salon owner should read.
+  const conversationalMessages = vapiMessages.filter(
+    (m) => m.role === "assistant" || m.role === "bot" || m.role === "user",
+  );
+  if (conversationalMessages.length > 0) {
+    const msgRows = conversationalMessages.map((m) => ({
       conversationId,
       role: (m.role === "assistant" || m.role === "bot" ? "assistant" : "user") as "user" | "assistant",
       content: m.message ?? m.content ?? "",

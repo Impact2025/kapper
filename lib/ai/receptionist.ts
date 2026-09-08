@@ -519,7 +519,7 @@ export async function getReceptionistReply(
   try {
     for (let round = 0; round <= MAX_TOOL_ROUNDS; round++) {
       const response = await anthropic.messages.create({
-        model: env.ANTHROPIC_MODEL_FAST,
+        model: env.OPENMODEL_MODEL,
         max_tokens: 768,
         system: systemPrompt,
         tools: RECEPTIONIST_TOOLS,
