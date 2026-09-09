@@ -91,7 +91,7 @@ export async function POST(req: Request) {
     .limit(20);
 
   const salonContext = await loadSalonContext(salon);
-  const { reply, bookedAppointment, escalated } = await getReceptionistReply(
+  const { reply, bookedAppointment, escalated, suggestedSlots } = await getReceptionistReply(
     salonContext,
     history.map((h) => ({ role: h.role, content: h.content })),
     demoPhone,
@@ -112,5 +112,6 @@ export async function POST(req: Request) {
       ? { treatment: bookedAppointment.serviceType, date: bookedAppointment.date, time: bookedAppointment.time }
       : null,
     escalated: Boolean(escalated),
+    suggestedSlots: suggestedSlots ?? [],
   });
 }

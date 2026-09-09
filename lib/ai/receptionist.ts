@@ -1,7 +1,7 @@
 import "server-only";
 import Anthropic from "@anthropic-ai/sdk";
 import { getAnthropic } from "@/lib/ai/anthropic";
-import { findAvailableSlots } from "@/lib/salon/availability";
+import { findAvailableSlots, type AvailableSlot } from "@/lib/salon/availability";
 import {
   findAppointmentsByPhone,
   bookFromSlot,
@@ -107,6 +107,11 @@ export interface ReceptionistResponse {
   /** Set when the model called escalate_to_staff — the caller (webhook) can
    * tag the conversation for a human to pick up. */
   escalated?: { reason: string };
+  /** Up to 4 concrete slots from the most recent check_availability call(s)
+   * this turn, so a text/chat UI can render them as clickable options
+   * instead of making the customer retype a time. Absent once a booking was
+   * made this turn (nothing left to pick). */
+  suggestedSlots?: { slotId: string; label: string }[];
 }
 
 const FALLBACK_NL =
@@ -354,8 +359,8 @@ GEDRAGSREGELS:
 2. Vraag naar de vestiging als die niet duidelijk is uit het gesprek, vóórdat je check_availability aanroept — sla dit over als er maar één locatie is. Uitzondering: als je een klant moet doorverwijzen naar een andere, wél bevoegde behandelaar (bijv. de gevraagde behandelaar voert deze behandeling niet uit) en er zijn hooguit twee bevoegde alternatieven, vraag dan niet eerst welke vestiging — roep check_availability meteen aan voor elk alternatief en presenteer de klant in één bericht de concrete tijdsopties per vestiging/behandelaar, zodat hij in één keer kan kiezen.
 3. Koppel een behandeling uitsluitend aan behandelaars die volgens BEHANDELAARS bevoegd zijn — verzin dit nooit.
 4. Gebruik voor beschikbaarheid, bestaande afspraken, boeken, verzetten en annuleren ALTIJD de bijbehorende tool. Verzin nooit zelf tijden, slot_id's of appointment_id's — kopieer ze letterlijk uit een eerder tool-resultaat.
-5. Bevestig altijd de volledige naam én het telefoonnummer van de klant vóórdat je boekt, verzet of annuleert.
-6. Als een klant een eigen afspraak wil opzoeken, wijzigen of annuleren: vraag om het telefoonnummer en gebruik find_appointments. Noem nooit afspraken die bij een ander telefoonnummer horen.
+5. ${opts?.voice ? "Het nummer waarmee de beller belt is al bekend en betrouwbaar (nummerherkenning), dus je hoeft er niet naar te vragen. Bevestig vóór het boeken, verzetten of annuleren wel altijd de volledige naam van de klant." : "Bevestig altijd de volledige naam én het telefoonnummer van de klant vóórdat je boekt, verzet of annuleert."}
+6. ${opts?.voice ? "Als de beller een eigen afspraak wil opzoeken, wijzigen of annuleren: gebruik find_appointments direct met het nummer waarmee hij belt — vraag daar niet apart naar, tenzij hij zelf zegt dat hij namens iemand anders belt of een ander nummer wil opzoeken." : "Als een klant een eigen afspraak wil opzoeken, wijzigen of annuleren: vraag om het telefoonnummer en gebruik find_appointments."} Noem nooit afspraken die bij een ander telefoonnummer horen.
 7. Denk actief mee: als iemand twijfelt tussen behandelingen of een klacht beschrijft, stel op basis van de BEHANDELINGEN- en KENNISBANK-info een passende behandeling of intake voor, met een korte uitleg waarom.
 8. EU AI Act (vanaf augustus 2026): bevestig eerlijk dat je een AI bent als de klant dat vraagt. Bied bij medische complexiteit, klachten, twijfel of een expliciet verzoek altijd aan om door te verbinden — gebruik dan escalate_to_staff.
 9. Voor concrete medische diagnoses verwijs je door naar een intake in plaats van zelf te diagnosticeren.
@@ -384,13 +389,27 @@ function textOf(response: Anthropic.Message): string {
   return stripMarkdownEmphasis(raw);
 }
 
+interface RunToolState {
+  bookedAppointment?: ReceptionistResponse["bookedAppointment"];
+  escalated?: ReceptionistResponse["escalated"];
+  /** Slots offered across every check_availability call this turn, most
+   * recent first — capped and labeled into suggestedSlots once the turn
+   * ends (see getReceptionistReply). */
+  offeredSlots?: AvailableSlot[];
+}
+
+function slotLabel(slot: AvailableSlot): string {
+  const dateLabel = formatDutchDate(slot.date);
+  return `${dateLabel} om ${slot.time} bij ${slot.staffName} (${slot.locationName})`;
+}
+
 async function runTool(
   name: string,
   args: Record<string, unknown>,
   salon: SalonContext,
   customerPhone: string,
   conversationId: string | null | undefined,
-  state: { bookedAppointment?: ReceptionistResponse["bookedAppointment"]; escalated?: ReceptionistResponse["escalated"] },
+  state: RunToolState,
   channel: "whatsapp" | "phone" = "whatsapp",
 ): Promise<string> {
   switch (name) {
@@ -406,10 +425,17 @@ async function runTool(
         agendaProvider: salon.agendaProvider,
         agendaApiKey: salon.aiSettings.agendaApiKey,
       });
+      if (result.slots.length) {
+        state.offeredSlots = [...(state.offeredSlots ?? []), ...result.slots];
+      }
       return JSON.stringify(result);
     }
     case "find_appointments": {
-      const result = await findAppointmentsByPhone(salon.id, String(args.phone ?? ""));
+      // Falls back to the channel's own known number (real caller-ID on a
+      // phone call) when the model doesn't supply one — the system prompt
+      // tells it not to bother asking on voice calls, so this can't rely on
+      // the model always filling in `phone` itself.
+      const result = await findAppointmentsByPhone(salon.id, String(args.phone || customerPhone || ""));
       return JSON.stringify(result);
     }
     case "book_appointment": {
@@ -506,7 +532,7 @@ export async function executeReceptionistTool(
   customerPhone: string,
   conversationId?: string | null,
 ): Promise<ToolExecutionResult> {
-  const state: { bookedAppointment?: ReceptionistResponse["bookedAppointment"]; escalated?: ReceptionistResponse["escalated"] } = {};
+  const state: RunToolState = {};
   const resultText = await runTool(name, args, salon, customerPhone, conversationId, state, "phone");
   return { resultText, bookedAppointment: state.bookedAppointment, escalated: state.escalated };
 }
@@ -541,7 +567,7 @@ export async function getReceptionistReply(
     content: m.content,
   }));
 
-  const state: { bookedAppointment?: ReceptionistResponse["bookedAppointment"]; escalated?: ReceptionistResponse["escalated"] } = {};
+  const state: RunToolState = {};
 
   try {
     for (let round = 0; round <= MAX_TOOL_ROUNDS; round++) {
@@ -557,7 +583,16 @@ export async function getReceptionistReply(
 
       if (!toolUses.length || round === MAX_TOOL_ROUNDS) {
         const reply = withDisclosure(textOf(response) || FALLBACK_NL, isNewConversation, salon.name);
-        return { reply, bookedAppointment: state.bookedAppointment, escalated: state.escalated };
+        // Nothing left to pick once a booking went through this turn.
+        const suggestedSlots = state.bookedAppointment
+          ? undefined
+          : state.offeredSlots?.slice(0, 4).map((s) => ({ slotId: s.slotId, label: slotLabel(s) }));
+        return {
+          reply,
+          bookedAppointment: state.bookedAppointment,
+          escalated: state.escalated,
+          ...(suggestedSlots?.length ? { suggestedSlots } : {}),
+        };
       }
 
       messages.push({ role: "assistant", content: response.content });

@@ -2,10 +2,15 @@
 
 import { useEffect, useRef, useState } from "react";
 
+interface SlotOption {
+  slotId: string;
+  label: string;
+}
 interface ChatMessage {
   id: string;
   role: "user" | "assistant";
   content: string;
+  slotOptions?: SlotOption[];
 }
 interface BookedInfo {
   treatment: string;
@@ -87,7 +92,10 @@ export function ElixirChatWidget() {
       });
       const data = await res.json();
       const reply = data.reply || "Er ging iets mis — probeer het nog eens.";
-      setMessages((m) => [...m, { id: crypto.randomUUID(), role: "assistant", content: reply }]);
+      const slotOptions: SlotOption[] | undefined = Array.isArray(data.suggestedSlots) && data.suggestedSlots.length
+        ? data.suggestedSlots
+        : undefined;
+      setMessages((m) => [...m, { id: crypto.randomUUID(), role: "assistant", content: reply, slotOptions }]);
       if (data.booked) setBooked(data.booked);
     } catch {
       setMessages((m) => [
@@ -131,7 +139,7 @@ export function ElixirChatWidget() {
               </div>
             )}
             {messages.map((msg) => (
-              <div key={msg.id} className={`flex ${msg.role === "assistant" ? "justify-start" : "justify-end"}`}>
+              <div key={msg.id} className={`flex flex-col ${msg.role === "assistant" ? "items-start" : "items-end"} gap-1.5`}>
                 <div
                   className={`max-w-[85%] whitespace-pre-wrap font-sans text-[13.5px] leading-relaxed shadow-sm ${
                     msg.role === "assistant"
@@ -141,6 +149,20 @@ export function ElixirChatWidget() {
                 >
                   {msg.content}
                 </div>
+                {msg.slotOptions && msg.slotOptions.length > 0 && (
+                  <div className="flex max-w-[85%] flex-col gap-1.5">
+                    {msg.slotOptions.map((slot) => (
+                      <button
+                        key={slot.slotId}
+                        onClick={() => send(`Ik kies ${slot.label}.`)}
+                        disabled={pending}
+                        className="rounded-xl border border-[#C5A880]/50 bg-white px-3.5 py-2 text-left font-sans text-[12.5px] leading-snug text-[#1b1c1a] shadow-sm transition-colors hover:border-[#725b38] hover:bg-[#fbf9f5] disabled:opacity-50"
+                      >
+                        {slot.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
             ))}
             {pending && (
