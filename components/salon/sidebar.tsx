@@ -20,6 +20,7 @@ const NAV: NavItem[] = [
   { href: "/dashboard/webwinkel", label: "Webwinkel", icon: "shopping_bag" },
   { href: "/dashboard/gesprekken", label: "Gesprekken", icon: "forum" },
   { href: "/dashboard/afspraken", label: "Afspraken", icon: "calendar_month" },
+  { href: "/dashboard/rapportage", label: "Rapportage", icon: "monitoring" },
   { href: "/dashboard/no-show", label: "No-show beleid", icon: "event_busy" },
   { href: "/dashboard/integraties", label: "Integraties", icon: "cable" },
   { href: "/dashboard/abonnement", label: "Abonnement", icon: "credit_card" },

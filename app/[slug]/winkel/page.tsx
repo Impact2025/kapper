@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { getPublicSalonForWinkel, listAvailableProducts } from "@/lib/webwinkel/queries";
 import { StorefrontCart } from "@/components/salon/webwinkel/storefront-cart";
 import { EmptyState } from "@/components/admin/ui";
+import { trackEvent } from "@/lib/analytics/track";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
@@ -15,6 +16,7 @@ export default async function WinkelPage({ params }: { params: Promise<{ slug: s
   const salon = await getPublicSalonForWinkel(slug);
   if (!salon) notFound();
 
+  await trackEvent({ type: "page_view", salonId: salon.id, props: { path: `/${slug}/winkel` } });
   const products = await listAvailableProducts(salon.id);
 
   return (
