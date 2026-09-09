@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getPublishedPost, listPublishedSlugs } from "@/lib/blog/queries";
@@ -84,6 +85,36 @@ export default async function BlogPostPage({
             {post.publishedAt ? dateFmt.format(post.publishedAt) : ""} · {minutes} min lezen
           </p>
         </header>
+
+        {post.coverImage && (
+          <div className="relative mb-lg h-64 w-full overflow-hidden rounded-xl md:h-96">
+            <Image
+              src={post.coverImage}
+              alt={post.coverImageAlt ?? post.title}
+              fill
+              className="object-cover"
+              sizes="(max-width: 768px) 100vw, 768px"
+            />
+          </div>
+        )}
+
+        {post.audioUrl && (
+          <div className="mb-lg rounded-xl border border-outline-variant bg-surface-container-low p-md">
+            <div className="mb-sm flex items-center gap-sm text-label-md font-label-md text-on-surface">
+              <span className="material-symbols-outlined text-[20px] text-primary" aria-hidden="true">podcasts</span>
+              {post.audioTitle || "Beluister dit artikel"}
+            </div>
+            <audio controls src={post.audioUrl} className="w-full" />
+            {post.transcript && (
+              <details className="mt-sm">
+                <summary className="cursor-pointer text-label-md text-on-surface-variant hover:text-primary">
+                  Transcript bekijken
+                </summary>
+                <p className="mt-sm whitespace-pre-wrap text-body-md text-on-surface-variant">{post.transcript}</p>
+              </details>
+            )}
+          </div>
+        )}
 
         <div
           className="prose-blog flex flex-col gap-md text-body-lg text-on-surface"

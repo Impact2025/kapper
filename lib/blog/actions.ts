@@ -65,6 +65,30 @@ export async function generateDraft(
   redirect(`/admin/blog/${row.id}`);
 }
 
+/** Create an empty draft and jump straight into the full editor. */
+export async function createBlankDraft(): Promise<never> {
+  const author = await getCurrentUser();
+
+  let slug = "nieuw-artikel";
+  let i = 2;
+  while (await slugTaken(slug)) slug = `nieuw-artikel-${i++}`;
+
+  const [row] = await db
+    .insert(blogPosts)
+    .values({
+      title: "Nieuw artikel",
+      slug,
+      status: "draft",
+      bodyMdx: "",
+      keywords: [],
+      authorId: author.id,
+    })
+    .returning({ id: blogPosts.id });
+
+  revalidatePath("/admin/blog");
+  redirect(`/admin/blog/${row.id}`);
+}
+
 const saveSchema = z.object({
   id: z.string().uuid(),
   title: z.string().min(3, "Titel is te kort.").max(120),
@@ -74,6 +98,12 @@ const saveSchema = z.object({
   metaDescription: z.string().max(170).optional().or(z.literal("")),
   keywords: z.string().optional().or(z.literal("")),
   bodyMdx: z.string().min(1, "Body mag niet leeg zijn."),
+  coverImage: z.string().optional().or(z.literal("")),
+  coverImageAlt: z.string().max(200).optional().or(z.literal("")),
+  audioUrl: z.string().optional().or(z.literal("")),
+  audioTitle: z.string().max(160).optional().or(z.literal("")),
+  audioDurationSeconds: z.string().optional().or(z.literal("")),
+  transcript: z.string().optional().or(z.literal("")),
 });
 
 export async function savePost(
@@ -90,6 +120,12 @@ export async function savePost(
     metaDescription: formData.get("metaDescription"),
     keywords: formData.get("keywords"),
     bodyMdx: formData.get("bodyMdx"),
+    coverImage: formData.get("coverImage"),
+    coverImageAlt: formData.get("coverImageAlt"),
+    audioUrl: formData.get("audioUrl"),
+    audioTitle: formData.get("audioTitle"),
+    audioDurationSeconds: formData.get("audioDurationSeconds"),
+    transcript: formData.get("transcript"),
   });
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? "Ongeldige invoer." };
@@ -137,6 +173,12 @@ export async function savePost(
       bodyMdx: d.bodyMdx,
       seoScore: score,
       jsonLd,
+      coverImage: d.coverImage || null,
+      coverImageAlt: d.coverImageAlt || null,
+      audioUrl: d.audioUrl || null,
+      audioTitle: d.audioTitle || null,
+      audioDurationSeconds: d.audioDurationSeconds ? Number(d.audioDurationSeconds) || null : null,
+      transcript: d.transcript || null,
     })
     .where(eq(blogPosts.id, d.id));
 

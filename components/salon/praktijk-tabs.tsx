@@ -3,6 +3,7 @@
 import { useActionState, useState } from "react";
 import { Icon } from "@/components/ui/icon";
 import { Card, Badge, EmptyState } from "@/components/admin/ui";
+import { RichTextEditor } from "@/components/admin/rich-text-editor";
 import type { PraktijkData } from "@/lib/salon/praktijk-queries";
 import type { ActionState } from "@/lib/salon/actions";
 import {
@@ -373,6 +374,12 @@ function StaffCard({ member, data }: { member: PraktijkData["staff"][number]; da
 
 function KennisbankTab({ data }: { data: PraktijkData }) {
   const [state, action, pending] = useActionState(addKnowledgeEntry, undefined);
+  const [content, setContent] = useState("");
+  const [lastState, setLastState] = useState(state);
+  if (state !== lastState) {
+    setLastState(state);
+    if (state?.success) setContent("");
+  }
 
   return (
     <div className="flex flex-col gap-md">
@@ -410,7 +417,8 @@ function KennisbankTab({ data }: { data: PraktijkData }) {
           </div>
           <div>
             <label className={labelCls}>Inhoud</label>
-            <textarea name="content" required rows={4} placeholder="Beschrijf het protocol, beleid of antwoord..." className={inputCls} />
+            <input type="hidden" name="content" value={content} />
+            <RichTextEditor content={content} onChange={setContent} placeholder="Beschrijf het protocol, beleid of antwoord…" />
           </div>
           <div className="flex items-center gap-md">
             <SubmitButton label="Toevoegen aan kennisbank" pending={pending} />

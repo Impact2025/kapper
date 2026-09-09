@@ -50,6 +50,12 @@ export default async function EditBlogPostPage({
           metaDescription: post.metaDescription,
           keywords: post.keywords,
           bodyMdx: post.bodyMdx,
+          coverImage: post.coverImage,
+          coverImageAlt: post.coverImageAlt,
+          audioUrl: post.audioUrl,
+          audioTitle: post.audioTitle,
+          audioDurationSeconds: post.audioDurationSeconds,
+          transcript: post.transcript,
         }}
       />
     </div>
