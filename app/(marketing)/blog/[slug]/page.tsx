@@ -3,7 +3,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getPublishedPost, listPublishedSlugs } from "@/lib/blog/queries";
-import { renderMarkdown, readingTimeMinutes } from "@/lib/blog/markdown";
+import { renderMarkdown, readingTimeMinutes, stripHtml } from "@/lib/blog/markdown";
 import { publicEnv } from "@/lib/env";
 
 export const revalidate = 3600;
@@ -47,8 +47,8 @@ export default async function BlogPostPage({
   const post = await getPublishedPost(slug);
   if (!post) notFound();
 
-  const html = renderMarkdown(post.bodyMdx);
-  const minutes = readingTimeMinutes(post.bodyMdx);
+  const html = post.bodyIsHtml ? post.bodyMdx : renderMarkdown(post.bodyMdx);
+  const minutes = readingTimeMinutes(post.bodyIsHtml ? stripHtml(post.bodyMdx) : post.bodyMdx);
   const dateFmt = new Intl.DateTimeFormat("nl-NL", {
     day: "numeric",
     month: "long",

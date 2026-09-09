@@ -3,7 +3,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Icon } from "@/components/ui/icon";
 import { env } from "@/lib/env";
-import { readingTimeMinutes } from "@/lib/blog/markdown";
+import { readingTimeMinutes, stripHtml } from "@/lib/blog/markdown";
 
 export const metadata: Metadata = {
   title: "Blog — Groeitips voor je kapsalon",
@@ -19,6 +19,7 @@ type Post = {
   title: string;
   excerpt: string | null;
   bodyMdx: string;
+  bodyIsHtml: boolean;
   publishedAt: Date | null;
   keywords: string[];
   coverImage: string | null;
@@ -45,6 +46,7 @@ export default async function BlogIndexPage() {
           title: blogPosts.title,
           excerpt: blogPosts.excerpt,
           bodyMdx: blogPosts.bodyMdx,
+          bodyIsHtml: blogPosts.bodyIsHtml,
           publishedAt: blogPosts.publishedAt,
           keywords: blogPosts.keywords,
           coverImage: blogPosts.coverImage,
@@ -86,7 +88,7 @@ export default async function BlogIndexPage() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-lg">
             {posts.map((p, i) => {
-              const minutes = readingTimeMinutes(p.bodyMdx);
+              const minutes = readingTimeMinutes(p.bodyIsHtml ? stripHtml(p.bodyMdx) : p.bodyMdx);
               const tag = p.keywords[0];
               return (
                 <Link

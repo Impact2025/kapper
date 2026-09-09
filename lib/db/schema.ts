@@ -198,6 +198,10 @@ export const blogPosts = pgTable(
     audioTitle: text("audio_title"),
     audioDurationSeconds: integer("audio_duration_seconds"),
     transcript: text("transcript"),
+    // true for posts pushed in by the AgentOS publish pipeline (body is
+    // pre-rendered HTML from a reviewed, non-user-facing source) instead of
+    // the admin editor's Markdown.
+    bodyIsHtml: boolean("body_is_html").default(false).notNull(),
     authorId: uuid("author_id").references(() => users.id, { onDelete: "set null" }),
     publishedAt: timestamp("published_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),

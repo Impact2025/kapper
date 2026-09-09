@@ -16,6 +16,7 @@ interface PostData {
   metaDescription: string | null;
   keywords: string[];
   bodyMdx: string;
+  bodyIsHtml: boolean;
   coverImage: string | null;
   coverImageAlt: string | null;
   audioUrl: string | null;
@@ -176,7 +177,23 @@ export function PostEditor({ post }: { post: PostData }) {
 
         <Field label="Inhoud">
           <input type="hidden" name="bodyMdx" value={bodyMdx} />
-          <RichTextEditor content={bodyMdx} onChange={setBodyMdx} placeholder="Start met schrijven…" />
+          {post.bodyIsHtml ? (
+            <div className="rounded-lg border border-outline-variant bg-surface-container-low p-md">
+              <p className="mb-sm flex items-center gap-xs text-label-md font-label-md text-secondary">
+                <Icon name="smart_toy" className="text-[18px]" />
+                Dit artikel komt uit AgentOS (al gereviewd en HTML-opgemaakt). Bewerken hier
+                gebeurt als kale HTML — de rich text editor werkt niet op dit formaat.
+              </p>
+              <textarea
+                value={bodyMdx}
+                onChange={(e) => setBodyMdx(e.target.value)}
+                rows={16}
+                className={`${inputCls} w-full font-mono text-label-sm`}
+              />
+            </div>
+          ) : (
+            <RichTextEditor content={bodyMdx} onChange={setBodyMdx} placeholder="Start met schrijven…" />
+          )}
         </Field>
 
         {/* Podcast / audio */}

@@ -1,0 +1,1 @@
+ALTER TABLE "blog_posts" ADD COLUMN "body_is_html" boolean DEFAULT false NOT NULL;

@@ -34,6 +34,10 @@ const serverSchema = z.object({
   // Cron protection
   CRON_SECRET: z.string().optional(),
 
+  // AgentOS publish pipeline (POST/DELETE /api/publish) — Bearer auth,
+  // matches {SITENAME}_PUBLISH_KEY in AgentOS's own .env.
+  PUBLISH_API_KEY: z.string().optional(),
+
   // AI Receptionist
   WATI_BASE_URL: z.string().url().optional(), // e.g. https://live-server-XXX.wati.io
   WATI_API_KEY: z.string().optional(),        // WATI Bearer token / webhook signing key

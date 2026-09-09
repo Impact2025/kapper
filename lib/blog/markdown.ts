@@ -104,3 +104,12 @@ export function readingTimeMinutes(md: string): number {
   const words = stripMarkdown(md).split(/\s+/).filter(Boolean).length;
   return Math.max(1, Math.round(words / 200));
 }
+
+/** Strip HTML tags to plain text (for posts pushed in as pre-rendered HTML). */
+export function stripHtml(html: string): string {
+  return html
+    .replace(/<[^>]+>/g, " ")
+    .replace(/&nbsp;/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
