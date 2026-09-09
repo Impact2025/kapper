@@ -7,12 +7,12 @@ import { cn } from "@/lib/utils";
 export function PricingCards() {
   return (
     <>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-lg items-start">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-lg items-stretch">
         {PLANS.map((plan) => (
           <div
             key={plan.id}
             className={cn(
-              "bg-white p-lg rounded-xl flex flex-col hover-lift relative",
+              "bg-white p-lg rounded-xl flex flex-col hover-lift relative h-full",
               plan.popular
                 ? "shadow-xl border-2 border-primary md:scale-105 z-10"
                 : "soft-shadow border border-outline-variant",
@@ -56,9 +56,10 @@ export function PricingCards() {
           </div>
         ))}
       </div>
-      <p className="text-center font-label-sm text-label-sm text-on-surface-variant mt-lg">
-        Eenmalige setup-fee vanaf {formatEur(SETUP_FEE_FROM)} voor configuratie van
-        prijslijst, API-koppeling en WhatsApp-platform.
+      <p className="text-center font-label-md text-label-md text-on-surface mt-lg">
+        <Icon name="info" className="text-on-surface-variant text-[16px] align-[-3px] mr-xs" />
+        Eenmalige setup-fee vanaf <strong>{formatEur(SETUP_FEE_FROM)}</strong> voor
+        configuratie van prijslijst, API-koppeling en WhatsApp-platform.
       </p>
     </>
   );

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { Icon } from "@/components/ui/icon";
 import { ButtonLink } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -20,7 +21,15 @@ export function SiteHeader() {
   return (
     <header className="bg-surface/80 backdrop-blur-md sticky top-0 z-50 shadow-sm">
       <nav className="flex justify-between items-center w-full px-margin-mobile md:px-xl py-base max-w-container-max mx-auto">
-        <Link href="/" className="flex items-center gap-xs">
+        <Link href="/" className="flex items-center gap-sm">
+          <Image
+            src="/logo.png"
+            alt="KapperAssistent logo"
+            width={36}
+            height={36}
+            className="h-9 w-9 object-contain"
+            priority
+          />
           <span className="font-headline-md text-headline-md font-bold text-primary">
             KapperAssistent
           </span>

@@ -82,7 +82,7 @@ export default function HomePage() {
         <div className="max-w-container-max mx-auto px-margin-mobile md:px-xl grid grid-cols-1 lg:grid-cols-2 gap-lg items-center">
           <div className="z-10 order-2 lg:order-1">
             <span className="inline-block px-sm py-xs bg-primary-fixed text-on-primary-fixed-variant rounded-full font-label-sm text-label-sm mb-md uppercase tracking-wider">
-              De rust die je verdient
+              Voorkom no-shows &amp; gemiste afspraken
             </span>
             <h1 className="font-display-lg text-display-lg md:text-[56px] leading-[1.1] mb-md text-on-surface">
               Nooit meer een rinkelende telefoon terwijl je knipt.
@@ -97,12 +97,25 @@ export default function HomePage() {
               </ButtonLink>
               <ButtonLink
                 href="/#hoe-het-werkt"
-                variant="outline"
+                variant="ghost"
                 size="lg"
-                className="rounded-lg border-secondary text-secondary"
+                className="rounded-lg bg-secondary text-on-secondary hover:opacity-90"
               >
                 Bekijk hoe het werkt
               </ButtonLink>
+            </div>
+            <div className="mt-lg grid grid-cols-3 gap-sm max-w-[32rem]">
+              {stats.map((s) => (
+                <div key={s.value} className="flex flex-col items-start gap-xs">
+                  <Icon name={s.icon} className={`${s.fg} text-[22px]`} />
+                  <p className="font-label-md text-label-md font-bold text-on-surface leading-tight">
+                    {s.value}
+                  </p>
+                  <p className="font-label-sm text-label-sm text-on-surface-variant leading-tight">
+                    {s.label}
+                  </p>
+                </div>
+              ))}
             </div>
           </div>
 
@@ -154,55 +167,30 @@ export default function HomePage() {
       </section>
 
       {/* ---------- Problem & Solution ---------- */}
-      <section id="voordelen" className="bg-surface-container-low py-xl">
+      <section id="voordelen" className="bg-surface-container-low py-lg">
         <div className="max-w-container-max mx-auto px-margin-mobile md:px-xl">
-          <div className="flex flex-col lg:flex-row gap-xl items-center">
-            <div className="w-full lg:w-1/2">
-              <h2 className="font-headline-lg text-headline-lg mb-md text-on-surface">
-                Focus op je vak, niet op de telefoon.
-              </h2>
-              <p className="font-body-lg text-body-lg text-on-surface-variant leading-relaxed">
-                Je bent net bezig met een balayage of een strakke overloop en de
-                telefoon gaat... Weer een onderbreking. KapperAssistent is de
-                perfecte digitale receptioniste die 24/7 vloeiend Nederlands praat
-                via telefoon en WhatsApp. Wij boeken, verzetten en voorkomen
-                no-shows terwijl jij doet waar je goed in bent.
-              </p>
-              <div className="mt-lg grid grid-cols-1 sm:grid-cols-2 gap-md">
-                <div className="flex items-start gap-sm">
-                  <Icon name="verified_user" className="text-primary" />
-                  <p className="font-label-md text-label-md text-on-surface">
-                    Nooit meer storende oproepen
-                  </p>
-                </div>
-                <div className="flex items-start gap-sm">
-                  <Icon name="schedule" className="text-primary" />
-                  <p className="font-label-md text-label-md text-on-surface">
-                    24/7 bereikbaar voor klanten
-                  </p>
-                </div>
-              </div>
-            </div>
-            <div className="w-full lg:w-1/2 grid grid-cols-2 gap-md">
-              <div className="bg-white p-lg rounded-xl soft-shadow flex flex-col items-center text-center hover-lift">
-                <Icon name="trending_up" className="text-primary text-[40px] mb-sm" />
-                <span className="font-display-lg text-[36px] text-primary mb-xs">
-                  +25%
-                </span>
-                <p className="font-label-md text-label-md text-on-surface-variant">
-                  Meer boekingen
+          <div className="max-w-[40rem] mx-auto text-center">
+            <h2 className="font-headline-lg text-headline-lg mb-md text-on-surface">
+              Focus op je vak, niet op de telefoon.
+            </h2>
+            <p className="font-body-lg text-body-lg text-on-surface-variant leading-relaxed">
+              Je bent net bezig met een balayage of een strakke overloop en de
+              telefoon gaat... Weer een onderbreking. KapperAssistent is de
+              perfecte digitale receptioniste die 24/7 vloeiend Nederlands praat
+              via telefoon en WhatsApp. Wij boeken, verzetten en voorkomen
+              no-shows terwijl jij doet waar je goed in bent.
+            </p>
+            <div className="mt-lg flex flex-col sm:flex-row justify-center gap-md">
+              <div className="flex items-center gap-sm">
+                <Icon name="verified_user" className="text-primary" />
+                <p className="font-label-md text-label-md text-on-surface">
+                  Nooit meer storende oproepen
                 </p>
               </div>
-              <div className="bg-white p-lg rounded-xl soft-shadow flex flex-col items-center text-center hover-lift mt-lg">
-                <Icon
-                  name="history_toggle_off"
-                  className="text-secondary text-[40px] mb-sm"
-                />
-                <span className="font-display-lg text-[36px] text-secondary mb-xs">
-                  10+ uur
-                </span>
-                <p className="font-label-md text-label-md text-on-surface-variant">
-                  Tijdwinst per week
+              <div className="flex items-center gap-sm">
+                <Icon name="schedule" className="text-primary" />
+                <p className="font-label-md text-label-md text-on-surface">
+                  24/7 bereikbaar voor klanten
                 </p>
               </div>
             </div>
@@ -211,7 +199,7 @@ export default function HomePage() {
       </section>
 
       {/* ---------- How it works ---------- */}
-      <section id="hoe-het-werkt" className="py-xl bg-surface">
+      <section id="hoe-het-werkt" className="py-lg bg-surface">
         <div className="max-w-container-max mx-auto px-margin-mobile md:px-xl">
           <div className="text-center mb-xl">
             <h2 className="font-headline-lg text-headline-lg text-on-surface mb-sm">
@@ -242,9 +230,9 @@ export default function HomePage() {
       </section>
 
       {/* ---------- Social proof ---------- */}
-      <section className="py-xl bg-surface-container-highest">
+      <section className="py-lg bg-surface-container-highest">
         <div className="max-w-container-max mx-auto px-margin-mobile md:px-xl">
-          <div className="flex flex-col items-center text-center mb-xl">
+          <div className="flex flex-col items-center text-center">
             <div className="flex gap-xs mb-sm">
               {Array.from({ length: 5 }).map((_, i) => (
                 <Icon key={i} name="star" filled className="text-secondary" />
@@ -255,37 +243,20 @@ export default function HomePage() {
               terwijl de boekingen gewoon binnenstromen. Ik kan me 100%
               concentreren op mijn klanten.&quot;
             </blockquote>
-            <cite className="font-label-md text-label-md text-on-surface-variant not-italic">
-              — Salonhouder, Amsterdam
-            </cite>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-md">
-            {stats.map((s) => (
-              <div
-                key={s.value}
-                className="bg-white p-lg rounded-xl soft-shadow flex gap-md items-center"
-              >
-                <div
-                  className={`w-12 h-12 rounded-lg ${s.bg} flex items-center justify-center`}
-                >
-                  <Icon name={s.icon} className={s.fg} />
-                </div>
-                <div>
-                  <p className="font-label-md text-label-md font-bold text-on-surface">
-                    {s.value}
-                  </p>
-                  <p className="font-label-sm text-label-sm text-on-surface-variant">
-                    {s.label}
-                  </p>
-                </div>
+            <div className="flex items-center gap-sm">
+              <div className="w-10 h-10 rounded-full bg-primary-fixed flex items-center justify-center">
+                <Icon name="person" className="text-on-primary-fixed-variant text-[20px]" />
               </div>
-            ))}
+              <cite className="font-label-md text-label-md text-on-surface-variant not-italic">
+                Salonhouder, Amsterdam
+              </cite>
+            </div>
           </div>
         </div>
       </section>
 
       {/* ---------- Pricing ---------- */}
-      <section id="prijzen" className="py-xl bg-surface">
+      <section id="prijzen" className="py-lg bg-surface">
         <div className="max-w-container-max mx-auto px-margin-mobile md:px-xl">
           <div className="text-center mb-xl">
             <h2 className="font-headline-lg text-headline-lg text-on-surface mb-sm">
