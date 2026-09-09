@@ -69,6 +69,42 @@ async function findSalonByAssistantId(assistantId: string): Promise<typeof salon
   return null;
 }
 
+/**
+ * Live tool-calls arrive while the call is still in progress, but the
+ * `conversations` row for this call is normally only created afterwards, in
+ * the end-of-call-report handler below. A booking made mid-call needs a real
+ * `conversations.id` to satisfy `appointments.conversation_id`'s foreign
+ * key — Vapi's own call id is never a row in that table, so passing it
+ * straight through crashed every phone booking with an FK violation.
+ * Find-or-create by `externalId` (the Vapi call id) so every tool-call
+ * during the same call reuses one row, and the end-of-call handler later
+ * finishes that same row instead of inserting a duplicate.
+ */
+async function findOrCreateLiveConversation(
+  salonId: string,
+  vapiCallId: string,
+  customerPhone: string,
+): Promise<string> {
+  const [existing] = await db
+    .select({ id: conversations.id })
+    .from(conversations)
+    .where(eq(conversations.externalId, vapiCallId))
+    .limit(1);
+  if (existing) return existing.id;
+
+  const [created] = await db
+    .insert(conversations)
+    .values({
+      salonId,
+      channel: "phone",
+      externalId: vapiCallId,
+      phoneNumber: customerPhone || null,
+      status: "active",
+    })
+    .returning({ id: conversations.id });
+  return created!.id;
+}
+
 /** Handle a live tool-call during the call — Vapi's own model decided to
  * call one of our tools and is waiting synchronously for the result. */
 async function handleToolCalls(payload: VapiPayload) {
@@ -87,6 +123,10 @@ async function handleToolCalls(payload: VapiPayload) {
   }
 
   const salonContext = await loadSalonContext(salon);
+  const vapiCallId = message.call?.id ?? "";
+  const conversationId = vapiCallId
+    ? await findOrCreateLiveConversation(salon.id, vapiCallId, customerPhone)
+    : null;
   const results = await Promise.all(
     toolCalls.map(async (tc) => {
       try {
@@ -95,7 +135,7 @@ async function handleToolCalls(payload: VapiPayload) {
           tc.function.arguments ?? {},
           salonContext,
           customerPhone,
-          message.call?.id ?? null,
+          conversationId,
         );
         if (bookedAppointment) {
           await trackEvent({
@@ -161,21 +201,36 @@ export async function POST(req: Request) {
   const salon = assistantId ? await findSalonByAssistantId(assistantId) : null;
   const salonId = salon?.id ?? "";
 
-  // Create conversation record
-  const [conv] = await db
-    .insert(conversations)
-    .values({
-      salonId,
-      channel: "phone",
-      externalId: vapiCallId || null,
-      phoneNumber: customerPhone || null,
-      customerName: customerName || null,
-      status: "closed",
-      closedAt: new Date(),
-    })
-    .returning({ id: conversations.id });
+  // A tool-call during the call may already have created this row (see
+  // findOrCreateLiveConversation) — finish that same row rather than
+  // inserting a duplicate, so any mid-call booking stays linked to it.
+  const [existingConv] = vapiCallId
+    ? await db.select({ id: conversations.id }).from(conversations).where(eq(conversations.externalId, vapiCallId)).limit(1)
+    : [];
 
-  const conversationId = conv!.id;
+  const conversationId = existingConv
+    ? existingConv.id
+    : (
+        await db
+          .insert(conversations)
+          .values({
+            salonId,
+            channel: "phone",
+            externalId: vapiCallId || null,
+            phoneNumber: customerPhone || null,
+            customerName: customerName || null,
+            status: "closed",
+            closedAt: new Date(),
+          })
+          .returning({ id: conversations.id })
+      )[0]!.id;
+
+  if (existingConv) {
+    await db
+      .update(conversations)
+      .set({ customerName: customerName || null, status: "closed", closedAt: new Date() })
+      .where(eq(conversations.id, conversationId));
+  }
 
   // Persist transcript as messages — skip system prompts and tool-call noise,
   // those aren't part of the conversation the salon owner should read.
