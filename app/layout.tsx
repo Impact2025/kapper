@@ -48,6 +48,27 @@ export const metadata: Metadata = {
     description:
       "De AI-gedreven operationele cockpit voor de moderne kapsalon.",
   },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
+  },
+};
+
+const organizationJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  name: "KapperAssistent.nl",
+  url: siteUrl,
+  logo: `${siteUrl}/logo.png`,
+  description:
+    "De AI-gedreven operationele cockpit voor de moderne kapsalon. AI-receptie via telefoon en WhatsApp, gekoppeld aan je agenda.",
+  areaServed: "NL",
 };
 
 export default function RootLayout({
@@ -64,6 +85,10 @@ export default function RootLayout({
         <link
           href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap"
           rel="stylesheet"
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }}
         />
       </head>
       <body className="min-h-full flex flex-col font-body-md text-body-md">

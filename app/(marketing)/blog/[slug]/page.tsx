@@ -35,6 +35,11 @@ export async function generateMetadata({
       url: `${publicEnv.NEXT_PUBLIC_SITE_URL}${canonical}`,
       publishedTime: post.publishedAt?.toISOString(),
     },
+    twitter: {
+      card: "summary_large_image",
+      title: post.metaTitle ?? post.title,
+      description: post.metaDescription ?? post.excerpt ?? undefined,
+    },
   };
 }
 
