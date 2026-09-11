@@ -6,7 +6,7 @@ import { Reveal } from "@/components/marketing/reveal";
 export const metadata: Metadata = {
   title: "Diensten — Kille technologie voor warme handen aan de stoel",
   description:
-    "Voice-AI met sub-800ms latentie, WhatsApp met de Middelburg-norm, Intelligent Double-Booking en autonome voorraadbeheer. KapperAssistent legt een schil om jouw salon.",
+    "Voice-AI met sub-800ms latentie, juridisch waterdichte WhatsApp-bevestigingen, Intelligent Double-Booking en autonome voorraadbeheer. KapperAssistent legt een schil om jouw salon.",
   alternates: { canonical: "/diensten" },
 };
 
@@ -32,9 +32,9 @@ const services = [
     bg: "bg-secondary-fixed",
     fg: "text-on-secondary-fixed",
     plan: null,
-    title: "WhatsApp Receptie met de Middelburg-norm",
+    title: "WhatsApp Receptie met juridisch waterdichte bevestiging",
     tagline: "24/7 bereikbaar via WhatsApp Business API",
-    body: "Geen trage appjes meer na sluitingstijd. Onze agent handelt boekingen binnen 60 seconden af. Conform de richtinggevende Middelburg-uitspraak vragen we altijd om een actieve bevestiging van de annuleringsvoorwaarden, waardoor no-shows juridisch kansloos zijn.",
+    body: "Geen trage appjes meer na sluitingstijd. Onze agent handelt boekingen binnen 60 seconden af. We vragen altijd om een actieve bevestiging van de annuleringsvoorwaarden, zodat je bij een no-show sterk staat.",
     bullets: [
       "Officiële WhatsApp Business API (geen consumer app)",
       "Actieve bevestigingsknop (pending_confirmation)",

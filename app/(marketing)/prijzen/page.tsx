@@ -142,7 +142,7 @@ export default function PrijzenPage() {
               Nog twijfels? Start gewoon gratis.
             </h2>
             <p className="font-body-lg text-body-lg opacity-90 mb-xl max-w-[34rem] mx-auto">
-              Laat ons je laten zien hoeveel omzet je nu laat liggen. De scan duurt
+              Wij laten je zien hoeveel omzet je nu laat liggen. De scan duurt
               60 seconden en is volledig vrijblijvend.
             </p>
             <div className="flex flex-col sm:flex-row gap-md justify-center">

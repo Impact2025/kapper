@@ -96,7 +96,7 @@ export default function HomePage() {
               je op met verf aan je handen, of laat je de beller vertrekken naar de
               concurrent? KapperAssistent is jouw digitale salonreceptionist die 24/7 opneemt
               via telefoon en WhatsApp, direct inboekt in jouw vertrouwde agenda en no-shows
-              vrijwel uitsluitend voorkomt.
+              vrijwel volledig voorkomt.
             </p>
             <div className="flex flex-col sm:flex-row gap-md">
               <ButtonLink href="/scan" size="lg" className="rounded-lg">
@@ -135,7 +135,7 @@ export default function HomePage() {
             <div className="relative h-full w-full rounded-3xl overflow-hidden shadow-2xl border-4 border-white">
               <Image
                 src="/hero.png"
-                alt="Kapsster vlechtt haar van klant in een sfeervolle salon"
+                alt="Kapster vlecht haar van klant in een sfeervolle salon"
                 fill
                 priority
                 className="object-cover object-center"
@@ -248,29 +248,30 @@ export default function HomePage() {
             <h2 className="font-display-lg text-display-lg text-on-surface my-md">
               +€106 netto winst per maand
             </h2>
-            <div className="space-y-sm text-left max-w-md mx-auto mb-lg font-body-md text-on-surface-variant">
-              <p className="flex justify-between">
-                <span>Eén geredde balayage per maand</span><span>+ €165</span>
+            <div className="space-y-sm text-left max-w-[28rem] mx-auto mb-lg font-body-md text-on-surface-variant">
+              <p className="flex items-baseline justify-between gap-md">
+                <span className="flex-1">Eén geredde balayage per maand</span>
+                <span className="shrink-0">+ €165</span>
               </p>
-              <p className="flex justify-between">
-                <span>Twee opgevangen knipbeurten buiten openingstijden</span>
-                <span>+ €110</span>
+              <p className="flex items-baseline justify-between gap-md">
+                <span className="flex-1">Twee opgevangen knipbeurten buiten openingstijden</span>
+                <span className="shrink-0">+ €110</span>
               </p>
-              <p className="flex justify-between">
-                <span>Twee voorkomen no-shows via SMS-herinneringen</span>
-                <span>+ €130</span>
+              <p className="flex items-baseline justify-between gap-md">
+                <span className="flex-1">Twee voorkomen no-shows via SMS-herinneringen</span>
+                <span className="shrink-0">+ €130</span>
               </p>
-              <p className="border-t border-outline-variant/40 pt-sm flex justify-between font-bold">
-                <span>Herwonnen omzet per maand</span>
-                <span className="text-primary">+ €405</span>
+              <p className="border-t border-outline-variant/40 pt-sm flex items-baseline justify-between gap-md font-bold">
+                <span className="flex-1">Herwonnen omzet per maand</span>
+                <span className="shrink-0 text-primary">+ €405</span>
               </p>
-              <p className="flex justify-between">
-                <span>Kosten KapperAssistent Pro</span>
-                <span className="text-error">- €299</span>
+              <p className="flex items-baseline justify-between gap-md">
+                <span className="flex-1">Kosten KapperAssistent Pro</span>
+                <span className="shrink-0 text-error">- €299</span>
               </p>
-              <p className="border-t border-outline-variant/40 pt-sm flex justify-between text-lg">
-                <span>Netto winst per maand</span>
-                <span className="text-primary font-bold">+ €106</span>
+              <p className="border-t border-outline-variant/40 pt-sm flex items-baseline justify-between gap-md text-lg">
+                <span className="flex-1">Netto winst per maand</span>
+                <span className="shrink-0 text-primary font-bold">+ €106</span>
               </p>
             </div>
             <p className="font-body-sm text-on-surface-variant">
