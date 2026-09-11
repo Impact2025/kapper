@@ -4,54 +4,56 @@ import { ButtonLink } from "@/components/ui/button";
 import { Reveal } from "@/components/marketing/reveal";
 
 export const metadata: Metadata = {
-  title: "Diensten — Alles voor jouw kapsalon",
+  title: "Diensten — Kile technologie voor warme handen aan de stoel",
   description:
-    "Van AI-receptionist tot SEO-blog: ontdek alle diensten van KapperAssistent.nl die jouw salon meer boekingen en minder stress opleveren.",
+    "Voice-AI met sub-800ms latentie, WhatsApp met de Middelburg-norm, Intelligent Double-Booking en autonome voorraadbeheer. KapperAssistent legt een schil om jouw salon.",
   alternates: { canonical: "/diensten" },
 };
 
 const services = [
   {
-    icon: "forum",
+    icon: "call",
     bg: "bg-primary-fixed",
-    fg: "text-primary",
-    plan: null,
-    title: "AI WhatsApp-assistent",
-    tagline: "24/7 bereikbaar via WhatsApp",
-    body: "Jouw AI-assistent leest elk WhatsApp-bericht, begrijpt de vraag en plant — of verzet — de afspraak direct in jouw agenda. Klanten krijgen binnen seconden een bevestiging, jij hoeft niets te doen.",
+    fg: "text-on-primary-fixed",
+    plan: "Pro & Elite",
+    title: "Voice-AI Telefonist (Sub-800ms)",
+    tagline: "Neemt op als een vriendelijke collega",
+    body: "Terwijl jij een balayage zet, neemt de AI Voice Agent de telefoon op. De stem klinkt natuurlijk, luistert nauwkeurig en verwerkt de boeking direct — zonder wachtrij of voicemail.",
     bullets: [
-      "Boekt, verzet en annuleert afspraken automatisch",
-      "Stuurt bevestigingen en reminders",
-      "Beantwoordt veelgestelde vragen (openingstijden, prijzen, stylisten)",
-      "Spreekt vloeiend Nederlands, altijd vriendelijk",
+      "Responst in minder dan 800 milliseconden",
+      "Herhaalt de gevraagde dienst en stylist exact",
+      "Boekt rechtstreeks in jouw agenda-software",
+      "SIP REFER-duringschakeling naar jouw mobiel bij complexe vragen",
+      "Geen gemiste oproepen, ook buiten openingstijden",
     ],
   },
   {
-    icon: "call",
+    icon: "forum",
     bg: "bg-secondary-fixed",
-    fg: "text-secondary",
-    plan: "Pro & Elite",
-    title: "AI Voice Agent",
-    tagline: "Neemt op als jij niet kunt",
-    body: "Terwijl jij een balayage zet, neemt de AI Voice Agent de telefoon aan. De stem klinkt natuurlijk, luistert nauwkeurig en verwerkt de boeking direct — zonder wachtrij of voicemail.",
+    fg: "text-on-secondary-fixed",
+    plan: null,
+    title: "WhatsApp Receptie met de Middelburg-norm",
+    tagline: "24/7 bereikbaar via WhatsApp Business API",
+    body: "Geen trage appjes meer na sluitingstijd. Onze agent handelt boekingen binnen 60 seconden af. Conform de richtinggevende Middelburg-uitspraak vragen we altijd om een actieve bevestiging van de annuleringsvoorwaarden, waardoor no-shows juridisch kansloos zijn.",
     bullets: [
-      "Neemt op in jouw saloonnaam",
-      "Herkent de gevraagde dienst en stylist",
-      "Boekt rechtstreeks in jouw agenda-software",
-      "Geen gemiste oproepen meer, ook buiten openingstijden",
+      "Officiële WhatsApp Business API (geen consumer app)",
+      "Actieve bevestigingsknop (pending_confirmation)",
+      "Volledige PII-masking conform Artikel 9 AVG",
+      "Beantwoordt veelgestelde vragen direct",
+      "Boekt, verzet en annuleert automatisch",
     ],
   },
   {
     icon: "calendar_month",
     bg: "bg-tertiary-fixed",
-    fg: "text-tertiary",
+    fg: "text-on-tertiary-fixed",
     plan: null,
-    title: "Agenda-koppeling",
-    tagline: "Werkt met jouw bestaande software",
-    body: "KapperAssistent koppelt rechtstreeks op Salonized, Phorest, Treatwell en Acuity. Jij blijft je vertrouwde agenda gebruiken — wij zorgen dat de AI altijd de actuele bezetting ziet.",
+    title: "Intelligent Double-Booking & Agenda-Sync",
+    tagline: "Haal 30% meer omzet uit je stoel",
+    body: "Sluit naadloos aan op Salonized, Phorest, Treatwell en Acuity. Ons algoritme herkent automatisch de chemische inwerktijd van een balayage of kleuring (Fase 2) en plant in dat vrije gat moeiteloos een herensnit of fohnbehandeling in. Maximale bezetting zonder overspannen personeel.",
     bullets: [
       "Directe sync: geen dubbele boekingen",
-      "Intelligente inwerktijden per stylist",
+      "Herhaalt inwerktijden automatisch (bv. 35–45 min bij kleuring)",
       "Multi-agenda support voor meerdere vestigingen (Elite)",
       "Setup door ons team, jij hoeft niets technisch te doen",
     ],
@@ -59,46 +61,46 @@ const services = [
   {
     icon: "event_busy",
     bg: "bg-primary-fixed",
-    fg: "text-primary",
+    fg: "text-on-primary-fixed",
     plan: null,
-    title: "No-show preventie",
+    title: "No-show Preventie",
     tagline: "Minder lege stoelen, meer omzet",
-    body: "Elke no-show kost je gemiddeld €40–€80. KapperAssistent stuurt automatisch een herinnering op het juiste moment via SMS of WhatsApp. Klanten bevestigen met één klik — of je weet het op tijd.",
+    body: "Elke no-show kost je gemiddeld €40–€80. KapperAssistent stuurt op het perfecte moment een herinnering via SMS (98% open rate) of WhatsApp. Klanten bevestigen met één woord — of je weet het op tijd om de plek op te vullen.",
     bullets: [
-      "Automatische SMS-herinneringen",
-      "WhatsApp-bevestigingsverzoeken (Pro+)",
-      "Slimme timing: 48 uur én 2 uur van tevoren",
+      "Automatische SMS-herinneringen op 48u en 2u vooraf",
+      "WhatsApp-bevestigingsverzoeken (aanpasbaar per stylistschema)",
       "No-show rate daalt gemiddeld naar onder de 2%",
-    ],
-  },
-  {
-    icon: "edit_note",
-    bg: "bg-secondary-fixed",
-    fg: "text-secondary",
-    plan: "Elite",
-    title: "Auto-Blog SEO-engine",
-    tagline: "Word gevonden door nieuwe klanten",
-    body: "De Auto-Blog engine schrijft maandelijks originele blogartikelen op basis van jouw diensten, locatie en actuele trends in de kapperssector. Google indexeert ze — nieuwe klanten vinden jou.",
-    bullets: [
-      "AI schrijft relevante, lokale content",
-      "SEO-geoptimaliseerd met meta-tags en JSON-LD",
-      "Gepubliceerd op jouw eigen domein",
-      "Geen schrijfwerk, geen contentbureau nodig",
+      "Gedifferentieerde aanbetalingen bij langdurige behandelingen",
     ],
   },
   {
     icon: "insights",
-    bg: "bg-tertiary-fixed",
-    fg: "text-tertiary",
-    plan: "Alle plannen",
-    title: "Analytics & Rapportages",
-    tagline: "Weet precies wat jouw AI doet",
-    body: "In je dashboard zie je realtime hoeveel boekingen, WhatsApp-berichten en telefoongesprekken jouw AI heeft afgehandeld. Elite-klanten ontvangen maandelijks een ROI-audit met concrete verbeterpunten.",
+    bg: "bg-secondary-fixed",
+    fg: "text-on-secondary-fixed",
+    plan: "Elite",
+    title: "Lokale SEO & Reputatie-Engine",
+    tagline: "Word gevonden als eerste op Google Maps",
+    body: "Consumenten kiezen met hun duim op Google Maps. Onze geautomatiseerde post-behandeling vraagt tevreden klanten 90 minuten na hun bezoek via WhatsApp om een recensie. De ingebouwde blog-engine publiceert autonome, geoptimaliseerde content waardoor jij lokaal onverslaanbaar wordt.",
     bullets: [
-      "Live metrics: boekingen, calls, WhatsApp, no-shows",
-      "Vergelijk maand-op-maand prestaties",
-      "Maandelijkse ROI-audit rapport per e-mail (Elite)",
-      "Exporteer data altijd naar CSV",
+      "AI schrijft relevante, lokale content",
+      "SEO-geoptimaliseerd met meta-tags en JSON-LD",
+      "Automatische recensieverzoeken na afspraak",
+      "Gepubliceerd op jouw eigen domein",
+    ],
+  },
+  {
+    icon: "inventory_2",
+    bg: "bg-tertiary-fixed",
+    fg: "text-on-tertiary-fixed",
+    plan: "Pro & Elite",
+    title: "Autonome Voorraad- & Praktijkbeheer",
+    tagline: "Nooit meer misgrijpen naar blondeerpoeder",
+    body: "Onze Inventory Agent analyseert je 30-daagse verkoopsnelheid en signaleert tijdig wanneer voorraden onder de drempelwaarde zakken. Inclusief maandelijkse rapportages over beschermde omzet, geredde calls en tijdwinst.",
+    bullets: [
+      "Automatische herbestelsuggesties (30-dagenanalyse)",
+      "Realtime voorraadwaarschuwingen",
+      "Maandelijkse geautomatiseerde rapportages",
+      "Stripe checkout voor webshop-artikelen",
     ],
   },
 ];
@@ -112,26 +114,26 @@ const integrations = [
   { name: "Stripe", icon: "credit_card" },
 ];
 
-const steps = [
+const howSteps = [
   {
     n: "01",
-    title: "Koppel je agenda",
-    body: "Onze AI integreert direct met Salonized, Phorest of Treatwell. Klaar in 5 minuten.",
+    title: "White-glove setup",
+    body: "Onze specialisten koppelen jouw agenda binnen 48 uur. Geen technische hobbels — wij regelen de API-verbinding heimelijk achter de schermen.",
   },
   {
     n: "02",
-    title: "Stel je regels in",
-    body: '"Sanne doet alleen kleur, Amber knipt heren." De AI leert wie wat doet.',
+    title: "Jij bepaalt de regels",
+    body: "Wie knipt wat? Welke inwerktijden heeft een kleuring? De AI leert jouw salonfilosofie tot in details kennen.",
   },
   {
     n: "03",
-    title: "Ga live",
-    body: "Activeer WhatsApp en/of telefoon. Boekingen komen binnen terwijl jij knipt.",
+    title: "Gaat live",
+    body: "Activeer telefoon en/of WhatsApp. Boekingen komen binnen terwijl jij knipt.",
   },
   {
     n: "04",
-    title: "Groei zonder stress",
-    body: "Bekijk je metrics, ontvang je maandrapport en geniet van een volle agenda.",
+    title: "Rust & groei",
+    body: "Bekijk je metrics en ontvang maandelijks je ROI-rapport. Geniet van een volle agenda.",
   },
 ];
 
@@ -166,15 +168,16 @@ export default function DienstenPage() {
             Onze diensten
           </span>
           <h1 className="font-display-lg text-display-lg md:text-[56px] leading-[1.1] text-on-surface mb-md max-w-3xl mx-auto">
-            Alles wat jouw kapsalon nodig heeft, op één plek.
+            Kille technologie voor warme handen aan de behandelstoel.
           </h1>
           <p className="font-body-lg text-body-lg text-on-surface-variant max-w-2xl mx-auto mb-xl">
-            Van AI-receptionist tot slimme no-show preventie en lokale SEO — KapperAssistent
-            neemt het werk over zodat jij je kunt focussen op je vak.
+            Geen log softwarepakket dat je dwingt om je hele werkwijze om te gooien.
+            KapperAssistent legt een intelligente, autonome schil om jouw bestaande salonpraktijk.
+            Wij vangen de ruis weg, zodat jij je kunt focussen op je vakmanschap.
           </p>
           <div className="flex flex-col sm:flex-row gap-md justify-center">
             <ButtonLink href="/scan" size="lg" className="rounded-lg">
-              Start gratis proefperiode
+              Bereken gratis je gemiste omzet
             </ButtonLink>
             <ButtonLink
               href="/prijzen"
@@ -205,7 +208,7 @@ export default function DienstenPage() {
                   >
                     <Icon name={s.icon} className={`${s.fg} text-[24px]`} />
                   </div>
-                  <p className="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider mb-xs">
+                  <p className={`font-label-sm text-label-sm uppercase tracking-wider mb-xs`}>
                     {s.tagline}
                   </p>
                   <h2 className="font-headline-md text-headline-md text-on-surface mb-sm">
@@ -216,8 +219,14 @@ export default function DienstenPage() {
                   </p>
                   <ul className="space-y-xs">
                     {s.bullets.map((b) => (
-                      <li key={b} className="flex items-start gap-sm font-label-md text-label-md text-on-surface">
-                        <Icon name="check_circle" className="text-primary text-[18px] mt-px shrink-0" />
+                      <li
+                        key={b}
+                        className="flex items-start gap-sm font-label-md text-label-md text-on-surface"
+                      >
+                        <Icon
+                          name="check_circle"
+                          className="text-primary text-[18px] mt-px shrink-0"
+                        />
                         {b}
                       </li>
                     ))}
@@ -240,9 +249,9 @@ export default function DienstenPage() {
               Jouw AI-receptionist werkt terwijl jij knipt.
             </h2>
             <p className="font-body-lg text-body-lg text-on-surface-variant leading-relaxed">
-              De combinatie van WhatsApp én telefoon betekent dat geen enkele klant meer verloren gaat.
-              Of ze nu appen of bellen — altijd wordt er direct en vriendelijk gereageerd.
-              De afspraak staat binnen 60 seconden in je agenda.
+              De combinatie van WhatsApp en telefoon betekent dat geen enkele klant meer
+              verloren gaat. Of ze nu appen of bellen — altijd wordt er direct en vriendelijk
+              gereaced. De afspraak staat binnen 60 seconden in je agenda.
             </p>
             <div className="grid grid-cols-2 gap-md pt-sm">
               {[
@@ -257,8 +266,12 @@ export default function DienstenPage() {
                 >
                   <Icon name={stat.icon} className="text-primary text-[22px]" />
                   <div>
-                    <p className="font-label-sm text-label-sm text-on-surface-variant">{stat.label}</p>
-                    <p className="font-label-md text-label-md text-on-surface font-medium">{stat.value}</p>
+                    <p className="font-label-sm text-label-sm text-on-surface-variant">
+                      {stat.label}
+                    </p>
+                    <p className="font-label-md text-label-md text-on-surface font-medium">
+                      {stat.value}
+                    </p>
                   </div>
                 </div>
               ))}
@@ -278,17 +291,26 @@ export default function DienstenPage() {
                   <p className="font-label-sm text-label-sm text-on-surface">
                     Hoi, kan ik volgende week dinsdag om 10 uur knippen bij Amber?
                   </p>
-                  <p className="font-label-sm text-label-sm text-on-surface-variant text-[10px] mt-xs">Klant · 09:14</p>
+                  <p className="font-label-sm text-label-sm text-on-surface-variant text-[10px] mt-xs">
+                    Klant · 09:14
+                  </p>
                 </div>
                 <div className="bg-primary rounded-2xl rounded-tr-sm p-sm max-w-[75%] ml-auto soft-shadow">
                   <p className="font-label-sm text-label-sm text-on-primary">
-                    Hoi! Dinsdag 22 juli om 10:00 bij Amber is beschikbaar. Zal ik deze afspraak voor je inplannen? 😊
+                    Hoi! Dinsdag 22 juli om 10:00 bij Amber is beschikbaar. Zal ik deze
+                    afspraak voor je inplannen?
                   </p>
-                  <p className="font-label-sm text-label-sm text-on-primary/70 text-[10px] mt-xs">AI-assistent · 09:14</p>
+                  <p className="font-label-sm text-label-sm text-on-primary/70 text-[10px] mt-xs">
+                    AI-assistent · 09:14
+                  </p>
                 </div>
                 <div className="bg-white rounded-2xl rounded-tl-sm p-sm max-w-[40%] soft-shadow">
-                  <p className="font-label-sm text-label-sm text-on-surface">Ja, graag!</p>
-                  <p className="font-label-sm text-label-sm text-on-surface-variant text-[10px] mt-xs">Klant · 09:15</p>
+                  <p className="font-label-sm text-label-sm text-on-surface">
+                    Ja, graag!
+                  </p>
+                  <p className="font-label-sm text-label-sm text-on-surface-variant text-[10px] mt-xs">
+                    Klant · 09:15
+                  </p>
                 </div>
               </div>
               {/* Confirmation badge */}
@@ -297,71 +319,16 @@ export default function DienstenPage() {
                   <Icon name="check" className="text-on-primary text-[18px]" />
                 </div>
                 <div>
-                  <p className="font-label-md text-label-md text-on-surface font-medium">Afspraak bevestigd</p>
-                  <p className="font-label-sm text-label-sm text-on-surface-variant">Di 22 jul · 10:00 · Amber</p>
+                  <p className="font-label-md text-label-md text-on-surface font-medium">
+                    Afspraak bevestigd
+                  </p>
+                  <p className="font-label-sm text-label-sm text-on-surface-variant">
+                    Di 22 jul · 10:00 · Amber
+                  </p>
                 </div>
                 <span className="ml-auto font-label-sm text-label-sm text-primary bg-primary-fixed px-sm py-xs rounded-full">
-                  In agenda ✓
+                  In agenda
                 </span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ── Deep dive: no-show preventie ── */}
-      <section className="py-xl bg-surface-container-low">
-        <div className="max-w-container-max mx-auto px-margin-mobile md:px-xl grid grid-cols-1 lg:grid-cols-2 gap-xl items-center">
-          {/* Visual */}
-          <div className="relative h-[380px] order-2 lg:order-1">
-            <div className="absolute inset-0 bg-secondary/5 rounded-3xl rotate-2 scale-105" />
-            <div className="relative h-full rounded-3xl bg-gradient-to-br from-secondary-container to-secondary-fixed overflow-hidden shadow-xl flex flex-col justify-center gap-md p-lg">
-              {[
-                { icon: "notifications", label: "48u van tevoren", msg: "Herinnering: morgen om 14:00 bij Sanne. Bevestig met 'JA'.", color: "bg-primary-fixed text-primary" },
-                { icon: "check_circle", label: "Klant bevestigt", msg: "JA", color: "bg-secondary-fixed text-secondary" },
-                { icon: "event_available", label: "2u van tevoren", msg: "Tot zo! Parkeren kan op het Marktplein.", color: "bg-tertiary-fixed text-tertiary" },
-              ].map((item, i) => (
-                <Reveal key={item.label} delay={i * 100}>
-                  <div className="glass-card rounded-xl p-md flex gap-sm items-start">
-                    <div className={`w-9 h-9 rounded-full ${item.color.split(" ")[0]} flex items-center justify-center shrink-0`}>
-                      <Icon name={item.icon} className={`${item.color.split(" ")[1]} text-[18px]`} />
-                    </div>
-                    <div>
-                      <p className="font-label-sm text-label-sm text-on-surface-variant">{item.label}</p>
-                      <p className="font-label-md text-label-md text-on-surface">{item.msg}</p>
-                    </div>
-                  </div>
-                </Reveal>
-              ))}
-            </div>
-          </div>
-
-          <div className="space-y-md order-1 lg:order-2">
-            <span className="inline-block px-sm py-xs bg-secondary-fixed text-secondary rounded-full font-label-sm text-label-sm uppercase tracking-wider">
-              No-show preventie
-            </span>
-            <h2 className="font-headline-lg text-headline-lg text-on-surface leading-tight">
-              Elke lege stoel kost je €40 tot €80.
-            </h2>
-            <p className="font-body-lg text-body-lg text-on-surface-variant leading-relaxed">
-              KapperAssistent stuurt op het perfecte moment een herinnering via SMS of WhatsApp.
-              Klanten bevestigen met één woord — of je weet het op tijd om de plek op te vullen.
-              Salons zien hun no-show rate dalen naar onder de 2%.
-            </p>
-            <div className="flex gap-lg pt-sm">
-              <div className="text-center">
-                <p className="font-display-lg text-[40px] text-secondary font-bold">&lt;2%</p>
-                <p className="font-label-sm text-label-sm text-on-surface-variant">No-show rate</p>
-              </div>
-              <div className="w-px bg-outline-variant" />
-              <div className="text-center">
-                <p className="font-display-lg text-[40px] text-primary font-bold">€960</p>
-                <p className="font-label-sm text-label-sm text-on-surface-variant">Meer omzet p/maand</p>
-              </div>
-              <div className="w-px bg-outline-variant" />
-              <div className="text-center">
-                <p className="font-display-lg text-[40px] text-on-surface font-bold">2×</p>
-                <p className="font-label-sm text-label-sm text-on-surface-variant">Herinneringen p/afspraak</p>
               </div>
             </div>
           </div>
@@ -381,13 +348,15 @@ export default function DienstenPage() {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-md relative">
             <div className="hidden md:block absolute top-8 left-base right-base h-[2px] bg-outline-variant/40 z-0" />
-            {steps.map((s, i) => (
+            {howSteps.map((s, i) => (
               <Reveal key={s.n} delay={i * 100}>
                 <div className="relative z-10 flex flex-col items-center text-center">
                   <div className="w-16 h-16 rounded-full bg-primary text-on-primary flex items-center justify-center font-headline-md text-[18px] mb-md shadow-lg">
                     {s.n}
                   </div>
-                  <h3 className="font-headline-md text-headline-md text-on-surface mb-xs">{s.title}</h3>
+                  <h3 className="font-headline-md text-headline-md text-on-surface mb-xs">
+                    {s.title}
+                  </h3>
                   <p className="font-body-md text-on-surface-variant">{s.body}</p>
                 </div>
               </Reveal>
@@ -409,7 +378,9 @@ export default function DienstenPage() {
                 className="flex items-center gap-sm bg-white rounded-xl px-md py-sm soft-shadow"
               >
                 <Icon name={item.icon} className="text-primary text-[20px]" />
-                <span className="font-label-md text-label-md text-on-surface">{item.name}</span>
+                <span className="font-label-md text-label-md text-on-surface">
+                  {item.name}
+                </span>
               </div>
             ))}
           </div>
@@ -426,23 +397,23 @@ export default function DienstenPage() {
             </div>
             <div className="relative z-10">
               <h2 className="font-display-lg text-display-lg text-on-primary mb-md">
-                Klaar om te starten?
+                Klaar om de rust te ervaren?
               </h2>
               <p className="font-body-lg text-body-lg text-on-primary/80 mb-xl max-w-[34rem] mx-auto">
-                Probeer KapperAssistent 14 dagen gratis. Geen creditcard, geen lock-in.
-                Ons team regelt de volledige setup voor je.
+                Bereken in 60 seconden hoeveel omzet jij nu mist aan gemiste oproepen en
+                no-shows. Geen verplichtingen.
               </p>
               <div className="flex flex-col sm:flex-row gap-md justify-center">
                 <ButtonLink href="/scan" variant="white" size="lg" className="rounded-lg">
-                  Start gratis proefperiode
+                  Start gratis scan
                 </ButtonLink>
                 <ButtonLink
-                  href="/prijzen"
+                  href="/contact"
                   variant="outline"
                   size="lg"
                   className="rounded-lg border-white/60 text-white hover:bg-white/10"
                 >
-                  Bekijk alle plannen
+                  Neem contact op
                 </ButtonLink>
               </div>
             </div>

@@ -4,86 +4,107 @@ import { ButtonLink } from "@/components/ui/button";
 import { Reveal } from "@/components/marketing/reveal";
 
 export const metadata: Metadata = {
-  title: "Over Ons",
+  title: "Over Ons — KapperAssistent",
   description:
-    "Waarom we KapperAssistent.nl hebben gebouwd: AI-technologie voor de lokale hoofdstraat, op een menselijke en laagdrempelige manier.",
+    "Waarom een oud-welzijnsdirecteur Voice-AI bouwt voor de salon: kille technologie om warme handen aan de stoel vrij te spelen.",
   alternates: { canonical: "/over-ons" },
 };
 
-const values = [
+const principles = [
   {
-    icon: "record_voice_over",
+    icon: "shield",
     bg: "bg-primary-fixed",
-    fg: "text-primary",
-    title: "Menselijke AI",
-    body: "De stemmen en berichten klinken zo natuurlijk dat klanten het verschil nauwelijks merken. Technologie die verbindt in plaats van afstand schept.",
+    fg: "text-on-primary-fixed",
+    title: "Eerlijke AI",
+    body: "Conform Artikel 50 van de EU AI Act is onze AI altijd transparant: we openen direct met wie we zijn. Geen misleidende trucjes, maar razendsnelle spraaktechnologie die dialecten, vaktermen en inwerktijden begrijpt.",
   },
   {
-    icon: "auto_awesome",
+    icon: "lock",
     bg: "bg-secondary-fixed",
-    fg: "text-secondary",
-    title: "Simpelheid boven alles",
-    body: "Geen ingewikkelde dashboards of leercurves. Onze systemen werken geruisloos op de achtergrond, zodat jij je kunt focussen op de klant in de stoel.",
+    fg: "text-on-secondary-fixed",
+    title: "Privacy by Design",
+    body: "Gegevens over hoofdhuidcondities, allergieën en foto's vallen onder Artikel 9 AVG. Wij weigeren te werken met de consumenten-WhatsApp en hosten alles strikt binnen de EER met PII-masking. Veiligheid vóór winstbejag.",
   },
   {
-    icon: "handshake",
+    icon: "nightlight",
     bg: "bg-tertiary-fixed",
-    fg: "text-tertiary",
-    title: "Lokale support",
-    body: "Wij praten jouw taal en helpen je persoonlijk bij de opstart. Geen anonieme helpdesk, maar partners die jouw regio en business begrijpen.",
+    fg: "text-on-tertiary-fixed",
+    title: "Rust boven schaalbaarheid",
+    body: "Wij verkopen geen losse uurtjes of ingewikkelde dashboards. Onze agents werken geruisloos op de achtergrond. Jij staat met twee handen aan de stoel; wij regelen de rest.",
   },
 ];
 
 const milestones = [
   {
     year: "2024",
-    title: "Het idee",
-    body: "Een bevriende salonhouder in Amsterdam vertelt ons dat ze dagelijks 15 tot 20 oproepen mist terwijl ze aan het werk is. Elke gemiste oproep is een gemiste boeking. Wij besluiten dat dit anders kan.",
+    title: "De observatie aan de stoel",
+    body: "Geen theoretische plannen, maar pure ergernis over logge software. Samen met salons in de praktijk brengen we de bereikbaarheidskloof in kaart. Het doel: een agentic systeem dat de telefoon opneemt zónder dat een stylist zijn schaar hoeft neer te leggen.",
   },
   {
     year: "2025",
-    title: "De eerste pilot",
-    body: "We draaien een besloten pilot met zes salons in Amsterdam en Rotterdam. De AI-assistent neemt op, plant in en stuurt herinneringen. Resultaat: gemiddeld 23% meer boekingen in de eerste maand.",
+    title: "De vuurdoop in de praktijk",
+    body: "Een besloten pilot met zes salons in Amsterdam en Rotterdam. We implementeren Voice-AI met een responstijd onder de 800 milliseconden: de beller ervaart een natuurlijk, vloeiend gesprek in plaats van een houterige robot. Het resultaat: 23% meer afspraken direct in de agenda en een daling van no-shows naar minder dan 2%.",
   },
   {
     year: "2026",
-    title: "KapperAssistent.nl live",
-    body: "We openen de deuren voor alle Nederlandse kapsalons. Met WhatsApp Business API, telefonie en een directe koppeling op Salonized, Phorest en Treatwell.",
+    title: "KapperAssistent staat als een huis",
+    body: "We openen de deuren voor salons door heel Nederland. Direct gekoppeld aan Salonized, Phorest en Treatwell, georkestreerd met flexibele n8n-workflows en de officiële WhatsApp Business API. Geen vage IT-projecten, maar de nuchtere €180-iPhone-mentaliteit: pragmatisch gereedschap dat morgen jouw probleem oplost.",
   },
 ];
 
 export default function OverOnsPage() {
   return (
     <>
-      {/* Mission */}
+      {/* Hero / Mission */}
       <section className="relative py-xl px-margin-mobile md:px-xl max-w-container-max mx-auto grid grid-cols-1 lg:grid-cols-12 gap-gutter items-center overflow-hidden">
-        <div className="lg:col-span-6 z-10 space-y-md">
+        <div className="lg:col-span-7 z-10 space-y-base">
           <span className="inline-block px-sm py-xs bg-primary-fixed text-on-primary-fixed-variant rounded-full font-label-sm text-label-sm uppercase tracking-wider">
             Ons verhaal
           </span>
           <h1 className="font-display-lg text-display-lg text-on-surface leading-tight">
-            Wij bouwen de rust die kappers verdienen.
+            Waarom een oud-welzijnsdirecteur Voice-AI bouwt voor de salon.
           </h1>
-          <p className="font-body-lg text-body-lg text-on-surface-variant max-w-[36rem] leading-relaxed">
-            Als je haar knipt, hoef jij niet ook de telefoon op te nemen. Wij geloven
-            dat kappers en stylisten volledig bezig moeten kunnen zijn met hun vak en
-            hun klanten — zonder onderbroken te worden door rinkelende telefoons of
-            WhatsApp-berichten die uren onbeantwoord blijven.
+          <p className="font-body-lg text-body-lg text-on-surface-variant max-w-[40rem] leading-relaxed">
+            Wanneer mensen horen dat ik als voormalig welzijnsdirecteur me druk maak
+            over het aantal keren dat een kapperstelefoon overgaat, kijken sommigen
+            even verrast op. Want: Vincent en AI?
           </p>
-          <p className="font-body-lg text-body-lg text-on-surface-variant max-w-[36rem] leading-relaxed">
-            Daarom brengen wij AI-receptietechnologie naar de lokale hoofdstraat. Niet
-            als kil, afstandelijk systeem — maar als een warme, vloeiend Nederlands
-            sprekende assistent die jouw salon begrijpt en jouw klanten welkom laat voelen.
+          <p className="font-body-lg text-body-lg text-on-surface-variant max-w-[40rem] leading-relaxed">
+            Mijn antwoord aan de keukentafel is altijd hetzelfde: juist omdat ik van
+            mensen houd, omarm ik slimme technologie.
+          </p>
+          <p className="font-body-lg text-body-lg text-on-surface-variant max-w-[40rem] leading-relaxed">
+            In 2014 stapte ik bewust uit de corporate ratrace om er als fulltime vader
+            te zijn voor mijn opgroeiende kinderen. Daar leerde ik de belangrijkste les
+            van mijn leven: als je aandacht versnippert, ben je nergens echt. Jaren
+            later zag ik op de salonvloer exact dezelfde worsteling.
+          </p>
+          <p className="font-body-lg text-body-lg text-on-surface-variant max-w-[40rem] leading-relaxed">
+            Een stylist staat met uiterste precisie een balayage te zetten. Opeens: trrrring.
+            De telefoon aan de balie. Je ziet de spagaat in de ogen van de ondernemer:
+            handschoenen uittrekken en opnemen (waardoor de klant in de stoel zich
+            genegeerd voelt), of laten rinkelen (met een knagend schuldgevoel en
+            omzetverlies)?
+          </p>
+          <p className="font-body-lg text-body-lg text-on-surface-variant max-w-[40rem] leading-relaxed">
+            Uit de praktijk weten we: 35% tot 40% van de oproepen wordt gemist tijdens
+            piekuren. En 85% van de mensen die een voicemail horen, hangt binnen drie
+            seconden op en belt direct de concurrent twee straten verderop. Dat is geen
+            frictie; dat is pure roofbouw op je vakmanschap en je nachtrust.
+          </p>
+          <p className="font-body-lg text-body-lg text-on-surface-variant max-w-[40rem] leading-relaxed">
+            KapperAssistent is niet bedacht in een ivoren toren. Het is gebouwd op één
+            filosofie: kille technologie inzetten om warme handen aan de stoel vrij te
+            spelen.
           </p>
         </div>
-        <div className="lg:col-span-6 relative h-[400px] md:h-[500px] w-full mt-md lg:mt-0">
+        <div className="lg:col-span-5 relative h-[400px] md:h-[500px] w-full mt-xl lg:mt-0">
           <div className="absolute inset-0 bg-primary-fixed rounded-[2rem] translate-x-4 translate-y-4" />
           <div className="relative h-full w-full rounded-[2rem] overflow-hidden soft-shadow">
             <div className="absolute inset-0 bg-gradient-to-br from-primary-container via-primary-fixed-dim to-secondary-fixed" />
             <div className="absolute inset-0 flex items-center justify-center">
-              <Icon name="diversity_3" className="text-white/30 text-[140px]" />
+              <Icon name="psychology" className="text-white/30 text-[120px]" />
             </div>
-            <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
             <div className="absolute bottom-md left-md text-on-primary">
               <p className="font-headline-md text-headline-md font-bold">
                 Het team achter de rust
@@ -96,16 +117,16 @@ export default function OverOnsPage() {
         </div>
       </section>
 
-      {/* Story / milestones */}
+      {/* Reis / Milestones */}
       <section className="bg-surface-container-low py-xl px-margin-mobile md:px-xl">
         <div className="max-w-container-max mx-auto">
           <div className="mb-lg">
             <h2 className="font-headline-lg text-headline-lg text-on-surface mb-sm">
-              Hoe het begon.
+              Onze reis
             </h2>
             <p className="font-body-lg text-body-lg text-on-surface-variant max-w-[40rem]">
-              KapperAssistent is niet gebouwd vanuit een vergaderzaal. Het begon met een
-              eenvoudige observatie op de werkvloer van een kapsalon.
+              KapperAssistent is niet gebouwd vanuit een vergaderzaal. Het is opgegroeid
+              uit de dagelijkse realiteit op salon-vloer.
             </p>
           </div>
           <div className="relative">
@@ -135,17 +156,17 @@ export default function OverOnsPage() {
         </div>
       </section>
 
-      {/* Values */}
+      {/* Principes */}
       <section className="py-xl px-margin-mobile md:px-xl">
         <div className="max-w-container-max mx-auto">
           <div className="mb-lg">
             <h2 className="font-headline-lg text-headline-lg text-on-surface mb-sm">
-              Waar we in geloven.
+              De principes waar we niet aan tornen
             </h2>
             <div className="h-1 w-24 bg-primary-container rounded-full" />
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-gutter">
-            {values.map((v, i) => (
+            {principles.map((v, i) => (
               <Reveal key={v.title} delay={i * 150}>
                 <div className="bg-surface-container-lowest p-md rounded-xl soft-shadow flex flex-col space-y-md h-full">
                   <div
@@ -168,46 +189,64 @@ export default function OverOnsPage() {
         </div>
       </section>
 
-      {/* Impact */}
+      {/* Impact cijfers */}
       <section className="bg-surface-container-low py-xl px-margin-mobile md:px-xl">
         <div className="max-w-container-max mx-auto">
           <div className="glass-card rounded-[2rem] p-lg flex flex-col md:flex-row items-center gap-lg">
             <div className="flex-1 space-y-base">
               <span className="font-label-md text-label-md text-primary uppercase tracking-widest">
-                Onze impact
+                De impact in cijfers
               </span>
               <h2 className="font-display-lg text-display-lg text-on-surface">
                 Meer rust, meer omzet.
               </h2>
               <p className="font-body-lg text-body-lg text-on-surface-variant">
-                Salonhouders besparen gemiddeld 10 uur per week aan telefoontjes en
-                appjes. Dat is tijd die jij terugkrijgt voor je klanten, je team —
-                of gewoon voor jezelf.
+                Salonhouders besparen gemiddeld 10 uur per week aan telefoondruk en
+                appjes. Dat is tijd die jij terugkrijgt voor je klanten, je team — of
+                gewoon voor jezelf.
               </p>
             </div>
-            <div className="flex gap-xl shrink-0">
+            <div className="flex gap-xl shrink-0 flex-wrap justify-center">
               <div className="text-center">
-                <div className="font-display-lg text-display-lg text-primary font-bold">+23%</div>
+                <div className="font-display-lg text-display-lg text-primary font-bold stat-figure">
+                  +23%
+                </div>
                 <p className="font-label-sm text-label-sm text-on-surface-variant mt-xs">
                   Meer boekingen
                 </p>
               </div>
               <div className="w-px bg-outline-variant" />
               <div className="text-center">
-                <div className="font-display-lg text-display-lg text-secondary font-bold">10u</div>
+                <div className="font-display-lg text-display-lg text-secondary font-bold stat-figure">
+                  10u
+                </div>
                 <p className="font-label-sm text-label-sm text-on-surface-variant mt-xs">
                   Tijdwinst p/week
                 </p>
               </div>
               <div className="w-px bg-outline-variant" />
               <div className="text-center">
-                <div className="font-display-lg text-display-lg text-on-surface font-bold">&lt;2%</div>
+                <div className="font-display-lg text-display-lg text-on-surface font-bold stat-figure">
+                  &lt;2%
+                </div>
                 <p className="font-label-sm text-label-sm text-on-surface-variant mt-xs">
                   No-shows
                 </p>
               </div>
             </div>
           </div>
+        </div>
+      </section>
+
+      {/* Closing quote + CTA */}
+      <section className="py-xl px-margin-mobile md:px-xl">
+        <div className="max-w-container-max mx-auto text-center space-y-base">
+          <blockquote className="font-body-lg text-body-lg text-on-surface-variant italic max-w-[36rem] mx-auto leading-relaxed">
+            "Vincent van Munster is sociaal ondernemer, AI-innovator en oprichter van
+            WeAreImpact en KapperAssistent. Als voormalig welzijnsdirecteur én vader van
+            twee kinderen bouwt hij aan AI-oplossingen met één doel: kille technologie
+            inzetten om warme handen en kostbare tijd vrij te spelen."
+          </blockquote>
         </div>
       </section>
 
@@ -235,6 +274,10 @@ export default function OverOnsPage() {
                 Neem contact op
               </ButtonLink>
             </div>
+            <p className="font-label-sm text-label-sm text-on-primary/70 mt-sm">
+              Zullen we eens koffie drinken? Als ondernemer en vader hoor ik graag waar
+              jouw salonpraktijk vandaag de dag écht vastloopt.
+            </p>
           </div>
         </div>
       </section>

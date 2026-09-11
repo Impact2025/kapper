@@ -7,25 +7,27 @@ import { PricingCards } from "@/components/marketing/pricing-cards";
 import { publicEnv } from "@/lib/env";
 
 export const metadata: Metadata = {
-  title: "Focus op je vak, niet op de telefoon",
+  title: "Twee handen aan de stoel. Nul gemiste afspraken aan de balie.",
+  description:
+    "KapperAssistent is je AI-receptionist die 24/7 telefoon en WhatsApp opneemt, direct boekt in jouw agenda en no-shows voorkomt. Sub-800ms Voice-AI. White-glove setup binnen 48 uur.",
   alternates: { canonical: "/" },
 };
 
 const steps = [
   {
     n: 1,
-    title: "Koppel je agenda",
-    body: "Verbind Salonized, Phorest of Treatwell in 5 minuten. Onze AI integreert direct.",
+    title: "Jij koppelt jouw agenda",
+    body: "Of je nu werkt met Salonized, Phorest, Acuity of Treatwell: jij hoeft geen ingewikkelde software te leren of data te migreren. Wij richten de koppeling binnen 48 uur geruisloos voor je op.",
   },
   {
     n: 2,
-    title: "Stel je regels in",
-    body: '"Sanne kleurt, Amber knipt alleen." De AI leert wie wat doet. Jij houdt de regie.',
+    title: "Jij bepaalt de spelregels",
+    body: "Wie knipt wat? Welke behandelingen mogen tegelijkertijd? Hoe lang moet een kleuring inwerken? De AI leert jouw salonfilosofie tot in detail kennen.",
   },
   {
     n: 3,
-    title: "Laat de AI het werk doen",
-    body: "Je receptioniste plant afspraken terwijl jij knipt. Geen gemiste inkomsten meer.",
+    title: "De AI maakt het werk",
+    body: "Vanaf dag één worden telefoontjes en WhatsApp-berichten binnen seconden professioneel beantwoord en ingeboekt. Jij knipt; je agenda loopt vol.",
   },
 ];
 
@@ -85,25 +87,33 @@ export default function HomePage() {
               Voorkom no-shows &amp; gemiste afspraken
             </span>
             <h1 className="font-display-lg text-display-lg md:text-[56px] leading-[1.1] mb-md text-on-surface">
-              Nooit meer een rinkelende telefoon terwijl je knipt.
+              Twee handen aan de stoel.
+              <br />
+              Nul gemiste afspraken aan de balie.
             </h1>
             <p className="font-body-lg text-body-lg text-on-surface-variant mb-xl max-w-[32rem]">
-              Je AI-assistent neemt op via WhatsApp en telefoon. Direct gekoppeld
-              aan jouw agenda, zodat je stoelen volstromen zonder onderbrekingen.
+              Terwijl jij met uiterste precisie een balayage zet, rinkelt de telefoon. Neem
+              je op met verf aan je handen, of laat je de beller vertrekken naar de
+              concurrent? KapperAssistent is jouw digitale salonreceptionist die 24/7 opneemt
+              via telefoon en WhatsApp, direct inboekt in jouw vertrouwde agenda en no-shows
+              vrijwel uitsluitend voorkomt.
             </p>
             <div className="flex flex-col sm:flex-row gap-md">
               <ButtonLink href="/scan" size="lg" className="rounded-lg">
-                Probeer 14 dagen gratis
+                Bereken je gemiste omzet
               </ButtonLink>
               <ButtonLink
-                href="/#hoe-het-werkt"
-                variant="ghost"
+                href="/diensten"
+                variant="outline"
                 size="lg"
-                className="rounded-lg bg-secondary text-on-secondary hover:opacity-90"
+                className="rounded-lg border-secondary text-secondary"
               >
-                Bekijk hoe het werkt
+                Bekijk live demo
               </ButtonLink>
             </div>
+            <p className="font-label-sm text-label-sm text-on-surface-variant mt-sm">
+              Geen creditcard nodig · Binnen 48 uur werkend · Sub-800ms Voice-AI
+            </p>
             <div className="mt-lg grid grid-cols-3 gap-sm max-w-[32rem]">
               {stats.map((s) => (
                 <div key={s.value} className="flex flex-col items-start gap-xs">
@@ -125,7 +135,7 @@ export default function HomePage() {
             <div className="relative h-full w-full rounded-3xl overflow-hidden shadow-2xl border-4 border-white">
               <Image
                 src="/hero.png"
-                alt="Kapster vlechtt haar van klant in een sfeervolle salon"
+                alt="Kapsster vlechtt haar van klant in een sfeervolle salon"
                 fill
                 priority
                 className="object-cover object-center"
@@ -157,7 +167,7 @@ export default function HomePage() {
                     AI Receptioniste
                   </p>
                   <p className="font-label-sm text-label-sm text-on-surface-variant italic">
-                    &quot;Afspraak bevestigd!&quot;
+                    "Afspraak bevestigd!"
                   </p>
                 </div>
               </div>
@@ -174,11 +184,11 @@ export default function HomePage() {
               Focus op je vak, niet op de telefoon.
             </h2>
             <p className="font-body-lg text-body-lg text-on-surface-variant leading-relaxed">
-              Je bent net bezig met een balayage of een strakke overloop en de
-              telefoon gaat... Weer een onderbreking. KapperAssistent is de
-              perfecte digitale receptioniste die 24/7 vloeiend Nederlands praat
-              via telefoon en WhatsApp. Wij boeken, verzetten en voorkomen
-              no-shows terwijl jij doet waar je goed in bent.
+              Je bent net bezig met een balayage of een strakke overloop en de telefoon
+              gaat... Weer een onderbreking. KapperAssistent is de perfecte digitale
+              receptioniste die 24/7 vloeiend Nederlands praat via telefoon en WhatsApp. Wij
+              boeken, verzetten en voorkomen no-shows terwijl jij doet waar je goed in
+              bent.
             </p>
             <div className="mt-lg flex flex-col sm:flex-row justify-center gap-md">
               <div className="flex items-center gap-sm">
@@ -206,8 +216,7 @@ export default function HomePage() {
               In 3 simpele stappen naar een rustige salon.
             </h2>
             <p className="text-on-surface-variant font-body-md max-w-[32rem] mx-auto">
-              Zonder technische kennis binnen een middag live met je eigen
-              AI-assistent.
+              Geen technische kennis nodig. Ons team regelt de setup, jij plukt de vruchten.
             </p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-xl relative">
@@ -229,6 +238,50 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* ---------- ROI callout ---------- */}
+      <section className="py-xl bg-surface-container-low">
+        <div className="max-w-container-max mx-auto px-margin-mobile md:px-xl">
+          <div className="glass-card rounded-[2rem] p-lg md:p-xl text-center max-w-3xl mx-auto">
+            <span className="font-label-sm text-label-sm text-primary uppercase tracking-widest">
+              De rekensom voor jouw salon
+            </span>
+            <h2 className="font-display-lg text-display-lg text-on-surface my-md">
+              Eén geredde balayage per maand = +€165
+            </h2>
+            <div className="space-y-sm text-left max-w-md mx-auto mb-lg font-body-md text-on-surface-variant">
+              <p className="flex justify-between">
+                <span>Eén geredde balayage per maand</span><span>+ €165</span>
+              </p>
+              <p className="flex justify-between">
+                <span>Twee opgevangen knipbeurten buiten openingstijden</span>
+                <span>+ €110</span>
+              </p>
+              <p className="flex justify-between">
+                <span>Twee voorkomen no-shows via SMS-herinneringen</span>
+                <span>+ €130</span>
+              </p>
+              <p className="border-t border-outline-variant/40 pt-sm flex justify-between font-bold">
+                <span>Herwonnen omzet per maand</span>
+                <span className="text-primary">+ €405</span>
+              </p>
+              <p className="flex justify-between">
+                <span>Kosten KapperAssistent Pro</span>
+                <span className="text-error">- €299</span>
+              </p>
+              <p className="border-t border-outline-variant/40 pt-sm flex justify-between text-lg">
+                <span>Netto winst per maand</span>
+                <span className="text-primary font-bold">+ €106</span>
+              </p>
+            </div>
+            <p className="font-body-sm text-on-surface-variant">
+              Als KapperAssistent zich zelf in de eerste 30 dagen niet minimaal dubbel en
+              dwars terugverdient in herwonnen omzet en bespaarde tijd, help ik je persoonlijk
+              om het weer stop te zetten. Zonder kleine lettertjes of wurgcontracten.
+            </p>
+          </div>
+        </div>
+      </section>
+
       {/* ---------- Social proof ---------- */}
       <section className="py-lg bg-surface-container-highest">
         <div className="max-w-container-max mx-auto px-margin-mobile md:px-xl">
@@ -239,9 +292,8 @@ export default function HomePage() {
               ))}
             </div>
             <blockquote className="font-headline-md text-headline-md italic text-on-surface max-w-2xl mb-base">
-              &quot;Eindelijk weer rust in de zaak. Mijn telefoon staat op stil,
-              terwijl de boekingen gewoon binnenstromen. Ik kan me 100%
-              concentreren op mijn klanten.&quot;
+              "Eindelijk weer rust in de zaak. Mijn telefoon staat op stil, terwijl de
+              boekingen gewoon binnenstromen. Ik kan me 100% concentreren op mijn klanten."
             </blockquote>
             <div className="flex items-center gap-sm">
               <div className="w-10 h-10 rounded-full bg-primary-fixed flex items-center justify-center">
@@ -263,8 +315,7 @@ export default function HomePage() {
               Transparante tarieven voor elke salon.
             </h2>
             <p className="text-on-surface-variant font-body-md max-w-[32rem] mx-auto">
-              Vaste prijs per maand. Geen verrassingen, geen variabele
-              minuutkosten.
+              Vaste prijs per maand. Geen verrassingen, geen variabele minuutkosten.
             </p>
           </div>
           <PricingCards />
@@ -280,11 +331,10 @@ export default function HomePage() {
                 Klaar voor meer rust?
               </h2>
               <p className="font-body-lg text-body-lg opacity-90 mb-xl max-w-[36rem] mx-auto">
-                Start vandaag je gratis proefperiode van 14 dagen. Geen creditcard
-                nodig. Stop de chaos, start met KapperAssistent.
+                Start vandaag een gratis scan. Zie direct hoeveel omzet jij nu mist.
               </p>
               <ButtonLink href="/scan" variant="white" size="lg" className="rounded-lg">
-                Probeer nu gratis
+                Bereken nu gratis
               </ButtonLink>
             </div>
           </div>

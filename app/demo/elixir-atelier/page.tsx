@@ -130,10 +130,10 @@ export default function ElixirAtelierPage() {
           </div>
 
           {/* Floating quick booking bar */}
-          <div id="boeken" className="mx-auto -mb-20 mt-10 max-w-5xl px-6 lg:px-10">
+          <div id="boeken" className="mx-auto -mb-20 mt-10 max-w-5xl scroll-mt-24 px-6 lg:px-10">
             <div className="rounded-3xl border border-[#1b1c1a]/[0.06] bg-white p-3 shadow-[0_24px_60px_-16px_rgba(28,24,21,0.18)] sm:p-4">
               <ElixirBookingBar />
-              <p id="chat-hint" className="mt-3 text-center text-[12px] text-[#4d4540]">
+              <p id="chat-hint" className="mt-3 scroll-mt-24 text-center text-[12px] text-[#4d4540]">
                 Onze AI-receptioniste checkt de beschikbaarheid live in de echte agenda.
               </p>
             </div>
@@ -141,7 +141,7 @@ export default function ElixirAtelierPage() {
         </section>
 
         {/* ================= FILOSOFIE ================= */}
-        <section id="filosofie" className="bg-[#f5f3ef] pb-24 pt-20">
+        <section id="filosofie" className="scroll-mt-24 bg-[#f5f3ef] pb-24 pt-20">
           <div className="mx-auto max-w-7xl px-6 lg:px-10">
             <div className="mx-auto max-w-2xl text-center">
               <p className="text-[12px] font-semibold uppercase tracking-[0.28em] text-[#725b38]">Onze Filosofie</p>
@@ -190,7 +190,7 @@ export default function ElixirAtelierPage() {
         </section>
 
         {/* ================= COUTURE MENU ================= */}
-        <section id="behandelingen" className="py-24">
+        <section id="behandelingen" className="scroll-mt-24 py-24">
           <div className="mx-auto max-w-7xl px-6 lg:px-10">
             <div className="mx-auto max-w-2xl text-center">
               <p className="text-[12px] font-semibold uppercase tracking-[0.28em] text-[#725b38]">Het Couture Menu</p>
@@ -230,7 +230,7 @@ export default function ElixirAtelierPage() {
         </section>
 
         {/* ================= STYLISTEN ================= */}
-        <section id="stylisten" className="bg-[#f5f3ef] py-24">
+        <section id="stylisten" className="scroll-mt-24 bg-[#f5f3ef] py-24">
           <div className="mx-auto max-w-7xl px-6 lg:px-10">
             <div className="mx-auto max-w-2xl text-center">
               <p className="text-[12px] font-semibold uppercase tracking-[0.28em] text-[#725b38]">Het Atelier Team</p>
@@ -269,7 +269,7 @@ export default function ElixirAtelierPage() {
         </section>
 
         {/* ================= LOCATIE ================= */}
-        <section id="locatie" className="py-24">
+        <section id="locatie" className="scroll-mt-24 py-24">
           <div className="mx-auto max-w-7xl px-6 lg:px-10">
             <div className="grid grid-cols-1 gap-16 lg:grid-cols-2 lg:gap-12">
               <div>
