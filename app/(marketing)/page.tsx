@@ -103,7 +103,7 @@ export default function HomePage() {
                 Bereken je gemiste omzet
               </ButtonLink>
               <ButtonLink
-                href="/diensten"
+                href="/demo/elixir-atelier"
                 variant="outline"
                 size="lg"
                 className="rounded-lg border-secondary text-secondary"
@@ -246,7 +246,7 @@ export default function HomePage() {
               De rekensom voor jouw salon
             </span>
             <h2 className="font-display-lg text-display-lg text-on-surface my-md">
-              Eén geredde balayage per maand = +€165
+              +€106 netto winst per maand
             </h2>
             <div className="space-y-sm text-left max-w-md mx-auto mb-lg font-body-md text-on-surface-variant">
               <p className="flex justify-between">

@@ -4,7 +4,7 @@ import { ButtonLink } from "@/components/ui/button";
 import { Reveal } from "@/components/marketing/reveal";
 
 export const metadata: Metadata = {
-  title: "Diensten — Kile technologie voor warme handen aan de stoel",
+  title: "Diensten — Kille technologie voor warme handen aan de stoel",
   description:
     "Voice-AI met sub-800ms latentie, WhatsApp met de Middelburg-norm, Intelligent Double-Booking en autonome voorraadbeheer. KapperAssistent legt een schil om jouw salon.",
   alternates: { canonical: "/diensten" },
@@ -23,7 +23,7 @@ const services = [
       "Responst in minder dan 800 milliseconden",
       "Herhaalt de gevraagde dienst en stylist exact",
       "Boekt rechtstreeks in jouw agenda-software",
-      "SIP REFER-duringschakeling naar jouw mobiel bij complexe vragen",
+      "SIP REFER-doorschakeling naar jouw mobiel bij complexe vragen",
       "Geen gemiste oproepen, ook buiten openingstijden",
     ],
   },
@@ -118,7 +118,7 @@ const howSteps = [
   {
     n: "01",
     title: "White-glove setup",
-    body: "Onze specialisten koppelen jouw agenda binnen 48 uur. Geen technische hobbels — wij regelen de API-verbinding heimelijk achter de schermen.",
+    body: "Onze specialisten koppelen jouw agenda binnen 48 uur. Geen technische hobbels — wij regelen de API-verbinding volledig op de achtergrond.",
   },
   {
     n: "02",
@@ -251,7 +251,7 @@ export default function DienstenPage() {
             <p className="font-body-lg text-body-lg text-on-surface-variant leading-relaxed">
               De combinatie van WhatsApp en telefoon betekent dat geen enkele klant meer
               verloren gaat. Of ze nu appen of bellen — altijd wordt er direct en vriendelijk
-              gereaced. De afspraak staat binnen 60 seconden in je agenda.
+              gereageerd. De afspraak staat binnen 60 seconden in je agenda.
             </p>
             <div className="grid grid-cols-2 gap-md pt-sm">
               {[
