@@ -25,12 +25,12 @@ export function SiteHeader() {
           <Image
             src="/logo.png"
             alt="KapperAssistent logo"
-            width={36}
-            height={36}
-            className="h-9 w-9 object-contain"
+            width={691}
+            height={361}
+            className="h-10 md:h-12 w-auto object-contain"
             priority
           />
-          <span className="font-headline-md text-headline-md font-bold text-primary">
+          <span className="font-headline-lg text-headline-lg font-bold text-primary">
             KapperAssistent
           </span>
         </Link>

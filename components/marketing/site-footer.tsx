@@ -37,9 +37,9 @@ export function SiteFooter() {
               <Image
                 src="/logo.png"
                 alt="KapperAssistent logo"
-                width={32}
-                height={32}
-                className="h-8 w-8 object-contain"
+                width={691}
+                height={361}
+                className="h-9 w-auto object-contain"
               />
               <span className="font-headline-md text-headline-md font-bold text-on-surface">
                 KapperAssistent.nl
