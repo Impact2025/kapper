@@ -99,21 +99,33 @@ export default function OverOnsPage() {
             spelen.
           </p>
         </div>
-        <div className="lg:col-span-5 relative h-[400px] md:h-[500px] w-full mt-xl lg:mt-0">
+        <div className="lg:col-span-5 relative w-full mt-xl lg:mt-0">
           <div className="absolute inset-0 bg-primary-fixed rounded-[2rem] translate-x-4 translate-y-4" />
-          <div className="relative h-full w-full rounded-[2rem] overflow-hidden soft-shadow">
-            <div className="absolute inset-0 bg-gradient-to-br from-primary-container via-primary-fixed-dim to-secondary-fixed" />
-            <div className="absolute inset-0 flex items-center justify-center">
-              <Icon name="psychology" className="text-white/30 text-[120px]" />
-            </div>
-            <div className="absolute bottom-md left-md text-on-primary">
-              <p className="font-headline-md text-headline-md font-bold">
-                Het team achter de rust
-              </p>
-              <p className="font-label-sm text-label-sm opacity-80">
-                Amsterdam · opgericht 2024
-              </p>
-            </div>
+          <div className="relative w-full rounded-[2rem] overflow-hidden soft-shadow bg-primary p-lg md:p-xl flex flex-col gap-md text-on-primary">
+            <span className="inline-block w-fit px-sm py-xs bg-white/15 rounded-full font-label-sm text-label-sm uppercase tracking-wider">
+              Hoe onze AI werkt
+            </span>
+            <h2 className="font-headline-lg text-headline-lg font-bold leading-snug">
+              Een AI-assistent die jouw salon écht kent
+            </h2>
+            <p className="font-body-md text-body-md opacity-90 leading-relaxed">
+              Getraind op jouw eigen prijslijst, diensten, openingstijden en stylisten —
+              geen generieke antwoorden, maar reacties die kloppen voor jouw salon.
+            </p>
+            <ul className="space-y-sm mt-xs">
+              <li className="flex items-start gap-sm font-label-md text-on-primary">
+                <Icon name="check_circle" filled className="shrink-0 text-[20px] mt-px" />
+                Kent jouw behandelingen, prijzen en agenda
+              </li>
+              <li className="flex items-start gap-sm font-label-md text-on-primary">
+                <Icon name="check_circle" filled className="shrink-0 text-[20px] mt-px" />
+                Herkent stamklanten en hun voorkeuren
+              </li>
+              <li className="flex items-start gap-sm font-label-md text-on-primary">
+                <Icon name="check_circle" filled className="shrink-0 text-[20px] mt-px" />
+                Antwoordt binnen seconden, warm en menselijk
+              </li>
+            </ul>
           </div>
         </div>
       </section>
