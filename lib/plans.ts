@@ -6,6 +6,8 @@ export interface Plan {
   price: number; // euro / month
   tagline: string;
   audience: string;
+  /** Short, concrete value-for-money framing shown on the pricing page. */
+  valueLine: string;
   features: string[];
   popular?: boolean;
 }
@@ -17,11 +19,12 @@ export const PLANS: Plan[] = [
     price: 149,
     tagline: "Voor solo-stylisten & kleine salons.",
     audience: "Solo & klein",
+    valueLine: "Terugverdiend met 1 extra afspraak per maand.",
     features: [
-      "AI WhatsApp-assistent",
-      "Native agenda-sync (Salonized/Phorest)",
-      "Contextgeheugen (10 interacties)",
-      "SMS-herinneringen",
+      "AI beantwoordt WhatsApp 24/7 en boekt direct de juiste afspraak",
+      "Synct automatisch met Salonized of Phorest — geen dubbele invoer",
+      "Onthoudt het gesprek, voelt als een medewerker en niet als een bot",
+      "Automatische afspraakherinneringen via SMS — minder no-shows",
     ],
   },
   {
@@ -31,11 +34,12 @@ export const PLANS: Plan[] = [
     tagline: "Voor midden-grote salons (3–10 stoelen).",
     audience: "Midden-groot",
     popular: true,
+    valueLine: "Verdient zich gemiddeld al in de eerste maand terug.",
     features: [
       "Alles uit Essential",
-      "AI Voice Agent (telefoon)",
-      "Intelligent double-booking (inwerktijden)",
-      "WhatsApp API-kosten inbegrepen",
+      "AI beantwoordt ook de telefoon — dag en nacht, nooit meer een gemiste oproep",
+      "Vult wachttijd tijdens kleurbehandelingen slim op met een extra klant",
+      "WhatsApp-berichtkosten zitten al in de prijs, geen aparte factuur",
     ],
   },
   {
@@ -44,12 +48,13 @@ export const PLANS: Plan[] = [
     price: 499,
     tagline: "Voor grote salons en ketens.",
     audience: "Keten / groot",
+    valueLine: "Eén AI-team voor al je vestigingen, in plaats van losse abonnementen.",
     features: [
       "Alles uit Pro",
-      "Auto-Blog SEO AI-engine",
-      "Geautomatiseerd reviewbeheer",
-      "Multi-agenda support",
-      "Maandelijkse ROI-audit",
+      "Schrijft automatisch SEO-blogs die nieuwe klanten via Google trekken",
+      "Reageert automatisch op Google-reviews",
+      "Beheer al je vestigingen en agenda's vanuit één cockpit",
+      "Maandelijks rapport: precies wat de AI je heeft opgeleverd",
     ],
   },
 ];

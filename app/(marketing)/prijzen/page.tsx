@@ -58,9 +58,14 @@ export default function PrijzenPage() {
             <h1 className="font-display-lg text-display-lg text-on-surface mb-md">
               Voorspelbare prijzen. Geen verrassingen.
             </h1>
+            <p className="font-body-lg text-body-lg text-on-surface-variant mb-sm">
+              KapperAssistent is de AI-receptioniste voor je salon: ze beantwoordt telefoon
+              en WhatsApp, boekt afspraken automatisch in je agenda en stuurt herinneringen
+              — ook buiten openingstijden.
+            </p>
             <p className="font-body-lg text-body-lg text-on-surface-variant">
               Geen variabele minuutprijzen. Geen verborgen kosten. Je betaalt een vaste
-              prijs per maand en verdient die gemiddeld al in de eerste week terug door
+              prijs per maand en verdient die gemiddeld al in de eerste maand terug door
               gemiste oproepen die voortaan wél worden aangenomen.
             </p>
           </div>

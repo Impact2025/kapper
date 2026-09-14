@@ -32,8 +32,12 @@ export function PricingCards() {
               </span>
               <span className="font-label-md text-on-surface-variant"> p/m</span>
             </div>
-            <p className="font-body-md text-on-surface-variant mb-lg">
+            <p className="font-body-md text-on-surface-variant mb-sm">
               {plan.tagline}
+            </p>
+            <p className="flex items-start gap-xs font-label-sm text-label-sm text-primary mb-lg">
+              <Icon name="trending_up" className="shrink-0 text-[18px] mt-px" />
+              {plan.valueLine}
             </p>
             <ul className="space-y-sm mb-xl flex-grow">
               {plan.features.map((f) => (

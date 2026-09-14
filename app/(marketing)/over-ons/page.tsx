@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import { Icon } from "@/components/ui/icon";
 import { ButtonLink } from "@/components/ui/button";
 import { Reveal } from "@/components/marketing/reveal";
@@ -241,6 +242,13 @@ export default function OverOnsPage() {
       {/* Closing quote + CTA */}
       <section className="py-xl px-margin-mobile md:px-xl">
         <div className="max-w-container-max mx-auto text-center space-y-base">
+          <Image
+            src="/vincent.jpg"
+            alt="Vincent van Munster"
+            width={56}
+            height={56}
+            className="mx-auto rounded-full object-cover soft-shadow"
+          />
           <blockquote className="font-body-lg text-body-lg text-on-surface-variant italic max-w-[36rem] mx-auto leading-relaxed">
             "Vincent van Munster is sociaal ondernemer, AI-innovator en oprichter van
             WeAreImpact en KapperAssistent. Als voormalig welzijnsdirecteur én vader van
