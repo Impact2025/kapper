@@ -9,7 +9,7 @@ import { publicEnv } from "@/lib/env";
 export const metadata: Metadata = {
   title: "Twee handen aan de stoel. Nul gemiste afspraken aan de balie.",
   description:
-    "KapperAssistent is je AI-receptionist die 24/7 telefoon en WhatsApp opneemt, direct boekt in jouw agenda en no-shows voorkomt. Sub-800ms Voice-AI. White-glove setup binnen 48 uur.",
+    "KapperAssistent is je AI-receptionist die 24/7 telefoon en WhatsApp opneemt, direct boekt in Salonized, Treatwell of Phorest en no-shows voorkomt. Klinkt als een echte collega. White-glove setup binnen 48 uur.",
   alternates: { canonical: "/" },
 };
 
@@ -94,9 +94,10 @@ export default function HomePage() {
             <p className="font-body-lg text-body-lg text-on-surface-variant mb-xl max-w-[32rem]">
               Terwijl jij met uiterste precisie een balayage zet, rinkelt de telefoon. Neem
               je op met verf aan je handen, of laat je de beller vertrekken naar de
-              concurrent? KapperAssistent is jouw digitale salonreceptionist die 24/7 opneemt
-              via telefoon en WhatsApp, direct inboekt in jouw vertrouwde agenda en no-shows
-              vrijwel volledig voorkomt.
+              concurrent — terwijl 85% geen voicemail inspreekt en meteen doorklikt naar de
+              volgende kapper op Google? KapperAssistent is jouw digitale salonreceptionist
+              die 24/7 opneemt via telefoon en WhatsApp, direct inboekt in Salonized,
+              Treatwell of Phorest en no-shows vrijwel volledig voorkomt.
             </p>
             <div className="flex flex-col sm:flex-row gap-md">
               <ButtonLink href="/scan" size="lg" className="rounded-lg">
@@ -112,7 +113,7 @@ export default function HomePage() {
               </ButtonLink>
             </div>
             <p className="font-label-sm text-label-sm text-on-surface-variant mt-sm">
-              Geen creditcard nodig · Binnen 48 uur werkend · Sub-800ms Voice-AI
+              Geen creditcard nodig · Binnen 48 uur werkend · Klinkt als een echte collega
             </p>
             <div className="mt-lg grid grid-cols-3 gap-sm max-w-[32rem]">
               {stats.map((s) => (
