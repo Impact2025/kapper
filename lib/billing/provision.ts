@@ -236,6 +236,10 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
 
   const planId = session.metadata?.plan as PlanId | undefined;
   const salonName = session.metadata?.salonName ?? "Nieuwe salon";
+  // Fase 7: which vertical (kapper, loodgieter, ...) this checkout is for —
+  // set by the marketing site's checkout call, defaults to "kapper" since
+  // that's the only live signup flow today.
+  const vertical = session.metadata?.vertical || "kapper";
   const couponId = session.metadata?.couponId || undefined;
   const email = (session.metadata?.email ?? session.customer_email ?? "").toLowerCase().trim();
   const existingSalonId = session.metadata?.salonId || undefined;
@@ -256,6 +260,7 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
       plan: plan.id,
       status: "active",
       mrr: plan.price * 100,
+      vertical,
     })
     .returning({ id: salons.id });
 

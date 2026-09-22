@@ -8,6 +8,7 @@ import {
   type ReceptionistResponse,
 } from "@/lib/ai/receptionist";
 import { captureError } from "@/lib/observability";
+import { getVerticalConfig } from "@/lib/salon/vertical";
 
 /**
  * Artikel 9 AVG signal words — a WhatsApp message mentioning these must not
@@ -95,7 +96,13 @@ async function logAgentRun(input: {
  * retention, ...) plugs into later without the webhooks changing.
  */
 export async function runAiManager(input: ManagerRunInput): Promise<ReceptionistResponse> {
-  if (input.channel === "whatsapp") {
+  // Fase 7: the Artikel 9 special-category-data guard only makes sense for
+  // verticals that actually handle health/skin data — see
+  // lib/salon/vertical.ts hasHealthDataGuard. A loodgieter vertical has no
+  // equivalent category here, and scanning plumbing vocabulary for
+  // hoofdhuid-/allergie-stems would just misfire.
+  const vertical = getVerticalConfig(input.salon.vertical);
+  if (input.channel === "whatsapp" && vertical.hasHealthDataGuard) {
     const latest = lastUserMessage(input.history);
     if (ARTICLE9_RE.test(latest)) {
       await logAgentRun({

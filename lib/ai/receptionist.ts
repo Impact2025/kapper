@@ -11,6 +11,7 @@ import {
 } from "@/lib/salon/appointments";
 import { env, publicEnv } from "@/lib/env";
 import { captureError } from "@/lib/observability";
+import { getVerticalConfig } from "@/lib/salon/vertical";
 
 export interface SalonLocation {
   id: string;
@@ -56,6 +57,8 @@ export interface SalonContext {
   city: string | null;
   phone: string | null;
   plan: string;
+  /** Fase 7 core/vertical-scheiding — keys into lib/salon/vertical.ts. */
+  vertical: string;
   agendaProvider: string | null;
   aiSettings: {
     agendaApiKey?: string | null;
@@ -301,6 +304,7 @@ function buildVoiceTreatmentsText(treatments: SalonTreatment[]): string {
  * durations/prices, since a caller hears mispronounced numbers a text
  * reader never would. */
 export function buildSystemPrompt(salon: SalonContext, opts?: { voice?: boolean }): string {
+  const vertical = getVerticalConfig(salon.vertical);
   const locationsJson = JSON.stringify(
     salon.locations.map((l) => ({ id: l.id, name: l.name, city: l.city })),
   );
@@ -355,6 +359,16 @@ export function buildSystemPrompt(salon: SalonContext, opts?: { voice?: boolean 
     knowledgeText = `\n\nKENNISBANK (protocollen/FAQ van de salon zelf):\n${parts.join("\n\n")}`;
   }
 
+  const complexityGuardTerm = vertical.hasHealthDataGuard
+    ? "medische complexiteit, klachten"
+    : "technische complexiteit of een veiligheidsrisico (bijv. gaslek, ernstige waterschade)";
+  const diagnosisRule = vertical.hasHealthDataGuard
+    ? "Voor concrete medische diagnoses verwijs je door naar een intake in plaats van zelf te diagnosticeren."
+    : `Voor een concrete technische diagnose of prijsinschatting op basis van een lastig geval verwijs je door naar een inspectie ter plaatse door de ${vertical.terms.practitioner} in plaats van zelf een oordeel te vellen.`;
+  const photoRule = vertical.hasHealthDataGuard
+    ? `14. Foto's: als een klant een foto stuurt (kapselinspiratie, huidige haarkleur, uitgroei), gebruik die om in te schatten welke ${vertical.terms.treatment} en hoeveel tijd nodig is, en noem dat kort in je antwoord (bijv. "op basis van je foto lijkt dit op een balayage met flink wat uitgroei"). Stel nooit een medische diagnose op basis van een foto — bij twijfel over een huid- of hoofdhuidconditie: escalate_to_staff.`
+    : `14. Foto's: als een klant een foto stuurt (bijv. een lekkage, leiding of cv-ketel), gebruik die om in te schatten welke ${vertical.terms.treatment} en hoeveel tijd nodig is, en noem dat kort in je antwoord. Bij een mogelijk gevaarlijke situatie (gaslek, ernstige waterschade) altijd escalate_to_staff gebruiken in plaats van zelf gerust te stellen.`;
+
   return `Je bent de AI-receptioniste van ${salon.name}${salon.city ? ` in ${salon.city}` : ""}. Je communiceert uitsluitend in vlot, vriendelijk, professioneel Nederlands.
 
 LOCATIES (JSON): ${locationsJson}
@@ -372,13 +386,13 @@ GEDRAGSREGELS:
 5. ${opts?.voice ? "Het nummer waarmee de beller belt is al bekend en betrouwbaar (nummerherkenning), dus je hoeft er niet naar te vragen. Bevestig vóór het boeken, verzetten of annuleren wel altijd de volledige naam van de klant." : "Bevestig altijd de volledige naam én het telefoonnummer van de klant vóórdat je boekt, verzet of annuleert."}
 6. ${opts?.voice ? "Als de beller een eigen afspraak wil opzoeken, wijzigen of annuleren: gebruik find_appointments direct met het nummer waarmee hij belt — vraag daar niet apart naar, tenzij hij zelf zegt dat hij namens iemand anders belt of een ander nummer wil opzoeken." : "Als een klant een eigen afspraak wil opzoeken, wijzigen of annuleren: vraag om het telefoonnummer en gebruik find_appointments."} Noem nooit afspraken die bij een ander telefoonnummer horen.
 7. Denk actief mee: als iemand twijfelt tussen behandelingen of een klacht beschrijft, stel op basis van de BEHANDELINGEN- en KENNISBANK-info een passende behandeling of intake voor, met een korte uitleg waarom.
-8. EU AI Act (vanaf augustus 2026): bevestig eerlijk dat je een AI bent als de klant dat vraagt. Bied bij medische complexiteit, klachten, twijfel of een expliciet verzoek altijd aan om door te verbinden — gebruik dan escalate_to_staff.
-9. Voor concrete medische diagnoses verwijs je door naar een intake in plaats van zelf te diagnosticeren.
-10. Annuleringsbeleid: ${salon.noShowSettings.enabled ? `Klanten kunnen gratis annuleren tot ${salon.noShowSettings.freeCancelHours ?? 24} uur voor de afspraak.` : "Neem contact op met de salon voor het annuleringsbeleid."}
+8. EU AI Act (vanaf augustus 2026): bevestig eerlijk dat je een AI bent als de klant dat vraagt. Bied bij ${complexityGuardTerm}, twijfel of een expliciet verzoek altijd aan om door te verbinden — gebruik dan escalate_to_staff.
+9. ${diagnosisRule}
+10. Annuleringsbeleid: ${salon.noShowSettings.enabled ? `Klanten kunnen gratis annuleren tot ${salon.noShowSettings.freeCancelHours ?? 24} uur voor de afspraak.` : `Neem contact op met het ${vertical.terms.establishment} voor het annuleringsbeleid.`}
 11. Sluit een geslaagde boeking, wijziging of annulering af met een korte, warme bevestiging.
-12. Intelligent Double-Booking: als een behandeling \`stylist_vrij_tijdens_inwerktijd\` heeft (bijv. kleuring), is de behandelaar tijdens \`inwerktijd_min\` vrij voor iets korts bij dezelfde klant of zelfs een andere klant. check_availability houdt hier al rekening mee door slots in dat venster aan te bieden — vertel de beller dit gerust actief, bijvoorbeeld: "Terwijl uw kleur inwerkt, heeft styliste Sarah tijd voor uw föhnbeurt."
-13. Aanbetaling: als book_appointment een pending_deposit-resultaat teruggeeft, is de afspraak nog niet definitief — leg uit dat er een aanbetaling nodig is en dat de betaallink (die je in dit bericht meestuurt) dat afrondt. Vertel dit nooit als een keuze — het is verplicht voor deze behandeling.
-14. Foto's: als een klant een foto stuurt (kapselinspiratie, huidige haarkleur, uitgroei), gebruik die om in te schatten welke behandeling en hoeveel tijd nodig is, en noem dat kort in je antwoord (bijv. "op basis van je foto lijkt dit op een balayage met flink wat uitgroei"). Stel nooit een medische diagnose op basis van een foto — bij twijfel over een huid- of hoofdhuidconditie: escalate_to_staff.`;
+12. Intelligent Double-Booking: als een ${vertical.terms.treatment} \`stylist_vrij_tijdens_inwerktijd\` heeft (een deel met onbemand inwerk-/uithardtijd), is de ${vertical.terms.practitioner} tijdens \`inwerktijd_min\` vrij voor iets korts bij dezelfde klant of zelfs een andere klant. check_availability houdt hier al rekening mee door slots in dat venster aan te bieden — vertel de beller dit gerust actief.
+13. Aanbetaling: als book_appointment een pending_deposit-resultaat teruggeeft, is de afspraak nog niet definitief — leg uit dat er een aanbetaling nodig is en dat de betaallink (die je in dit bericht meestuurt) dat afrondt. Vertel dit nooit als een keuze — het is verplicht voor deze ${vertical.terms.treatment}.
+${photoRule}`;
 }
 
 /** Defense-in-depth: the system prompt tells the model to write plain text,

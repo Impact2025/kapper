@@ -25,6 +25,7 @@ const salon: SalonContext = {
   city: "Utrecht",
   phone: null,
   plan: "pro",
+  vertical: "kapper",
   agendaProvider: null,
   aiSettings: {},
   noShowSettings: {},

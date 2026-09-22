@@ -64,6 +64,7 @@ export async function loadSalonContext(
     city: salonRow.city,
     phone: salonRow.phone,
     plan: salonRow.plan,
+    vertical: salonRow.vertical,
     agendaProvider: salonRow.agendaProvider,
     aiSettings: {
       agendaApiKey: ai.agendaApiKey as string | null | undefined,

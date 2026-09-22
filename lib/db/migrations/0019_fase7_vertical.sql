@@ -1,0 +1,1 @@
+ALTER TABLE "salons" ADD COLUMN "vertical" text DEFAULT 'kapper' NOT NULL;

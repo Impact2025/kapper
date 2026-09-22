@@ -63,6 +63,11 @@ export const salons = pgTable("salons", {
   agendaProvider: text("agenda_provider"), // salonized | phorest | treatwell | acuity
   city: text("city"),
   phone: text("phone"),
+  // Fase 7 core/vertical-scheiding: keys into lib/salon/vertical.ts's
+  // registry (terms, btw-defaults, system-prompt variant). "kapper" for
+  // every salon today; a second vertical (e.g. "loodgieter") reuses this
+  // same core unchanged.
+  vertical: text("vertical").default("kapper").notNull(),
   settings: jsonb("settings").$type<Record<string, unknown>>().default({}).notNull(),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull().$onUpdate(() => new Date()),

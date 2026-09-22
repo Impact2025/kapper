@@ -47,6 +47,7 @@ const salon: SalonContext = {
   city: "Den Bosch",
   phone: "+31201234567",
   plan: "pro",
+  vertical: "kapper",
   agendaProvider: "salonized",
   aiSettings: { agendaApiKey: "irrelevant-because-decrypt-is-mocked" },
   noShowSettings: { enabled: true, freeCancelHours: 24, chargePercent: 100 },

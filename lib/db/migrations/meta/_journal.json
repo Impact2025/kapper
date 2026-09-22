@@ -134,6 +134,13 @@
       "when": 1790093058689,
       "tag": "0018_fase5_reviews_retention_loyalty",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1790097188450,
+      "tag": "0019_fase7_vertical",
+      "breakpoints": true
     }
   ]
 }
