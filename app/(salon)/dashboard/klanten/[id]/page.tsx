@@ -11,6 +11,7 @@ import { Card, Badge } from "@/components/salon/dash-ui";
 import { Icon } from "@/components/ui/icon";
 import { TreatmentCardForm } from "@/components/salon/treatment-card-form";
 import { HealthRecordForm } from "@/components/salon/health-record-form";
+import { PurgeCustomerButton } from "@/components/salon/purge-customer-button";
 
 export const metadata: Metadata = { title: "Klantdossier" };
 
@@ -200,6 +201,11 @@ export default async function KlantDetailPage({
             </div>
           )}
         </Card>
+
+        {/* Artikel 17 AVG recht op vergetelheid */}
+        <div className="pt-md">
+          <PurgeCustomerButton customerId={customer.id} customerName={customer.name} />
+        </div>
       </div>
     </div>
   );

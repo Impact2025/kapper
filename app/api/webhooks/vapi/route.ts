@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { eq } from "drizzle-orm";
 import { db } from "@/lib/db";
-import { salons, conversations, messages, appointments } from "@/lib/db/schema";
+import { salons, conversations, messages, appointments, agentRuns } from "@/lib/db/schema";
 import { executeReceptionistTool } from "@/lib/ai/receptionist";
 import { loadSalonContext } from "@/lib/salon/receptionist-context";
 import { trackEvent } from "@/lib/analytics/track";
@@ -299,17 +299,43 @@ export async function POST(req: Request) {
     });
   }
 
+  const [finalConv] = salonId
+    ? await db
+        .select({ escalationReason: conversations.escalationReason })
+        .from(conversations)
+        .where(eq(conversations.id, conversationId))
+        .limit(1)
+    : [];
+
+  // Fase 6 Artikel 50/17: phone calls never went through lib/ai/manager.ts
+  // (they call executeReceptionistTool directly per tool-call event, see
+  // handleToolCalls above), so unlike WhatsApp they had no agent_runs audit
+  // row at all. One row per call, logged here at call-end, closes that gap —
+  // it also doubles as the provenance record for the AI Act's machine-
+  // readable-marking requirement on generated audio: Vapi/Cartesia don't
+  // expose an actual audio watermarking API as of this writing (checked
+  // their docs), so this ledger (which AI handled the call, when, whether
+  // escalated) is the best available substitute until they do. The verbal
+  // "u spreekt met een AI-assistent" disclosure (lib/ai/vapi-assistant.ts
+  // firstMessage) remains the primary, always-on Artikel 50 measure for
+  // voice.
+  if (salonId) {
+    await db.insert(agentRuns).values({
+      salonId,
+      conversationId,
+      channel: "phone",
+      agent: "receptionist",
+      guardTriggered: false,
+      escalated: Boolean(finalConv?.escalationReason),
+    });
+  }
+
   // Fase 4 SMS-fallback: the call ended without a booking and without being
   // handed off to a human — text the customer a way to still get booked
   // instead of silently losing the lead. escalationReason survives the
   // status-overwrite to "closed" above (that update never clears it), so
   // it's still a reliable "was this escalated mid-call" signal here.
   if (salonId && customerPhone) {
-    const [finalConv] = await db
-      .select({ escalationReason: conversations.escalationReason })
-      .from(conversations)
-      .where(eq(conversations.id, conversationId))
-      .limit(1);
     const hasBooking = Boolean(bookedMatch) || (
       await db.select({ id: appointments.id }).from(appointments).where(eq(appointments.conversationId, conversationId)).limit(1)
     ).length > 0;
