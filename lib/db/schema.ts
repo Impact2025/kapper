@@ -334,6 +334,14 @@ export const customers = pgTable(
     // owner manually lifts it — see lib/payments-policy/queries.ts.
     noShowCount: integer("no_show_count").default(0).notNull(),
     blockedFromOnlineBooking: boolean("blocked_from_online_booking").default(false).notNull(),
+    // Fase 5 — Elite-only loyaliteitspunten (running balance; the full
+    // mutation log lives in loyaltyMutations below). 1 point per €10 spent
+    // via the kassa, awarded in lib/loyalty/queries.ts.
+    loyaltyPoints: integer("loyalty_points").default(0).notNull(),
+    // Fase 5 — Client ReConnect: when a reactivation WhatsApp message was
+    // last sent, so the retention cron doesn't nag the same customer every
+    // run once they've gone quiet.
+    lastRetentionSentAt: timestamp("last_retention_sent_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull().$onUpdate(() => new Date()),
   },
@@ -410,6 +418,28 @@ export const photos = pgTable(
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   },
   (t) => [index("photos_customer_idx").on(t.customerId)],
+);
+
+// Fase 5 — Elite loyaliteitspunten audit log. customers.loyaltyPoints is the
+// running balance; every award/redemption gets a row here so the balance is
+// always explainable (matches the agent_runs pattern: a denormalized counter
+// plus a full log, never just the counter).
+export const loyaltyMutations = pgTable(
+  "loyalty_mutations",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    salonId: uuid("salon_id")
+      .notNull()
+      .references(() => salons.id, { onDelete: "cascade" }),
+    customerId: uuid("customer_id")
+      .notNull()
+      .references(() => customers.id, { onDelete: "cascade" }),
+    delta: integer("delta").notNull(),
+    reason: text("reason").notNull(),
+    orderId: uuid("order_id").references(() => orders.id, { onDelete: "set null" }),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [index("loyalty_mutations_customer_idx").on(t.customerId)],
 );
 
 /* ============================ Praktijk (locaties, behandelingen, team) ============================ */
@@ -599,6 +629,9 @@ export const appointments = pgTable(
     status: appointmentStatusEnum("status").default("pending_confirmation").notNull(),
     source: appointmentSourceEnum("source").notNull(),
     reminderSentAt: timestamp("reminder_sent_at", { withTimezone: true }),
+    // Fase 5 — reviewbeheer: set once a review-request WhatsApp message has
+    // been sent for this appointment, so the reviews cron never asks twice.
+    reviewRequestedAt: timestamp("review_requested_at", { withTimezone: true }),
     // Middelburg-norm: appointment is not enforceable against the customer
     // until they explicitly accept the cancellation policy.
     policyAcceptedAt: timestamp("policy_accepted_at", { withTimezone: true }),

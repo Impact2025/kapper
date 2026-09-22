@@ -24,6 +24,7 @@ const NAV: NavItem[] = [
   { href: "/dashboard/afspraken", label: "Afspraken", icon: "calendar_month" },
   { href: "/dashboard/kassa", label: "Kassa", icon: "point_of_sale" },
   { href: "/dashboard/rapportage", label: "Rapportage", icon: "monitoring" },
+  { href: "/dashboard/retentie", label: "Retentie & marketing", icon: "loyalty" },
   { href: "/dashboard/no-show", label: "No-show beleid", icon: "event_busy" },
   { href: "/dashboard/integraties", label: "Integraties", icon: "cable" },
   { href: "/dashboard/abonnement", label: "Abonnement", icon: "credit_card" },

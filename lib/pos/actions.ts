@@ -55,6 +55,7 @@ export async function createPosSaleAction(
     items: parsed.data.items,
     paymentMethod: parsed.data.paymentMethod,
     tipCents: Math.round((parsed.data.tipEuros ?? 0) * 100),
+    elitePlan: salonHasPlan(plan, "elite"),
   });
   if ("error" in result) return { error: result.error };
 

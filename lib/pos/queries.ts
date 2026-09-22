@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { inventoryMovements, orderItems, orders, products, treatments } from "@/lib/db/schema";
 import { upsertCustomerByPhone } from "@/lib/customers/queries";
 import { amsterdamDateKey } from "@/lib/salon/timezone";
+import { awardLoyaltyPoints } from "@/lib/loyalty/queries";
 
 export interface SellableTreatment {
   id: string;
@@ -56,6 +57,10 @@ export interface PosSaleInput {
   items: PosSaleItemInput[];
   paymentMethod: "cash" | "pin" | "card";
   tipCents?: number;
+  /** Fase 5: loyaliteitspunten zijn een Elite-only feature — the caller
+   * (which already resolved the salon's plan for the Pro-gate) passes this
+   * through rather than createPosSale fetching the plan itself again. */
+  elitePlan?: boolean;
 }
 
 /**
@@ -157,6 +162,16 @@ export async function createPosSale(
         reason: `Kassaverkoop ${order!.id}`,
       });
     }
+  }
+
+  if (input.elitePlan && customer) {
+    await awardLoyaltyPoints({
+      salonId: input.salonId,
+      customerId: customer.id,
+      amountCents: lineTotal + tipCents,
+      reason: "Kassaverkoop",
+      orderId: order!.id,
+    });
   }
 
   return { ok: true, orderId: order!.id, totalCents: lineTotal + tipCents };
