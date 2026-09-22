@@ -7,6 +7,7 @@ import { loadSalonContext } from "@/lib/salon/receptionist-context";
 import { trackEvent } from "@/lib/analytics/track";
 import { env } from "@/lib/env";
 import { captureError } from "@/lib/observability";
+import { sendBookingFallbackSms } from "@/lib/sms/twilio";
 
 export const runtime = "nodejs";
 export const maxDuration = 30;
@@ -296,6 +297,30 @@ export async function POST(req: Request) {
       props: { via: "ai_phone", serviceType: bookedMatch[3]!.trim(), date: bookedMatch[4] },
       dedupeKey: `booking:phone:${vapiCallId}`,
     });
+  }
+
+  // Fase 4 SMS-fallback: the call ended without a booking and without being
+  // handed off to a human — text the customer a way to still get booked
+  // instead of silently losing the lead. escalationReason survives the
+  // status-overwrite to "closed" above (that update never clears it), so
+  // it's still a reliable "was this escalated mid-call" signal here.
+  if (salonId && customerPhone) {
+    const [finalConv] = await db
+      .select({ escalationReason: conversations.escalationReason })
+      .from(conversations)
+      .where(eq(conversations.id, conversationId))
+      .limit(1);
+    const hasBooking = Boolean(bookedMatch) || (
+      await db.select({ id: appointments.id }).from(appointments).where(eq(appointments.conversationId, conversationId)).limit(1)
+    ).length > 0;
+
+    if (!hasBooking && !finalConv?.escalationReason) {
+      await sendBookingFallbackSms({
+        toPhone: customerPhone,
+        salonName: salon?.name ?? "de salon",
+        salonPhone: salon?.phone ?? null,
+      });
+    }
   }
 
   return NextResponse.json({ ok: true });

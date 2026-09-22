@@ -52,6 +52,19 @@ const serverSchema = z.object({
   CARTESIA_VOICE_ID_NL: z.string().default("96355f3d-0179-4c9a-a8d8-11ef0779a9b8"),
   ENCRYPTION_KEY: z.string().optional(),      // 64 hex chars = 32 bytes for AES-256-GCM
 
+  // Fase 4 — WhatsApp message-buffering delayed-job primitive. Optional: if
+  // unset, the WATI webhook falls back to replying immediately (no
+  // debounce), same as before Fase 4 — never a hard dependency.
+  QSTASH_TOKEN: z.string().optional(),
+  QSTASH_CURRENT_SIGNING_KEY: z.string().optional(),
+  QSTASH_NEXT_SIGNING_KEY: z.string().optional(),
+
+  // Fase 4 — SMS-fallback when a phone booking stalls. Optional: silently
+  // skipped if unset.
+  TWILIO_ACCOUNT_SID: z.string().optional(),
+  TWILIO_AUTH_TOKEN: z.string().optional(),
+  TWILIO_FROM_NUMBER: z.string().optional(),
+
   // Observability
   SENTRY_DSN: z.string().url().optional(),
 

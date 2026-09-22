@@ -1,23 +1,28 @@
 import { createHmac } from "node:crypto";
 import { NextResponse } from "next/server";
-import { eq, and, sql } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 import { db } from "@/lib/db";
-import { salons, conversations, messages, users, events as eventsTable } from "@/lib/db/schema";
-import type { WatiConfirmationPayload } from "@/lib/ai/receptionist";
-import { runAiManager } from "@/lib/ai/manager";
-import { loadSalonContext } from "@/lib/salon/receptionist-context";
+import { salons, conversations, messages } from "@/lib/db/schema";
 import { confirmAppointment, pushBookingToAgenda } from "@/lib/salon/appointments";
 import { amsterdamDateKey, amsterdamTimeKey } from "@/lib/salon/timezone";
 import { trackEvent } from "@/lib/analytics/track";
 import { env } from "@/lib/env";
 import { decrypt } from "@/lib/crypto";
-import { sendEmail } from "@/lib/mail/resend";
-import { aiLiveEmail } from "@/lib/mail/templates";
-import { publicEnv } from "@/lib/env";
 import { captureError } from "@/lib/observability";
+import { sendWatiMessage } from "@/lib/salon/wati-client";
+import { resolveWatiCredentials, processWatiTurn } from "@/lib/ai/wati-turn";
+import { isQstashConfigured, scheduleDelayedCall } from "@/lib/queue/qstash";
 
 export const runtime = "nodejs";
 export const maxDuration = 30;
+
+/** Fase 4: seconds to wait for more messages before the AI replies once
+ * (message-buffering/debouncing) — matches the approved fasenplan default. */
+const DEBOUNCE_SECONDS = 6;
+
+/** Re-exported for lib/billing/provision.ts (Stripe deposit webhook needs to
+ * notify the customer once a deposit checkout completes). */
+export { sendWatiMessage };
 
 /** Verify WATI HMAC-SHA256 webhook signature. Exported for tests. */
 export function verifyWatiSignature(body: string, signature: string | null, secret: string): boolean {
@@ -26,52 +31,8 @@ export function verifyWatiSignature(body: string, signature: string | null, secr
   return signature === expected;
 }
 
-/** Send a WhatsApp message via WATI. Exported for the Stripe deposit-webhook
- * flow (lib/billing/provision.ts), which needs to notify the customer once
- * a deposit checkout completes — same WATI credential-resolution/sending
- * concern, kept in one place rather than duplicated. */
-export async function sendWatiMessage(
-  baseUrl: string,
-  apiKey: string,
-  phoneNumber: string,
-  message: string,
-): Promise<void> {
-  const url = `${baseUrl}/api/v1/sendSessionMessage/${encodeURIComponent(phoneNumber)}`;
-  await fetch(url, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ messageText: message }),
-  });
-}
-
-/** Send a WhatsApp interactive-button message via WATI (Middelburg-norm booking confirmation). */
-async function sendWatiInteractiveMessage(
-  baseUrl: string,
-  apiKey: string,
-  phoneNumber: string,
-  payload: WatiConfirmationPayload,
-): Promise<void> {
-  const url = `${baseUrl}/api/v1/sendInteractiveButtonsMessage/${encodeURIComponent(phoneNumber)}`;
-  await fetch(url, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      body: payload.text,
-      buttons: [{ text: payload.buttonTitle, id: payload.buttonId }],
-    }),
-  });
-}
-
 /** Look up the salon whose WATI API key matches the inbound request. */
 async function findSalonByWatiKey(rawKey: string): Promise<typeof salons.$inferSelect | null> {
-  // We need to find the salon whose stored (encrypted) watiApiKey decrypts to rawKey
-  // For performance: fetch all active salons with ai settings and check
   const rows = await db
     .select()
     .from(salons)
@@ -125,7 +86,9 @@ export async function POST(req: Request) {
 
   // Middelburg-norm confirmation: the customer tapped "Akkoord & Bevestigen"
   // on the interactive booking message. Handle this before the plain-text
-  // conversational flow below — a button reply carries no free-text body.
+  // conversational flow below — a button reply carries no free-text body,
+  // and it must never be debounced (it's a direct user action, not a
+  // conversational message).
   const buttonReplyObj = (messageObj.button ?? messageObj.interactiveButtonReply ?? messageObj.buttonReply) as
     | Record<string, unknown>
     | undefined;
@@ -213,13 +176,11 @@ export async function POST(req: Request) {
   }
   const salonId = salon.id;
 
-  const aiSettings = (salon.settings as Record<string, unknown>).ai as Record<string, unknown> | undefined;
-  const watiApiKey = env.WATI_API_KEY ?? (aiSettings?.watiApiKey ? (decrypt(String(aiSettings.watiApiKey)) ?? String(aiSettings.watiApiKey)) : null);
-  const watiBaseUrl = env.WATI_BASE_URL ?? "";
-
-  if (!watiApiKey || !watiBaseUrl) {
+  const credentials = resolveWatiCredentials(salon, env.WATI_API_KEY, env.WATI_BASE_URL, decrypt);
+  if (!credentials) {
     return NextResponse.json({ error: "WATI not configured" }, { status: 500 });
   }
+  const { watiApiKey, watiBaseUrl } = credentials;
 
   // Upsert conversation
   const existing = await db
@@ -235,7 +196,6 @@ export async function POST(req: Request) {
     )
     .limit(1);
 
-  const isNewConversation = !existing[0];
   let conversationId: string;
   if (existing[0]) {
     conversationId = existing[0].id;
@@ -262,55 +222,7 @@ export async function POST(req: Request) {
     imageUrl,
   });
 
-  // Load recent history for context
-  const history = await db
-    .select({ role: messages.role, content: messages.content, imageUrl: messages.imageUrl })
-    .from(messages)
-    .where(eq(messages.conversationId, conversationId))
-    .orderBy(messages.createdAt)
-    .limit(20);
-
-  const salonContext = await loadSalonContext(salon);
-  // The WATI credential resolved above (per-salon or global env fallback)
-  // is what actually authenticates outbound sends — keep it authoritative
-  // over whatever loadSalonContext read from settings.
-  salonContext.aiSettings.watiApiKey = watiApiKey;
-
-  const { reply, bookedAppointment, escalated } = await runAiManager({
-    salonId,
-    salon: salonContext,
-    history: history.map((h) => ({ role: h.role, content: h.content, imageUrl: h.imageUrl })),
-    customerPhone: fromPhone,
-    conversationId,
-    isNewConversation,
-    channel: "whatsapp",
-  });
-
-  // Persist assistant reply
-  await db.insert(messages).values({
-    conversationId,
-    role: "assistant",
-    content: reply,
-  });
-
-  // Send reply via WATI — a fresh booking gets the Middelburg-norm
-  // interactive confirmation message (with its accept button), or a Fase 2
-  // deposit checkout link, instead of the assistant's plain-text reply for
-  // this turn.
-  if (bookedAppointment?.depositPayment) {
-    await sendWatiMessage(
-      watiBaseUrl,
-      watiApiKey,
-      fromPhone,
-      `Rond je afspraak af met een aanbetaling van €${(bookedAppointment.depositPayment.amountCents / 100).toFixed(2)}: ${bookedAppointment.depositPayment.checkoutUrl}`,
-    );
-  } else if (bookedAppointment?.confirmationPayload) {
-    await sendWatiInteractiveMessage(watiBaseUrl, watiApiKey, fromPhone, bookedAppointment.confirmationPayload);
-  } else {
-    await sendWatiMessage(watiBaseUrl, watiApiKey, fromPhone, reply);
-  }
-
-  // Track analytics event
+  // Track analytics event for every inbound message, independent of debouncing.
   await trackEvent({
     type: "whatsapp_message",
     salonId,
@@ -318,78 +230,18 @@ export async function POST(req: Request) {
     dedupeKey: `wa:${watiConvId}:${Date.now()}`,
   });
 
-  // The receptionist tool already wrote the booking straight to our own
-  // appointments table as pending_confirmation — the external agenda push
-  // only happens once the customer taps the confirmation button above.
-  if (bookedAppointment) {
-    await trackEvent({
-      type: "booking_made",
-      salonId,
-      props: {
-        via: "ai_whatsapp",
-        serviceType: bookedAppointment.serviceType,
-        date: bookedAppointment.date,
-      },
-      dedupeKey: `booking:${conversationId}:${bookedAppointment.date}:${bookedAppointment.time}`,
-    });
+  // Fase 4 message-buffering: if QStash is configured, wait DEBOUNCE_SECONDS
+  // for more messages from the same customer before replying once — a
+  // WhatsApp burst ("hoi" / "ik wil een afspraak" / "morgen 14u graag" as
+  // three separate messages) shouldn't get three separate AI replies. The
+  // debounce endpoint below re-checks whether this is still the newest
+  // message before actually processing, so scheduling on every message is
+  // safe even if several land within the window.
+  if (isQstashConfigured()) {
+    await scheduleDelayedCall("/api/webhooks/wati/debounce", { conversationId }, DEBOUNCE_SECONDS);
+    return NextResponse.json({ ok: true, queued: true });
   }
 
-  // The AI flagged this conversation for a human — surface it in Gesprekken.
-  if (escalated) {
-    await db
-      .update(conversations)
-      .set({ status: "escalated", escalationReason: escalated.reason })
-      .where(eq(conversations.id, conversationId));
-    await trackEvent({
-      type: "escalated",
-      salonId,
-      props: { via: "ai_whatsapp", reason: escalated.reason, conversationId },
-      dedupeKey: `escalate:${conversationId}:${Date.now()}`,
-    });
-  }
-
-  // Send "AI is live" email on first real event for this salon
-  if (salonId) {
-    try {
-      const aiLiveSent = (salon?.settings as Record<string, unknown>)?.aiLiveNotificationSent;
-      if (!aiLiveSent) {
-        // Check this is the first event
-        const [countRow] = await db
-          .select({ n: sql<number>`count(*)::int` })
-          .from(eventsTable)
-          .where(eq(eventsTable.salonId, salonId));
-
-        if (Number(countRow?.n ?? 0) <= 1) {
-          // Find owner email
-          const ownerRows = await db
-            .select({ email: users.email })
-            .from(users)
-            .where(and(eq(users.salonId, salonId), eq(users.role, "owner")))
-            .limit(1);
-
-          if (ownerRows[0]) {
-            await sendEmail({
-              to: ownerRows[0].email,
-              subject: `Je AI-assistent staat live — ${salon?.name ?? "Jouw salon"}`,
-              html: aiLiveEmail({
-                salonName: salon?.name ?? "Jouw salon",
-                dashboardUrl: `${publicEnv.NEXT_PUBLIC_SITE_URL}/dashboard/gesprekken`,
-              }),
-            });
-            // Mark as sent
-            await db
-              .update(salons)
-              .set({
-                settings: sql`${salons.settings} || '{"aiLiveNotificationSent": true}'::jsonb`,
-              })
-              .where(eq(salons.id, salonId));
-          }
-        }
-      }
-    } catch (err) {
-      captureError("wati/ai-live-notification", err);
-    }
-  }
-
+  await processWatiTurn({ salon, conversationId, fromPhone, watiApiKey, watiBaseUrl });
   return NextResponse.json({ ok: true });
 }
