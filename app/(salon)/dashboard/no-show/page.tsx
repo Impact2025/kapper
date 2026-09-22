@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { requireSalonOwner } from "@/lib/auth/dal";
 import { getSalonWithSubscription } from "@/lib/salon/queries";
-import { PageHeader, Card, Badge } from "@/components/admin/ui";
+import { PageHeader, Card, Badge } from "@/components/salon/dash-ui";
 import { Icon } from "@/components/ui/icon";
 import { NoShowForm } from "@/components/salon/no-show-form";
 
@@ -60,7 +60,7 @@ export default async function NoShowPage() {
         {/* Live policy preview */}
         <div className="flex flex-col gap-md">
           <Card>
-            <h3 className="mb-sm font-headline-md text-headline-md text-on-surface">
+            <h3 className="mb-sm dash-h2 text-headline-md text-on-surface">
               Preview klantbeleid
             </h3>
             <div className="rounded-lg border border-outline-variant/40 bg-surface p-sm text-label-sm text-on-surface-variant space-y-xs">
@@ -91,7 +91,7 @@ export default async function NoShowPage() {
           </Card>
 
           <Card>
-            <h3 className="mb-sm font-headline-md text-headline-md text-on-surface">
+            <h3 className="mb-sm dash-h2 text-headline-md text-on-surface">
               Herinneringstijdstip
             </h3>
             <div className="flex flex-col gap-xs">
@@ -110,10 +110,10 @@ export default async function NoShowPage() {
           </Card>
 
           <Card>
-            <h3 className="mb-sm font-headline-md text-headline-md text-on-surface">
+            <h3 className="mb-sm dash-h2 text-headline-md text-on-surface">
               ROI bij 4 no-shows/week
             </h3>
-            <div className="text-headline-md font-headline-md text-primary">€12.000</div>
+            <div className="stat-figure text-headline-md text-primary">€12.000</div>
             <div className="text-label-sm text-on-surface-variant">
               per jaar beschermd bij gemiddeld €65 per behandeling
             </div>

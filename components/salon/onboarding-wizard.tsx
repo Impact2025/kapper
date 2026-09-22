@@ -49,7 +49,7 @@ export function OnboardingWizard({ steps, salonId }: OnboardingWizardProps) {
         {/* Header */}
         <div className="flex items-center justify-between border-b border-outline-variant/40 px-lg py-md">
           <div>
-            <h2 className="font-headline-md text-headline-md text-on-surface">
+            <h2 className="dash-h2 text-headline-md text-on-surface">
               Stel je assistent in
             </h2>
             <p className="text-label-sm text-on-surface-variant">
@@ -100,7 +100,7 @@ export function OnboardingWizard({ steps, salonId }: OnboardingWizardProps) {
               <Icon name={step.icon} className="text-[24px]" />
             </div>
             <div>
-              <h3 className="font-headline-md text-headline-md text-on-surface mb-xs">
+              <h3 className="dash-h2 text-headline-md text-on-surface mb-xs">
                 {step.title}
               </h3>
               <p className="text-body-md text-on-surface-variant leading-relaxed">

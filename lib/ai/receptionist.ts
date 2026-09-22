@@ -68,6 +68,8 @@ export interface SalonContext {
     enabled?: boolean;
     freeCancelHours?: number;
     chargePercent?: number;
+    depositRequired?: boolean;
+    depositCents?: number;
   };
   locations: SalonLocation[];
   treatments: SalonTreatment[];
@@ -78,6 +80,10 @@ export interface SalonContext {
 export interface ConversationMessage {
   role: "user" | "assistant";
   content: string;
+  /** Fase 4 multimodale input: a photo the customer sent alongside this
+   * message (kapselinspiratie, huidige haarkleur, uitgroei). Only ever set
+   * on a user message. */
+  imageUrl?: string | null;
 }
 
 export interface WatiConfirmationPayload {
@@ -103,6 +109,10 @@ export interface ReceptionistResponse {
      * pushing the booking straight to the agenda adapter. Absent for phone
      * bookings, which are confirmed immediately (no button to tap mid-call). */
     confirmationPayload?: WatiConfirmationPayload;
+    /** Fase 2 vooruitbetalingen: set instead of confirmationPayload when the
+     * treatment requires a deposit — the webhook sends this checkout link
+     * rather than the Middelburg confirmation button message. */
+    depositPayment?: { checkoutUrl: string; amountCents: number };
   };
   /** Set when the model called escalate_to_staff — the caller (webhook) can
    * tag the conversation for a human to pick up. */
@@ -366,7 +376,9 @@ GEDRAGSREGELS:
 9. Voor concrete medische diagnoses verwijs je door naar een intake in plaats van zelf te diagnosticeren.
 10. Annuleringsbeleid: ${salon.noShowSettings.enabled ? `Klanten kunnen gratis annuleren tot ${salon.noShowSettings.freeCancelHours ?? 24} uur voor de afspraak.` : "Neem contact op met de salon voor het annuleringsbeleid."}
 11. Sluit een geslaagde boeking, wijziging of annulering af met een korte, warme bevestiging.
-12. Intelligent Double-Booking: als een behandeling \`stylist_vrij_tijdens_inwerktijd\` heeft (bijv. kleuring), is de behandelaar tijdens \`inwerktijd_min\` vrij voor iets korts bij dezelfde klant of zelfs een andere klant. check_availability houdt hier al rekening mee door slots in dat venster aan te bieden — vertel de beller dit gerust actief, bijvoorbeeld: "Terwijl uw kleur inwerkt, heeft styliste Sarah tijd voor uw föhnbeurt."`;
+12. Intelligent Double-Booking: als een behandeling \`stylist_vrij_tijdens_inwerktijd\` heeft (bijv. kleuring), is de behandelaar tijdens \`inwerktijd_min\` vrij voor iets korts bij dezelfde klant of zelfs een andere klant. check_availability houdt hier al rekening mee door slots in dat venster aan te bieden — vertel de beller dit gerust actief, bijvoorbeeld: "Terwijl uw kleur inwerkt, heeft styliste Sarah tijd voor uw föhnbeurt."
+13. Aanbetaling: als book_appointment een pending_deposit-resultaat teruggeeft, is de afspraak nog niet definitief — leg uit dat er een aanbetaling nodig is en dat de betaallink (die je in dit bericht meestuurt) dat afrondt. Vertel dit nooit als een keuze — het is verplicht voor deze behandeling.
+14. Foto's: als een klant een foto stuurt (kapselinspiratie, huidige haarkleur, uitgroei), gebruik die om in te schatten welke behandeling en hoeveel tijd nodig is, en noem dat kort in je antwoord (bijv. "op basis van je foto lijkt dit op een balayage met flink wat uitgroei"). Stel nooit een medische diagnose op basis van een foto — bij twijfel over een huid- of hoofdhuidconditie: escalate_to_staff.`;
 }
 
 /** Defense-in-depth: the system prompt tells the model to write plain text,
@@ -443,12 +455,15 @@ async function runTool(
       const customerPhoneArg = String(args.customer_phone ?? customerPhone);
       const result = await bookFromSlot({
         salonId: salon.id,
+        salonName: salon.name,
         slotId: String(args.slot_id ?? ""),
         customerName,
         customerPhone: customerPhoneArg,
         conversationId,
         agendaProvider: salon.agendaProvider,
         freeCancelHours: salon.noShowSettings.freeCancelHours,
+        depositRequired: salon.noShowSettings.depositRequired,
+        depositCents: salon.noShowSettings.depositCents,
         channel,
       });
       if ("error" in result) return JSON.stringify(result);
@@ -460,8 +475,10 @@ async function runTool(
       // no button to tap — bookFromSlot already confirmed it immediately,
       // so the caller hears it's booked, not "we'll call you back" — push it
       // to the connected agenda software right away instead of leaving it
-      // stuck in this app's own database only.
-      if (!result.pendingConfirmation) {
+      // stuck in this app's own database only. A deposit-required booking
+      // (Fase 2) isn't pushed either — that happens once Stripe confirms
+      // payment (lib/billing/provision.ts's handleDepositCheckout).
+      if (!result.pendingConfirmation && !result.depositPayment) {
         await pushBookingToAgenda(salon.agendaProvider, salon.aiSettings.agendaApiKey, result.appointmentId, {
           customerName,
           customerPhone: customerPhoneArg,
@@ -479,13 +496,19 @@ async function runTool(
         date: result.date,
         time: result.time,
         cancellationDeadline: result.cancellationDeadline,
-        ...(result.pendingConfirmation
-          ? { confirmationPayload: buildWatiConfirmationPayload(result.appointmentId, result.date, result.time) }
-          : {}),
+        ...(result.depositPayment
+          ? { depositPayment: result.depositPayment }
+          : result.pendingConfirmation
+            ? { confirmationPayload: buildWatiConfirmationPayload(result.appointmentId, result.date, result.time) }
+            : {}),
       };
       return JSON.stringify({
         ok: true,
-        ...(result.pendingConfirmation ? { pending_confirmation: true } : { confirmed: true }),
+        ...(result.depositPayment
+          ? { pending_deposit: true, deposit_amount_eur: result.depositPayment.amountCents / 100 }
+          : result.pendingConfirmation
+            ? { pending_confirmation: true }
+            : { confirmed: true }),
         treatment: result.treatment,
         location: result.location,
         date: result.date,
@@ -564,7 +587,15 @@ export async function getReceptionistReply(
   const systemPrompt = buildSystemPrompt(salon);
   const messages: Anthropic.MessageParam[] = history.slice(-MAX_HISTORY_MESSAGES).map((m) => ({
     role: m.role,
-    content: m.content,
+    // Multimodal (Fase 4): an image-bearing user message becomes a content
+    // block array (image + text) instead of a plain string — Claude fetches
+    // the photo directly from the URL, no base64 round-trip needed.
+    content: m.imageUrl
+      ? [
+          { type: "image" as const, source: { type: "url" as const, url: m.imageUrl } },
+          { type: "text" as const, text: m.content || "(foto zonder tekst)" },
+        ]
+      : m.content,
   }));
 
   const state: RunToolState = {};

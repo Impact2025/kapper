@@ -3,7 +3,7 @@ import Link from "next/link";
 import { requireSalonOwner } from "@/lib/auth/dal";
 import { getSalonWithSubscription } from "@/lib/salon/queries";
 import { getSalonMetrics } from "@/lib/salon/metrics";
-import { PageHeader, Card, Badge } from "@/components/admin/ui";
+import { PageHeader, Card, Badge } from "@/components/salon/dash-ui";
 import { Icon } from "@/components/ui/icon";
 import { PLANS } from "@/lib/plans";
 import { formatEur } from "@/lib/utils";
@@ -87,10 +87,10 @@ export default async function AbonnementPage() {
       <div className="grid grid-cols-1 gap-md lg:grid-cols-2">
         {/* Current plan */}
         <Card>
-          <h2 className="mb-md font-headline-md text-headline-md text-on-surface">Huidig plan</h2>
+          <h2 className="mb-md dash-h2 text-headline-md text-on-surface">Huidig plan</h2>
           <div className="mb-md flex items-start justify-between">
             <div>
-              <div className="font-headline-md text-headline-md text-on-surface">{plan.name}</div>
+              <div className="dash-h2 text-headline-md text-on-surface">{plan.name}</div>
               <div className="mt-xs text-label-sm text-on-surface-variant">{plan.tagline}</div>
             </div>
             <div className="shrink-0 text-right">
@@ -161,7 +161,7 @@ export default async function AbonnementPage() {
                   <div className="mb-sm flex items-start justify-between">
                     <div>
                       <div className="flex items-center gap-xs">
-                        <span className="font-headline-md text-headline-md text-on-surface">
+                        <span className="dash-h2 text-headline-md text-on-surface">
                           {up.name}
                         </span>
                         {up.popular && <Badge tone="primary">Populair</Badge>}

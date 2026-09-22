@@ -15,11 +15,14 @@ interface NavItem {
 
 const NAV: NavItem[] = [
   { href: "/dashboard", label: "Overzicht", icon: "dashboard" },
+  { href: "/dashboard/klanten", label: "Klanten", icon: "group" },
   { href: "/dashboard/ai-receptie", label: "AI-Receptie", icon: "smart_toy" },
   { href: "/dashboard/praktijk", label: "Praktijk", icon: "storefront" },
   { href: "/dashboard/webwinkel", label: "Webwinkel", icon: "shopping_bag" },
   { href: "/dashboard/gesprekken", label: "Gesprekken", icon: "forum" },
+  { href: "/dashboard/escalaties", label: "Escalaties", icon: "support_agent" },
   { href: "/dashboard/afspraken", label: "Afspraken", icon: "calendar_month" },
+  { href: "/dashboard/kassa", label: "Kassa", icon: "point_of_sale" },
   { href: "/dashboard/rapportage", label: "Rapportage", icon: "monitoring" },
   { href: "/dashboard/no-show", label: "No-show beleid", icon: "event_busy" },
   { href: "/dashboard/integraties", label: "Integraties", icon: "cable" },
@@ -51,10 +54,8 @@ export function SalonSidebar({
   return (
     <>
       {/* Mobile top bar */}
-      <div className="flex items-center justify-between border-b border-outline-variant/40 bg-surface px-margin-mobile py-base md:hidden">
-        <div className="font-headline-md text-headline-md font-bold text-on-surface">
-          {salon.name}
-        </div>
+      <div className="flex items-center justify-between border-b border-outline-variant/30 bg-surface px-margin-mobile py-base md:hidden">
+        <div className="dash-h2 text-body-lg">{salon.name}</div>
         <button
           onClick={() => setOpen((v) => !v)}
           aria-label="Menu"
@@ -66,30 +67,28 @@ export function SalonSidebar({
 
       <aside
         className={cn(
-          "flex w-full flex-col border-r border-outline-variant/40 bg-surface-container-low md:w-64 md:min-h-screen",
+          "flex w-full flex-col border-r border-outline-variant/30 bg-surface-container-lowest md:w-64 md:min-h-screen",
           open ? "block" : "hidden md:flex",
         )}
       >
-        <div className="hidden flex-col gap-xs px-md py-md md:flex">
-          <span className="font-headline-md text-headline-md font-bold text-on-surface">
-            {salon.name}
-          </span>
-          <span className="text-label-sm text-primary font-label-sm">
+        <div className="hidden flex-col gap-xs px-md py-lg md:flex">
+          <span className="dash-h2 text-body-lg">{salon.name}</span>
+          <span className="dash-pill w-fit bg-primary-fixed text-on-primary-fixed">
             {PLAN_LABELS[salon.plan] ?? salon.plan}
           </span>
         </div>
 
-        <nav className="flex flex-1 flex-col gap-xs px-sm py-sm">
+        <nav className="flex flex-1 flex-col gap-[2px] px-sm py-sm">
           {NAV.map((item) => (
             <Link
               key={item.href}
               href={item.href}
               onClick={() => setOpen(false)}
               className={cn(
-                "flex items-center gap-sm rounded-lg px-sm py-sm text-label-md font-label-md transition-colors",
+                "flex items-center gap-sm rounded-xl px-sm py-sm text-label-md font-label-md transition-colors",
                 isActive(item.href)
                   ? "bg-primary text-on-primary"
-                  : "text-on-surface-variant hover:bg-primary/5 hover:text-primary",
+                  : "text-on-surface-variant hover:bg-surface-container",
               )}
             >
               <Icon name={item.icon} className="text-[20px]" />
@@ -98,7 +97,7 @@ export function SalonSidebar({
           ))}
         </nav>
 
-        <div className="border-t border-outline-variant/40 px-sm py-sm">
+        <div className="border-t border-outline-variant/30 px-sm py-sm">
           <div className="flex items-center gap-sm px-sm py-xs">
             <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary text-label-md font-label-md text-on-primary">
               {(user.name ?? user.email)
@@ -117,7 +116,7 @@ export function SalonSidebar({
           <form action={logout}>
             <button
               type="submit"
-              className="flex w-full items-center gap-sm rounded-lg px-sm py-sm text-label-md font-label-md text-on-surface-variant transition-colors hover:bg-error-container hover:text-on-error-container"
+              className="flex w-full items-center gap-sm rounded-xl px-sm py-sm text-label-md font-label-md text-on-surface-variant transition-colors hover:bg-error-container hover:text-on-error-container"
             >
               <Icon name="logout" className="text-[20px]" />
               Uitloggen

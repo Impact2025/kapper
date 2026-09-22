@@ -12,6 +12,7 @@ export interface CurrentUser {
   name: string | null;
   role: "admin" | "owner";
   salonId: string | null;
+  canAccessHealthRecords: boolean;
 }
 
 /**
@@ -45,6 +46,7 @@ export const getCurrentUser = cache(async (): Promise<CurrentUser> => {
       name: users.name,
       role: users.role,
       salonId: users.salonId,
+      canAccessHealthRecords: users.canAccessHealthRecords,
     })
     .from(users)
     .where(eq(users.id, session.userId))
@@ -68,4 +70,16 @@ export async function requireSalonOwner(): Promise<CurrentUser & { salonId: stri
   if (user.role !== "owner") redirect("/admin");
   if (!user.salonId) redirect("/dashboard/setup");
   return user as CurrentUser & { salonId: string };
+}
+
+/**
+ * Artikel 9 AVG gate: a salon owner by default can see health_records (see
+ * users.canAccessHealthRecords), but a future per-stylist login could have
+ * this revoked. Redirects to the dossier root rather than /admin — this is
+ * a within-salon permission, not an auth failure.
+ */
+export async function requireHealthRecordsAccess(): Promise<CurrentUser & { salonId: string }> {
+  const user = await requireSalonOwner();
+  if (!user.canAccessHealthRecords) redirect("/dashboard/klanten");
+  return user;
 }

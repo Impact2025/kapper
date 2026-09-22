@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { requireSalonOwner } from "@/lib/auth/dal";
 import { getConversationDetail } from "@/lib/salon/gesprekken";
 import { Icon } from "@/components/ui/icon";
-import { Badge } from "@/components/admin/ui";
+import { Badge } from "@/components/salon/dash-ui";
 
 export const metadata: Metadata = { title: "Gesprek" };
 
@@ -44,7 +44,7 @@ export default async function ConversationDetailPage({
       {/* Header */}
       <div className="mb-lg rounded-xl border border-outline-variant/40 bg-surface-container-lowest p-md">
         <div className="mb-sm flex flex-wrap items-center gap-sm">
-          <h1 className="font-headline-md text-headline-md text-on-surface">
+          <h1 className="dash-h2 text-headline-md text-on-surface">
             {conv.customerName || conv.phoneNumber || "Onbekend"}
           </h1>
           <Badge tone={conv.status === "closed" ? "success" : "neutral"}>

@@ -76,6 +76,8 @@ export async function loadSalonContext(
       enabled: Boolean(noShow.enabled),
       freeCancelHours: Number(noShow.freeCancelHours ?? 24),
       chargePercent: Number(noShow.chargePercent ?? 100),
+      depositRequired: Boolean(noShow.depositRequired),
+      depositCents: Number(noShow.depositCents ?? 0),
     },
     locations: locationRows
       .filter((l) => l.active)

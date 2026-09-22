@@ -3,7 +3,7 @@ import Link from "next/link";
 import { requireSalonOwner } from "@/lib/auth/dal";
 import { getSalonWithSubscription } from "@/lib/salon/queries";
 import { getSalonMetrics } from "@/lib/salon/metrics";
-import { PageHeader, Card, StatCard, Badge } from "@/components/admin/ui";
+import { PageHeader, Card, StatCard, Badge } from "@/components/salon/dash-ui";
 import { Icon } from "@/components/ui/icon";
 import { formatEur } from "@/lib/utils";
 import { OnboardingWizard } from "@/components/salon/onboarding-wizard";
@@ -84,7 +84,7 @@ export default async function DashboardPage() {
         <div className="mb-lg rounded-xl border border-secondary/30 bg-secondary-fixed/40 p-md">
           <div className="mb-sm flex items-center gap-sm">
             <Icon name="checklist" className="text-[22px] text-secondary" />
-            <h2 className="font-headline-md text-headline-md text-on-surface">
+            <h2 className="dash-h2 text-headline-md text-on-surface">
               Stel je assistent in ({completedSteps}/{onboardingSteps.length})
             </h2>
           </div>
@@ -150,7 +150,7 @@ export default async function DashboardPage() {
         {/* AI-receptie status */}
         <Card>
           <div className="mb-md flex items-center justify-between">
-            <h2 className="font-headline-md text-headline-md text-on-surface">AI-Receptie</h2>
+            <h2 className="dash-h2 text-headline-md text-on-surface">AI-Receptie</h2>
             <Link href="/dashboard/ai-receptie" className="text-label-md font-label-md text-primary hover:underline">
               Beheer →
             </Link>
@@ -164,8 +164,9 @@ export default async function DashboardPage() {
 
         {/* Quick links */}
         <Card>
-          <h2 className="mb-md font-headline-md text-headline-md text-on-surface">Snel naar</h2>
+          <h2 className="mb-md dash-h2 text-headline-md text-on-surface">Snel naar</h2>
           <div className="flex flex-col gap-xs">
+            <QuickLink href="/dashboard/klanten" icon="group" label="Klanten & dagplanning" />
             <QuickLink href="/dashboard/gesprekken" icon="forum" label="Gesprekken bekijken" />
             <QuickLink href="/dashboard/afspraken" icon="calendar_month" label="Afspraken bekijken" />
             <QuickLink href="/dashboard/no-show" icon="event_busy" label="No-show beleid instellen" />

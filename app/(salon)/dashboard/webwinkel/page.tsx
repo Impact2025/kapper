@@ -5,7 +5,7 @@ import { getSalonWithSubscription } from "@/lib/salon/queries";
 import { salonHasPlan } from "@/lib/salon/plan";
 import { listProducts, listOrders } from "@/lib/webwinkel/queries";
 import { getReorderSuggestions } from "@/lib/ai/inventory-agent";
-import { PageHeader, EmptyState, AdminLink } from "@/components/admin/ui";
+import { PageHeader, EmptyState, AdminLink } from "@/components/salon/dash-ui";
 import { WebwinkelTabs } from "@/components/salon/webwinkel/webwinkel-tabs";
 
 export const metadata: Metadata = { title: "Webwinkel" };

@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { requireSalonOwner } from "@/lib/auth/dal";
 import { getConversations } from "@/lib/salon/gesprekken";
-import { PageHeader, Badge } from "@/components/admin/ui";
+import { PageHeader, Badge } from "@/components/salon/dash-ui";
 import { Icon } from "@/components/ui/icon";
 
 export const metadata: Metadata = { title: "Gesprekken" };
@@ -34,7 +34,7 @@ export default async function GesprekkenPage() {
       {convs.length === 0 ? (
         <div className="flex flex-col items-center justify-center rounded-xl border border-outline-variant/40 bg-surface-container-lowest py-2xl text-center">
           <Icon name="forum" className="mb-md text-[48px] text-outline-variant" />
-          <p className="font-headline-md text-headline-md text-on-surface mb-xs">
+          <p className="dash-h2 text-headline-md text-on-surface mb-xs">
             Nog geen gesprekken
           </p>
           <p className="text-body-md text-on-surface-variant max-w-[20rem]">

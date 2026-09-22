@@ -3,7 +3,7 @@ import Link from "next/link";
 import { requireSalonOwner } from "@/lib/auth/dal";
 import { getSalonWithSubscription } from "@/lib/salon/queries";
 import { getSalonMetrics } from "@/lib/salon/metrics";
-import { PageHeader, Card, StatCard, Badge } from "@/components/admin/ui";
+import { PageHeader, Card, StatCard, Badge } from "@/components/salon/dash-ui";
 import { Icon } from "@/components/ui/icon";
 
 export const metadata: Metadata = { title: "AI-Receptie" };
@@ -127,7 +127,7 @@ export default async function AiReceptiePage() {
                   <Icon name={ch.icon} className="text-[22px]" />
                 </div>
                 <div>
-                  <div className="font-headline-md text-headline-md text-on-surface">{ch.label}</div>
+                  <div className="dash-h2 text-headline-md text-on-surface">{ch.label}</div>
                   <div className="text-label-sm text-on-surface-variant">{ch.description}</div>
                 </div>
               </div>
@@ -157,7 +157,7 @@ export default async function AiReceptiePage() {
 
       {/* Behavior rules */}
       <Card>
-        <h2 className="mb-md font-headline-md text-headline-md text-on-surface">
+        <h2 className="mb-md dash-h2 text-headline-md text-on-surface">
           AI-gedragsregels
         </h2>
         <div className="flex flex-col gap-sm">

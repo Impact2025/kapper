@@ -71,6 +71,62 @@
       "when": 1788954591128,
       "tag": "0009_exotic_killraven",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1790055053189,
+      "tag": "0010_kennisbank_posts",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1790055053190,
+      "tag": "0011_customers_and_agent_manager",
+      "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1790055053191,
+      "tag": "0012_backfill_customers",
+      "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1790056837730,
+      "tag": "0013_dossier_artikel9",
+      "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1790057360731,
+      "tag": "0014_deposits_and_three_strikes",
+      "breakpoints": true
+    },
+    {
+      "idx": 15,
+      "version": "7",
+      "when": 1790058537314,
+      "tag": "0015_pos_vat",
+      "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1790059539455,
+      "tag": "0016_escalation_reason",
+      "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1790059720284,
+      "tag": "0017_multimodal_intake",
+      "breakpoints": true
     }
   ]
 }

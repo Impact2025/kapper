@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Card } from "@/components/admin/ui";
+import { Card } from "@/components/salon/dash-ui";
 import { Icon } from "@/components/ui/icon";
 
 export const metadata: Metadata = { title: "Account wordt ingericht" };
@@ -11,7 +11,7 @@ export default function SetupPage() {
         <Icon name="pending" className="text-[32px] text-on-primary-fixed" />
       </div>
       <div>
-        <h1 className="font-headline-lg text-headline-lg text-on-surface mb-xs">
+        <h1 className="dash-h1 text-headline-lg text-on-surface mb-xs">
           Je account wordt ingericht
         </h1>
         <p className="text-body-md text-on-surface-variant">

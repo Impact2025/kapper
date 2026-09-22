@@ -4,8 +4,9 @@ import { requireSalonOwner } from "@/lib/auth/dal";
 import { getSalonWithSubscription } from "@/lib/salon/queries";
 import { listUpcomingAppointments } from "@/lib/salon/appointments";
 import { SALON_TIMEZONE, amsterdamTimeKey } from "@/lib/salon/timezone";
-import { PageHeader, Card, Badge } from "@/components/admin/ui";
+import { PageHeader, Card, Badge } from "@/components/salon/dash-ui";
 import { Icon } from "@/components/ui/icon";
+import { MarkNoShowButton } from "@/components/salon/mark-no-show-button";
 
 export const metadata: Metadata = { title: "Afspraken" };
 
@@ -27,9 +28,10 @@ export default async function AfsprakenPage() {
   const isDemo = upcoming.length === 0;
 
   const appointmentRows = isDemo
-    ? DEMO_APPOINTMENTS.map((a) => ({ id: a.id, time: a.time, client: a.client, service: a.service, duration: a.duration, location: null as string | null, reminded: a.reminded }))
+    ? DEMO_APPOINTMENTS.map((a) => ({ id: a.id, customerId: null as string | null, time: a.time, client: a.client, service: a.service, duration: a.duration, location: null as string | null, reminded: a.reminded }))
     : upcoming.map((a) => ({
         id: a.id,
+        customerId: a.customerId,
         time: amsterdamTimeKey(a.appointmentTime),
         client: a.customerName,
         service: a.serviceType,
@@ -77,7 +79,7 @@ export default async function AfsprakenPage() {
         {/* Upcoming appointments */}
         <Card>
           <div className="mb-md flex items-center justify-between">
-            <h2 className="font-headline-md text-headline-md text-on-surface">
+            <h2 className="dash-h2 text-headline-md text-on-surface">
               {isDemo ? "Vandaag" : "Aankomend"}
             </h2>
             {isDemo && <Badge tone="primary">{today}</Badge>}
@@ -90,7 +92,13 @@ export default async function AfsprakenPage() {
                   <span className="text-label-md font-label-md text-on-surface">{apt.time}</span>
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="truncate text-body-md text-on-surface">{apt.client}</div>
+                  {apt.customerId ? (
+                    <Link href={`/dashboard/klanten/${apt.customerId}`} className="truncate text-body-md text-on-surface hover:text-primary hover:underline">
+                      {apt.client}
+                    </Link>
+                  ) : (
+                    <div className="truncate text-body-md text-on-surface">{apt.client}</div>
+                  )}
                   <div className="text-label-sm text-on-surface-variant">
                     {apt.service} · {apt.duration} min{apt.location ? ` · ${apt.location}` : ""}
                   </div>
@@ -98,6 +106,7 @@ export default async function AfsprakenPage() {
                 <Badge tone={apt.reminded ? "success" : "neutral"}>
                   {apt.reminded ? "Herinnerd" : "Gepland"}
                 </Badge>
+                {!isDemo && <MarkNoShowButton appointmentId={apt.id} />}
               </div>
             ))}
           </div>
@@ -117,7 +126,7 @@ export default async function AfsprakenPage() {
 
           {/* No-show stats */}
           <Card>
-            <h2 className="mb-md font-headline-md text-headline-md text-on-surface">
+            <h2 className="mb-md dash-h2 text-headline-md text-on-surface">
               No-show statistieken (30d)
             </h2>
             <div className="grid grid-cols-3 gap-md text-center">

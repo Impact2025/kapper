@@ -10,6 +10,7 @@ import {
   jsonb,
   primaryKey,
   index,
+  uniqueIndex,
 } from "drizzle-orm/pg-core";
 
 /* ============================ Enums ============================ */
@@ -77,6 +78,12 @@ export const users = pgTable("users", {
   image: text("image"),
   role: roleEnum("role").default("owner").notNull(),
   salonId: uuid("salon_id").references(() => salons.id, { onDelete: "set null" }),
+  // Artikel 9 AVG: health_records (allergieën, patch-tests, hoofdhuidcondities)
+  // require an explicit, stronger-gated role flag — not every owner/admin
+  // login should see this by default. Defaults true for today's sole
+  // per-salon login (the owner); a future per-stylist login can default it
+  // false and let the owner grant it per person.
+  canAccessHealthRecords: boolean("can_access_health_records").default(true).notNull(),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull().$onUpdate(() => new Date()),
 });
@@ -209,6 +216,38 @@ export const blogPosts = pgTable(
   (t) => [index("blog_status_idx").on(t.status)],
 );
 
+export const knowledgePosts = pgTable(
+  "knowledge_posts",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    title: text("title").notNull(),
+    slug: text("slug").notNull().unique(),
+    status: postStatusEnum("status").default("draft").notNull(),
+    excerpt: text("excerpt"),
+    bodyMdx: text("body_mdx").notNull().default(""),
+    bodyIsHtml: boolean("body_is_html").default(false).notNull(),
+    metaTitle: varchar("meta_title", { length: 70 }),
+    metaDescription: varchar("meta_description", { length: 170 }),
+    keywords: jsonb("keywords").$type<string[]>().default([]).notNull(),
+    internalLinks: jsonb("internal_links").$type<string[]>().default([]).notNull(),
+    externalLinks: jsonb("external_links").$type<string[]>().default([]).notNull(),
+    jsonLd: jsonb("json_ld").$type<Record<string, unknown>>(),
+    seoScore: integer("seo_score").default(0).notNull(),
+    coverImage: text("cover_image"),
+    coverImageAlt: text("cover_image_alt"),
+    // kennisbank onderwerpscategorie (bv. "Techniek", "Hoofdhuid", "Producten",
+    // "Aftercare", "Inwerktijd", "Balayage", "Kleurcorrectie")
+    category: text("category"),
+    authorId: uuid("author_id").references(() => users.id, { onDelete: "set null" }),
+    publishedAt: timestamp("published_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [
+    index("knowledge_status_idx").on(t.status),
+    index("knowledge_category_idx").on(t.category),
+  ],
+);
+
 /* ============================ Coupons & Billing ============================ */
 export const coupons = pgTable("coupons", {
   id: uuid("id").defaultRandom().primaryKey(),
@@ -255,6 +294,11 @@ export const conversationStatusEnum = pgEnum("conversation_status", [
 ]);
 export const messageRoleEnum = pgEnum("message_role", ["user", "assistant"]);
 export const appointmentStatusEnum = pgEnum("appointment_status", [
+  // Fase 2: a deposit checkout session is open — the slot is held (every
+  // non-cancelled status already counts as occupied in availability.ts) but
+  // not yet a Middelburg-norm pending_confirmation until Stripe confirms
+  // payment (see lib/payments-policy and the stripe webhook).
+  "pending_deposit",
   "pending_confirmation",
   "confirmed",
   "completed",
@@ -266,6 +310,107 @@ export const appointmentSourceEnum = pgEnum("appointment_source", [
   "ai_phone",
   "manual",
 ]);
+
+/* ============================ Customers (salon's own end-customers) ============================ */
+// The sector-neutral customer entity — distinct from `leads` (the SaaS's own
+// B2B sales pipeline of prospective salons). appointments/orders keep their
+// denormalized customerName/customerPhone for backward compatibility and are
+// backfilled to point customerId here (see 0011 migration).
+export const customers = pgTable(
+  "customers",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    salonId: uuid("salon_id")
+      .notNull()
+      .references(() => salons.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    phone: text("phone").notNull(), // normalized, unique per salon
+    email: text("email"),
+    birthDate: timestamp("birth_date", { withTimezone: true }),
+    source: appointmentSourceEnum("source").notNull().default("manual"),
+    marketingOptIn: boolean("marketing_opt_in").default(false).notNull(),
+    // Three-strikes no-show policy (Fase 2): coulance on the first no-show,
+    // online AI booking blocked from the second onward until the salon
+    // owner manually lifts it — see lib/payments-policy/queries.ts.
+    noShowCount: integer("no_show_count").default(0).notNull(),
+    blockedFromOnlineBooking: boolean("blocked_from_online_booking").default(false).notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull().$onUpdate(() => new Date()),
+  },
+  (t) => [uniqueIndex("customers_salon_phone_idx").on(t.salonId, t.phone)],
+);
+
+export const photoTypeEnum = pgEnum("photo_type", ["before", "after"]);
+
+/* ============================ Dossier (Artikel 9 AVG) ============================ */
+// Kleurrecepten/kniptechnieken — ordinary treatment history, no special AVG
+// category. Kept in its own table (not folded into `customers`) because it's
+// per-visit, not per-customer.
+export const treatmentCards = pgTable(
+  "treatment_cards",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    salonId: uuid("salon_id")
+      .notNull()
+      .references(() => salons.id, { onDelete: "cascade" }),
+    customerId: uuid("customer_id")
+      .notNull()
+      .references(() => customers.id, { onDelete: "cascade" }),
+    staffId: uuid("staff_id").references(() => staff.id, { onDelete: "set null" }),
+    appointmentId: uuid("appointment_id").references(() => appointments.id, { onDelete: "set null" }),
+    // { colorFormula, mixRatio, technique, ... } — free-form per salon/vertical.
+    details: jsonb("details").$type<Record<string, unknown>>().default({}).notNull(),
+    notes: text("notes"),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [index("treatment_cards_customer_idx").on(t.customerId)],
+);
+
+// Artikel 9 AVG special-category data — deliberately its own table so access
+// can be gated separately from ordinary customer/treatment data (see
+// users.canAccessHealthRecords and lib/dossier/queries.ts). Never written
+// without consentGivenAt: the compliance guard in lib/ai/manager.ts also
+// blocks the AI from ever writing to this table directly over WhatsApp.
+export const healthRecords = pgTable(
+  "health_records",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    salonId: uuid("salon_id")
+      .notNull()
+      .references(() => salons.id, { onDelete: "cascade" }),
+    customerId: uuid("customer_id")
+      .notNull()
+      .references(() => customers.id, { onDelete: "cascade" }),
+    allergies: text("allergies"),
+    scalpCondition: text("scalp_condition"),
+    patchTestResult: text("patch_test_result"),
+    patchTestAt: timestamp("patch_test_at", { withTimezone: true }),
+    consentGivenAt: timestamp("consent_given_at", { withTimezone: true }).notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull().$onUpdate(() => new Date()),
+  },
+  (t) => [index("health_records_customer_idx").on(t.customerId)],
+);
+
+export const photos = pgTable(
+  "photos",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    salonId: uuid("salon_id")
+      .notNull()
+      .references(() => salons.id, { onDelete: "cascade" }),
+    customerId: uuid("customer_id")
+      .notNull()
+      .references(() => customers.id, { onDelete: "cascade" }),
+    blobUrl: text("blob_url").notNull(),
+    type: photoTypeEnum("type").notNull(),
+    // Portfolio use (website/socials) is a separate, broader consent from
+    // simply keeping the photo in the dossier for aftercare comparison.
+    portfolioConsentAt: timestamp("portfolio_consent_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [index("photos_customer_idx").on(t.customerId)],
+);
 
 /* ============================ Praktijk (locaties, behandelingen, team) ============================ */
 export const locations = pgTable(
@@ -308,6 +453,9 @@ export const treatments = pgTable(
     description: text("description"),
     prepInfo: text("prep_info"),
     aftercareInfo: text("aftercare_info"),
+    // NL btw-tarief: 9% op behandelingen (dienst), 21% op producten — see
+    // lib/salon/vertical.ts KAPPER_VERTICAL.vatRates for the same default.
+    vatRatePercent: integer("vat_rate_percent").notNull().default(9),
     active: boolean("active").default(true).notNull(),
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   },
@@ -382,6 +530,10 @@ export const conversations = pgTable("conversations", {
   phoneNumber: text("phone_number"), // normalized E.164
   customerName: text("customer_name"),
   status: conversationStatusEnum("status").default("active").notNull(),
+  // Fase 4 human-in-the-loop dashboard: why the AI handed off, set together
+  // with status: "escalated" so a stylist can triage without re-reading the
+  // whole transcript.
+  escalationReason: text("escalation_reason"),
   startedAt: timestamp("started_at", { withTimezone: true }).defaultNow().notNull(),
   closedAt: timestamp("closed_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
@@ -395,8 +547,33 @@ export const messages = pgTable("messages", {
     .references(() => conversations.id, { onDelete: "cascade" }),
   role: messageRoleEnum("role").notNull(),
   content: text("content").notNull(),
+  // Fase 4 multimodale input: set when the customer sent a photo (kapsel-
+  // inspiratie, huidige haarkleur, uitgroei) alongside/instead of text.
+  imageUrl: text("image_url"),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 });
+
+// One row per AI-manager-routed conversation turn — doubles as the Artikel
+// 50 EU AI Act audit trail (which agent handled what) and the basis for the
+// Artikel 17 right-to-erasure purge routine (Fase 6).
+export const agentRuns = pgTable(
+  "agent_runs",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    salonId: uuid("salon_id")
+      .notNull()
+      .references(() => salons.id, { onDelete: "cascade" }),
+    conversationId: uuid("conversation_id").references(() => conversations.id, { onDelete: "set null" }),
+    channel: conversationChannelEnum("channel").notNull(),
+    // Free text, not an enum: new agents (pos, retention, ...) are added per
+    // phase and shouldn't need an ALTER TYPE migration each time.
+    agent: text("agent").notNull(),
+    guardTriggered: boolean("guard_triggered").default(false).notNull(),
+    escalated: boolean("escalated").default(false).notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [index("agent_runs_salon_idx").on(t.salonId)],
+);
 
 export const appointments = pgTable(
   "appointments",
@@ -413,6 +590,7 @@ export const appointments = pgTable(
     locationId: uuid("location_id").references(() => locations.id, { onDelete: "set null" }),
     staffId: uuid("staff_id").references(() => staff.id, { onDelete: "set null" }),
     treatmentId: uuid("treatment_id").references(() => treatments.id, { onDelete: "set null" }),
+    customerId: uuid("customer_id").references(() => customers.id, { onDelete: "set null" }),
     customerName: text("customer_name").notNull(),
     customerPhone: text("customer_phone").notNull(),
     serviceType: text("service_type").notNull(),
@@ -426,6 +604,11 @@ export const appointments = pgTable(
     policyAcceptedAt: timestamp("policy_accepted_at", { withTimezone: true }),
     confirmationChannel: text("confirmation_channel"), // 'whatsapp_button' | 'sms_link' | 'voice_otp'
     cancellationDeadline: timestamp("cancellation_deadline", { withTimezone: true }),
+    // Fase 2 vooruitbetalingen — set together when a deposit is required;
+    // depositPaidAt is filled in by the Stripe webhook once payment lands.
+    depositAmountCents: integer("deposit_amount_cents"),
+    stripeDepositSessionId: text("stripe_deposit_session_id").unique(),
+    depositPaidAt: timestamp("deposit_paid_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   },
   (t) => [
@@ -450,6 +633,8 @@ export const products = pgTable(
     imageUrl: text("image_url"),
     stockQuantity: integer("stock_quantity").notNull().default(0),
     lowStockThreshold: integer("low_stock_threshold").notNull().default(5),
+    // NL btw-tarief: 21% op producten (goederen), 9% op behandelingen.
+    vatRatePercent: integer("vat_rate_percent").notNull().default(21),
     active: boolean("active").default(true).notNull(),
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull().$onUpdate(() => new Date()),
@@ -475,6 +660,9 @@ export const inventoryMovements = pgTable(
   (t) => [index("inventory_movements_product_idx").on(t.productId)],
 );
 
+export const orderChannelEnum = pgEnum("order_channel", ["webshop", "pos"]);
+export const paymentMethodEnum = pgEnum("payment_method", ["cash", "pin", "card"]);
+
 export const orders = pgTable(
   "orders",
   {
@@ -482,10 +670,16 @@ export const orders = pgTable(
     salonId: uuid("salon_id")
       .notNull()
       .references(() => salons.id, { onDelete: "cascade" }),
+    customerId: uuid("customer_id").references(() => customers.id, { onDelete: "set null" }),
     customerName: text("customer_name").notNull(),
-    customerEmail: text("customer_email").notNull(),
+    // Nullable: a chair-side POS sale (channel: "pos") rarely collects an
+    // email, unlike a webshop checkout which requires one.
+    customerEmail: text("customer_email"),
     customerPhone: text("customer_phone"),
     status: orderStatusEnum("status").default("pending").notNull(),
+    channel: orderChannelEnum("channel").default("webshop").notNull(),
+    paymentMethod: paymentMethodEnum("payment_method"),
+    tipCents: integer("tip_cents").default(0).notNull(),
     totalCents: integer("total_cents").notNull().default(0),
     stripeSessionId: text("stripe_session_id").unique(),
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
@@ -501,11 +695,17 @@ export const orderItems = pgTable(
     orderId: uuid("order_id")
       .notNull()
       .references(() => orders.id, { onDelete: "cascade" }),
-    // set null on product delete so past orders keep their history
+    // set null on product/treatment delete so past orders keep their history.
+    // Exactly one of the two is set for a POS sale; both are null for a
+    // webshop order (product-only historically, but kept nullable to match).
     productId: uuid("product_id").references(() => products.id, { onDelete: "set null" }),
+    treatmentId: uuid("treatment_id").references(() => treatments.id, { onDelete: "set null" }),
     productName: text("product_name").notNull(),
     unitPriceCents: integer("unit_price_cents").notNull(),
     quantity: integer("quantity").notNull(),
+    // Snapshotted at sale time — accounting must reflect the rate that
+    // applied then, even if the salon changes vatRatePercent later.
+    vatRatePercent: integer("vat_rate_percent").notNull().default(21),
   },
   (t) => [index("order_items_order_idx").on(t.orderId)],
 );

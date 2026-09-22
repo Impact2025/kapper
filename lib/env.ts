@@ -59,7 +59,7 @@ const serverSchema = z.object({
 });
 
 const publicSchema = z.object({
-  NEXT_PUBLIC_SITE_URL: z.string().url().default("https://kappersassistent.nl"),
+  NEXT_PUBLIC_SITE_URL: z.string().url().default("https://www.kappersassistent.nl"),
 });
 
 // Vercel sets unassigned env vars to "" at build time; strip them so

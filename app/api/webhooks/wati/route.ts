@@ -3,7 +3,8 @@ import { NextResponse } from "next/server";
 import { eq, and, sql } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { salons, conversations, messages, users, events as eventsTable } from "@/lib/db/schema";
-import { getReceptionistReply, type WatiConfirmationPayload } from "@/lib/ai/receptionist";
+import type { WatiConfirmationPayload } from "@/lib/ai/receptionist";
+import { runAiManager } from "@/lib/ai/manager";
 import { loadSalonContext } from "@/lib/salon/receptionist-context";
 import { confirmAppointment, pushBookingToAgenda } from "@/lib/salon/appointments";
 import { amsterdamDateKey, amsterdamTimeKey } from "@/lib/salon/timezone";
@@ -25,8 +26,11 @@ export function verifyWatiSignature(body: string, signature: string | null, secr
   return signature === expected;
 }
 
-/** Send a WhatsApp message via WATI. */
-async function sendWatiMessage(
+/** Send a WhatsApp message via WATI. Exported for the Stripe deposit-webhook
+ * flow (lib/billing/provision.ts), which needs to notify the customer once
+ * a deposit checkout completes — same WATI credential-resolution/sending
+ * concern, kept in one place rather than duplicated. */
+export async function sendWatiMessage(
   baseUrl: string,
   apiKey: string,
   phoneNumber: string,
@@ -185,11 +189,20 @@ export async function POST(req: Request) {
   const messageText = String(
     messageObj.text ?? messageObj.body ?? body.text ?? "",
   ).trim();
+  // Fase 4 multimodale input: WATI's media message shape — best-effort field
+  // names (type/data/filePath), unverified against live WATI docs since we
+  // don't have a connected account to confirm the exact payload. Falls back
+  // to no image gracefully if none of these match.
+  const messageType = String(messageObj.type ?? body.type ?? "");
+  const imageUrl =
+    messageType === "image"
+      ? String(messageObj.data ?? messageObj.filePath ?? messageObj.fileUrl ?? "") || null
+      : null;
   const convObj = body.conversation as Record<string, unknown> | undefined;
   const watiConvId = String(body.id ?? convObj?.id ?? "");
   const customerName = String(body.senderName ?? body.contactName ?? "");
 
-  if (!fromPhone || !messageText) {
+  if (!fromPhone || (!messageText && !imageUrl)) {
     return NextResponse.json({ ok: true, ignored: true });
   }
 
@@ -245,12 +258,13 @@ export async function POST(req: Request) {
   await db.insert(messages).values({
     conversationId,
     role: "user",
-    content: messageText,
+    content: messageText || (imageUrl ? "[Foto ontvangen]" : ""),
+    imageUrl,
   });
 
   // Load recent history for context
   const history = await db
-    .select({ role: messages.role, content: messages.content })
+    .select({ role: messages.role, content: messages.content, imageUrl: messages.imageUrl })
     .from(messages)
     .where(eq(messages.conversationId, conversationId))
     .orderBy(messages.createdAt)
@@ -262,13 +276,15 @@ export async function POST(req: Request) {
   // over whatever loadSalonContext read from settings.
   salonContext.aiSettings.watiApiKey = watiApiKey;
 
-  const { reply, bookedAppointment, escalated } = await getReceptionistReply(
-    salonContext,
-    history.map((h) => ({ role: h.role, content: h.content })),
-    fromPhone,
+  const { reply, bookedAppointment, escalated } = await runAiManager({
+    salonId,
+    salon: salonContext,
+    history: history.map((h) => ({ role: h.role, content: h.content, imageUrl: h.imageUrl })),
+    customerPhone: fromPhone,
     conversationId,
     isNewConversation,
-  );
+    channel: "whatsapp",
+  });
 
   // Persist assistant reply
   await db.insert(messages).values({
@@ -278,9 +294,17 @@ export async function POST(req: Request) {
   });
 
   // Send reply via WATI — a fresh booking gets the Middelburg-norm
-  // interactive confirmation message (with its accept button) instead of
-  // the assistant's plain-text reply for this turn.
-  if (bookedAppointment?.confirmationPayload) {
+  // interactive confirmation message (with its accept button), or a Fase 2
+  // deposit checkout link, instead of the assistant's plain-text reply for
+  // this turn.
+  if (bookedAppointment?.depositPayment) {
+    await sendWatiMessage(
+      watiBaseUrl,
+      watiApiKey,
+      fromPhone,
+      `Rond je afspraak af met een aanbetaling van €${(bookedAppointment.depositPayment.amountCents / 100).toFixed(2)}: ${bookedAppointment.depositPayment.checkoutUrl}`,
+    );
+  } else if (bookedAppointment?.confirmationPayload) {
     await sendWatiInteractiveMessage(watiBaseUrl, watiApiKey, fromPhone, bookedAppointment.confirmationPayload);
   } else {
     await sendWatiMessage(watiBaseUrl, watiApiKey, fromPhone, reply);
@@ -312,7 +336,10 @@ export async function POST(req: Request) {
 
   // The AI flagged this conversation for a human — surface it in Gesprekken.
   if (escalated) {
-    await db.update(conversations).set({ status: "escalated" }).where(eq(conversations.id, conversationId));
+    await db
+      .update(conversations)
+      .set({ status: "escalated", escalationReason: escalated.reason })
+      .where(eq(conversations.id, conversationId));
     await trackEvent({
       type: "escalated",
       salonId,

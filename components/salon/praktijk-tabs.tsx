@@ -2,7 +2,7 @@
 
 import { useActionState, useState } from "react";
 import { Icon } from "@/components/ui/icon";
-import { Card, Badge, EmptyState } from "@/components/admin/ui";
+import { Card, Badge, EmptyState } from "@/components/salon/dash-ui";
 import { RichTextEditor } from "@/components/admin/rich-text-editor";
 import type { PraktijkData } from "@/lib/salon/praktijk-queries";
 import type { ActionState } from "@/lib/salon/actions";

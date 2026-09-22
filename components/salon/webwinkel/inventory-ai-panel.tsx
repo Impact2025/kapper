@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { askInventoryAgent } from "@/lib/webwinkel/actions";
-import { Card } from "@/components/admin/ui";
+import { Card } from "@/components/salon/dash-ui";
 import { Icon } from "@/components/ui/icon";
 import type { InventoryChatMessage } from "@/lib/ai/inventory-agent";
 

@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { and, eq, sql } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { conversations, messages } from "@/lib/db/schema";
-import { getReceptionistReply } from "@/lib/ai/receptionist";
+import { runAiManager } from "@/lib/ai/manager";
 import { loadSalonContext } from "@/lib/salon/receptionist-context";
 import { getPublicDemoSalon } from "@/lib/salon/public-demo";
 import { trackEvent } from "@/lib/analytics/track";
@@ -91,12 +91,14 @@ export async function POST(req: Request) {
     .limit(20);
 
   const salonContext = await loadSalonContext(salon);
-  const { reply, bookedAppointment, escalated, suggestedSlots } = await getReceptionistReply(
-    salonContext,
-    history.map((h) => ({ role: h.role, content: h.content })),
-    demoPhone,
+  const { reply, bookedAppointment, escalated, suggestedSlots } = await runAiManager({
+    salonId: salon.id,
+    salon: salonContext,
+    history: history.map((h) => ({ role: h.role, content: h.content })),
+    customerPhone: demoPhone,
     conversationId,
-  );
+    channel: "whatsapp",
+  });
 
   await db.insert(messages).values({ conversationId, role: "assistant", content: reply });
 

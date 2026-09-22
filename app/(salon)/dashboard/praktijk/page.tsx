@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { requireSalonOwner } from "@/lib/auth/dal";
 import { getPraktijkData } from "@/lib/salon/praktijk-queries";
-import { PageHeader } from "@/components/admin/ui";
+import { PageHeader } from "@/components/salon/dash-ui";
 import { PraktijkTabs } from "@/components/salon/praktijk-tabs";
 
 export const metadata: Metadata = { title: "Praktijk" };

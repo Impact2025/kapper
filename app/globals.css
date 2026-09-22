@@ -197,6 +197,69 @@ body {
 .scrollbar-hide::-webkit-scrollbar { display: none; }
 .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
 
+/* ============================================================
+   Salon dashboard design language ("Sparren-style"): strak,
+   sans-serif, ruime witruimte, pill-badges, overline-labels.
+   Scoped via classnames only used inside components/salon/dash-ui.tsx
+   — never applied to the marketing site or /admin, so those keep
+   the existing Garamond/serif brand identity untouched.
+   ============================================================ */
+.dash-eyebrow {
+  font-family: var(--font-hanken), "Hanken Grotesk", sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--color-on-surface-variant);
+}
+
+.dash-h1 {
+  font-family: var(--font-hanken), "Hanken Grotesk", sans-serif;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--color-on-surface);
+}
+
+.dash-h2 {
+  font-family: var(--font-hanken), "Hanken Grotesk", sans-serif;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--color-on-surface);
+}
+
+.dash-card {
+  border-radius: 20px;
+  border: 1px solid rgba(27, 28, 28, 0.06);
+  background: var(--color-surface-container-lowest);
+}
+
+.dash-card-tint {
+  border-radius: 20px;
+  border: 1px solid transparent;
+}
+
+.dash-pill {
+  border-radius: 9999px;
+  font-family: var(--font-hanken), "Hanken Grotesk", sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  line-height: 1;
+  padding: 6px 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+}
+
+.dash-icon-tile {
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
 /* Rendered blog body (from Markdown) */
 .prose-blog h2 {
   font-family: var(--font-headline-lg);

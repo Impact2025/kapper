@@ -1,11 +1,13 @@
 import "server-only";
-import { and, eq, gte, ne } from "drizzle-orm";
+import { and, desc, eq, gte, lt, ne } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { appointments, locations, staff, treatments } from "@/lib/db/schema";
 import { decodeSlot } from "@/lib/salon/availability";
-import { amsterdamDateKey, amsterdamTimeKey } from "@/lib/salon/timezone";
+import { amsterdamDateKey, amsterdamTimeKey, amsterdamWallTimeToUtc } from "@/lib/salon/timezone";
 import { getAgendaAdapter, resolveAgendaApiKey } from "@/lib/agenda";
 import { captureError } from "@/lib/observability";
+import { upsertCustomerByPhone, findCustomerByPhone } from "@/lib/customers/queries";
+import { computeDepositRequirement, createDepositCheckoutSession } from "@/lib/payments-policy/queries";
 
 /** `__implicit__<salonId>` slot ids (no locations/treatments/staff configured
  * yet) don't exist as real rows — never write them as a foreign key. */
@@ -69,6 +71,7 @@ export async function findAppointmentsByPhone(
 
 interface BookInput {
   salonId: string;
+  salonName: string;
   slotId: string;
   customerName: string;
   customerPhone: string;
@@ -76,6 +79,12 @@ interface BookInput {
   agendaProvider: string | null;
   /** Uren vóór de afspraak waarbinnen kosteloos annuleren nog mag — bepaalt cancellationDeadline. Standaard 24. */
   freeCancelHours?: number;
+  /** Fase 2 vooruitbetalingen. Deposit collection needs an out-of-band
+   * Stripe Checkout redirect, which only makes sense on WhatsApp — a phone
+   * caller can't pause mid-call to pay, so deposits are never required for
+   * channel: "phone" regardless of these settings. */
+  depositRequired?: boolean;
+  depositCents?: number;
   /** Middelburg-norm double-confirmation (pending_confirmation + a WhatsApp
    * button tap) only makes sense on a channel with a tappable button. A
    * phone caller can't tap anything mid-call — the AI already verbally
@@ -111,15 +120,49 @@ export async function bookFromSlot(input: BookInput) {
 
   const isPhone = input.channel === "phone";
 
+  // Three-strikes no-show policy (Fase 2): a customer blocked after repeat
+  // no-shows can't self-book through the AI — checked before an existing
+  // customer's phone even reaches upsertCustomerByPhone (which would create
+  // a new customer for a not-yet-seen phone anyway).
+  const existingCustomer = await findCustomerByPhone(input.salonId, input.customerPhone);
+  if (existingCustomer?.blockedFromOnlineBooking) {
+    return {
+      error:
+        "Voor dit telefoonnummer staan herhaalde no-shows geregistreerd — online boeken is geblokkeerd. Verwijs door naar de salon.",
+    };
+  }
+
+  // Every AI booking is a customer touchpoint — find-or-create the customer
+  // record so the appointment links to it from the start (dossier, CRM,
+  // no-show history and loyalty in later phases all key off customerId).
+  const customer =
+    existingCustomer ??
+    (await upsertCustomerByPhone({
+      salonId: input.salonId,
+      phone: input.customerPhone,
+      name: input.customerName,
+      source: isPhone ? "ai_phone" : "ai_whatsapp",
+    }));
+
+  const deposit = isPhone
+    ? { required: false, amountCents: 0 }
+    : computeDepositRequirement(
+        { depositRequired: input.depositRequired, depositCents: input.depositCents },
+        treatmentRow[0]?.priceCents ?? 0,
+      );
+
   // Middelburg-norm: WhatsApp bookings start unconfirmed and are pushed to
   // the external agenda only after the customer taps the confirm button —
   // see the WATI button_reply webhook. There's no equivalent tap on a phone
   // call, so a phone booking is confirmed immediately (the AI already got
-  // verbal name/phone confirmation before calling this).
+  // verbal name/phone confirmation before calling this). A deposit-required
+  // WhatsApp booking starts one step earlier still (pending_deposit) — see
+  // below.
   const [row] = await db
     .insert(appointments)
     .values({
       salonId: input.salonId,
+      customerId: customer.id,
       conversationId: input.conversationId ?? null,
       agendaProvider: input.agendaProvider ?? "manual",
       locationId: realId(decoded.locationId),
@@ -132,14 +175,37 @@ export async function bookFromSlot(input: BookInput) {
       durationMinutes,
       source: isPhone ? "ai_phone" : "ai_whatsapp",
       cancellationDeadline,
-      ...(isPhone ? { status: "confirmed" as const, policyAcceptedAt: new Date(), confirmationChannel: "voice" } : {}),
+      ...(isPhone
+        ? { status: "confirmed" as const, policyAcceptedAt: new Date(), confirmationChannel: "voice" }
+        : deposit.required
+          ? { status: "pending_deposit" as const }
+          : {}),
     })
     .returning();
+
+  let depositPayment: { checkoutUrl: string; amountCents: number } | null = null;
+  if (deposit.required) {
+    const session = await createDepositCheckoutSession({
+      appointmentId: row!.id,
+      salonId: input.salonId,
+      salonName: input.salonName,
+      treatmentName: serviceType,
+      amountCents: deposit.amountCents,
+    });
+    if (session) {
+      depositPayment = { checkoutUrl: session.url, amountCents: deposit.amountCents };
+    } else {
+      // Stripe not configured — degrade to the normal Middelburg flow
+      // instead of leaving the booking stuck in pending_deposit forever.
+      await db.update(appointments).set({ status: "pending_confirmation" }).where(eq(appointments.id, row!.id));
+    }
+  }
 
   return {
     ok: true as const,
     appointmentId: row!.id,
-    pendingConfirmation: !isPhone,
+    pendingConfirmation: !isPhone && !depositPayment,
+    ...(depositPayment ? { depositPayment } : {}),
     treatment: serviceType,
     location: locationName,
     date: amsterdamDateKey(appointmentTime),
@@ -270,6 +336,7 @@ export async function cancelById(salonId: string, appointmentId: string) {
 
 export interface UpcomingAppointment {
   id: string;
+  customerId: string | null;
   customerName: string;
   serviceType: string;
   locationName: string | null;
@@ -284,6 +351,7 @@ export async function listUpcomingAppointments(salonId: string, limit = 20): Pro
   const rows = await db
     .select({
       id: appointments.id,
+      customerId: appointments.customerId,
       customerName: appointments.customerName,
       serviceType: appointments.serviceType,
       locationName: locations.name,
@@ -298,4 +366,73 @@ export async function listUpcomingAppointments(salonId: string, limit = 20): Pro
     .orderBy(appointments.appointmentTime)
     .limit(limit);
   return rows.map((r) => ({ ...r, reminded: Boolean(r.reminderSentAt) }));
+}
+
+export interface CustomerAppointment {
+  id: string;
+  customerId: string | null;
+  customerName: string;
+  serviceType: string;
+  staffName: string | null;
+  appointmentTime: Date;
+  durationMinutes: number;
+  status: string;
+}
+
+/**
+ * Vandaag-overzicht op /dashboard/klanten — de dagplanning van een kapper,
+ * met customerId zodat elke rij direct naar het klantdossier kan linken.
+ * Amsterdam-daggrens, niet server-local (zie lib/salon/timezone.ts).
+ */
+export async function listTodayAppointments(salonId: string): Promise<CustomerAppointment[]> {
+  const now = new Date();
+  const startOfDay = amsterdamWallTimeToUtc(now, 0, 0);
+  const startOfNextDay = amsterdamWallTimeToUtc(now, 1, 0);
+
+  return db
+    .select({
+      id: appointments.id,
+      customerId: appointments.customerId,
+      customerName: appointments.customerName,
+      serviceType: appointments.serviceType,
+      staffName: staff.name,
+      appointmentTime: appointments.appointmentTime,
+      durationMinutes: appointments.durationMinutes,
+      status: appointments.status,
+    })
+    .from(appointments)
+    .leftJoin(staff, eq(staff.id, appointments.staffId))
+    .where(
+      and(
+        eq(appointments.salonId, salonId),
+        gte(appointments.appointmentTime, startOfDay),
+        lt(appointments.appointmentTime, startOfNextDay),
+        ne(appointments.status, "cancelled"),
+      ),
+    )
+    .orderBy(appointments.appointmentTime);
+}
+
+/** Afsprakenhistorie op een klantdossier — recentste eerst, inclusief toekomstige. */
+export async function listAppointmentsForCustomer(
+  salonId: string,
+  customerId: string,
+  limit = 20,
+): Promise<CustomerAppointment[]> {
+  return db
+    .select({
+      id: appointments.id,
+      customerId: appointments.customerId,
+      customerName: appointments.customerName,
+      serviceType: appointments.serviceType,
+      staffName: staff.name,
+      appointmentTime: appointments.appointmentTime,
+      durationMinutes: appointments.durationMinutes,
+      status: appointments.status,
+    })
+    .from(appointments)
+    .leftJoin(staff, eq(staff.id, appointments.staffId))
+    .where(and(eq(appointments.salonId, salonId), eq(appointments.customerId, customerId)))
+    .orderBy(desc(appointments.appointmentTime))
+    .limit(limit);
 }

@@ -2,7 +2,7 @@
 
 import { useActionState, useState, useEffect, useRef } from "react";
 import { Icon } from "@/components/ui/icon";
-import { Badge } from "@/components/admin/ui";
+import { Badge } from "@/components/salon/dash-ui";
 import { formatEur } from "@/lib/utils";
 import { createUpgrade } from "@/lib/billing/upgrade";
 import type { Plan } from "@/lib/plans";
@@ -56,7 +56,7 @@ export function UpgradeModal({
         className="m-auto max-h-[90dvh] w-full max-w-[32rem] overflow-y-auto rounded-2xl border border-outline-variant/40 bg-surface p-0 shadow-xl backdrop:bg-black/40"
       >
         <div className="sticky top-0 z-10 flex items-center justify-between border-b border-outline-variant/40 bg-surface px-lg py-md">
-          <h2 className="font-headline-md text-headline-md text-on-surface">Plan kiezen</h2>
+          <h2 className="dash-h2 text-headline-md text-on-surface">Plan kiezen</h2>
           <button
             onClick={() => setOpen(false)}
             className="flex h-9 w-9 items-center justify-center rounded-full text-on-surface-variant transition-colors hover:bg-surface-container-high"
@@ -83,13 +83,13 @@ export function UpgradeModal({
                 <div className="flex items-start justify-between">
                   <div>
                     <div className="flex items-center gap-xs">
-                      <span className="font-headline-md text-headline-md text-on-surface">{plan.name}</span>
+                      <span className="dash-h2 text-headline-md text-on-surface">{plan.name}</span>
                       {plan.popular && <Badge tone="primary">Populair</Badge>}
                     </div>
                     <p className="mt-xs text-label-sm text-on-surface-variant">{plan.tagline}</p>
                   </div>
                   <div className="shrink-0 text-right">
-                    <div className="font-headline-md text-headline-md text-on-surface">{formatEur(plan.price)}</div>
+                    <div className="dash-h2 text-headline-md text-on-surface">{formatEur(plan.price)}</div>
                     <div className="text-label-sm text-on-surface-variant">/maand</div>
                   </div>
                 </div>

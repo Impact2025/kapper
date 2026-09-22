@@ -15,7 +15,7 @@ export default function SalonError({
         <Icon name="error" filled className="text-[32px] text-on-error-container" />
       </div>
       <div>
-        <h2 className="font-headline-md text-headline-md text-on-surface mb-xs">
+        <h2 className="dash-h2 text-headline-md text-on-surface mb-xs">
           Er is iets misgegaan
         </h2>
         <p className="max-w-[24rem] text-body-md text-on-surface-variant">

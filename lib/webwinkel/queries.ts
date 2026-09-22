@@ -70,7 +70,7 @@ export async function getLowStockProducts(salonId: string): Promise<Product[]> {
 export interface OrderWithItems {
   id: string;
   customerName: string;
-  customerEmail: string;
+  customerEmail: string | null;
   customerPhone: string | null;
   status: "pending" | "paid" | "fulfilled" | "canceled";
   totalCents: number;

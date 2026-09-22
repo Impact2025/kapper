@@ -3,7 +3,7 @@ import { requireSalonOwner } from "@/lib/auth/dal";
 import { getSalonWithSubscription } from "@/lib/salon/queries";
 import { salonHasPlan } from "@/lib/salon/plan";
 import { getSalonReportData } from "@/lib/salon/reports";
-import { PageHeader, Card, StatCard, EmptyState, AdminLink } from "@/components/admin/ui";
+import { PageHeader, Card, StatCard, EmptyState, AdminLink } from "@/components/salon/dash-ui";
 import { Icon } from "@/components/ui/icon";
 import { formatEur } from "@/lib/utils";
 
@@ -61,12 +61,12 @@ async function RapportageContent({ salonId }: { salonId: string }) {
 
       <div className="mt-lg grid grid-cols-1 gap-md lg:grid-cols-3">
         <Card className="lg:col-span-2">
-          <h2 className="mb-md font-headline-md text-headline-md text-on-surface">Boekingen per dag</h2>
+          <h2 className="mb-md dash-h2 text-headline-md text-on-surface">Boekingen per dag</h2>
           <BookingsTrend points={data.bookingsTrend} />
         </Card>
 
         <Card>
-          <h2 className="mb-md font-headline-md text-headline-md text-on-surface">Boekingen per kanaal</h2>
+          <h2 className="mb-md dash-h2 text-headline-md text-on-surface">Boekingen per kanaal</h2>
           {data.bookingsByChannel.length === 0 ? (
             <p className="text-body-md text-on-surface-variant">Nog geen boekingen.</p>
           ) : (

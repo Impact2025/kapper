@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useActionState } from "react";
 import { deleteProduct, adjustStock } from "@/lib/webwinkel/actions";
-import { Badge, EmptyState } from "@/components/admin/ui";
+import { Badge, EmptyState } from "@/components/salon/dash-ui";
 import { Icon } from "@/components/ui/icon";
 import { ProductForm, type EditableProduct } from "@/components/salon/webwinkel/product-form";
 

@@ -19,7 +19,14 @@ import { PLANS, type PlanId } from "@/lib/plans";
 import { slugify } from "@/lib/utils";
 import { sendEmail } from "@/lib/mail/resend";
 import { welcomeEmail } from "@/lib/mail/templates";
-import { publicEnv } from "@/lib/env";
+import { publicEnv, env } from "@/lib/env";
+import { markDepositPaid } from "@/lib/payments-policy/queries";
+import { pushBookingToAgenda } from "@/lib/salon/appointments";
+import { amsterdamDateKey, amsterdamTimeKey } from "@/lib/salon/timezone";
+import { decrypt } from "@/lib/crypto";
+import { sendWatiMessage } from "@/app/api/webhooks/wati/route";
+import { trackEvent } from "@/lib/analytics/track";
+import { captureError } from "@/lib/observability";
 
 function planById(id: string | undefined): (typeof PLANS)[number] | undefined {
   return PLANS.find((p) => p.id === id);
@@ -171,9 +178,59 @@ async function handleWebshopOrder(session: Stripe.Checkout.Session) {
   });
 }
 
+/**
+ * Fase 2 vooruitbetalingen: a paid deposit confirms the booking directly
+ * (see the comment on markDepositPaid) — push it to the salon's connected
+ * agenda and let the customer know over WhatsApp, mirroring exactly what
+ * the WATI button-confirm handler does for a no-deposit booking.
+ */
+async function handleDepositCheckout(session: Stripe.Checkout.Session) {
+  const confirmed = await markDepositPaid(session.id);
+  if (!confirmed) return; // already handled, or not a deposit session
+
+  const [salon] = await db.select().from(salons).where(eq(salons.id, confirmed.salonId)).limit(1);
+  const ai = (salon?.settings as Record<string, unknown> | undefined)?.ai as
+    | Record<string, unknown>
+    | undefined;
+
+  await pushBookingToAgenda(salon?.agendaProvider, ai?.agendaApiKey ? String(ai.agendaApiKey) : null, confirmed.id, {
+    customerName: confirmed.customerName,
+    customerPhone: confirmed.customerPhone,
+    serviceType: confirmed.serviceType,
+    date: amsterdamDateKey(confirmed.appointmentTime),
+    time: amsterdamTimeKey(confirmed.appointmentTime),
+  });
+
+  try {
+    const watiApiKey =
+      env.WATI_API_KEY ?? (ai?.watiApiKey ? (decrypt(String(ai.watiApiKey)) ?? String(ai.watiApiKey)) : null);
+    if (watiApiKey && env.WATI_BASE_URL) {
+      await sendWatiMessage(
+        env.WATI_BASE_URL,
+        watiApiKey,
+        confirmed.customerPhone,
+        `Bedankt voor je aanbetaling! Je afspraak op ${amsterdamDateKey(confirmed.appointmentTime)} om ${amsterdamTimeKey(confirmed.appointmentTime)} is definitief bevestigd.`,
+      );
+    }
+  } catch (err) {
+    captureError("stripe-deposit/wati-confirm", err);
+  }
+
+  await trackEvent({
+    type: "deposit_paid",
+    salonId: confirmed.salonId,
+    props: { appointmentId: confirmed.id, amountCents: confirmed.depositAmountCents },
+    dedupeKey: `deposit-paid:${confirmed.id}`,
+  });
+}
+
 async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
   if (session.metadata?.kind === "webshop_order") {
     await handleWebshopOrder(session);
+    return;
+  }
+  if (session.metadata?.kind === "appointment_deposit") {
+    await handleDepositCheckout(session);
     return;
   }
 

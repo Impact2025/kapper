@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { cn } from "@/lib/utils";
-import { Card } from "@/components/admin/ui";
+import { Card } from "@/components/salon/dash-ui";
 import { ProductForm, type EditableProduct } from "@/components/salon/webwinkel/product-form";
 import { ProductList } from "@/components/salon/webwinkel/product-list";
 import { OrdersList } from "@/components/salon/webwinkel/orders-list";

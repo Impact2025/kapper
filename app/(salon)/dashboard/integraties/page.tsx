@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { requireSalonOwner } from "@/lib/auth/dal";
 import { getSalonWithSubscription } from "@/lib/salon/queries";
-import { PageHeader, Card, Badge } from "@/components/admin/ui";
+import { PageHeader, Card, Badge } from "@/components/salon/dash-ui";
 import { Icon } from "@/components/ui/icon";
 import { IntegratiesForm } from "@/components/salon/integraties-form";
 import { decrypt } from "@/lib/crypto";

@@ -16,6 +16,16 @@ export interface ConversationRow {
   bookedAppointment: boolean;
 }
 
+export interface EscalatedConversationRow {
+  id: string;
+  channel: "whatsapp" | "phone";
+  phoneNumber: string | null;
+  customerName: string | null;
+  escalationReason: string | null;
+  updatedAt: Date;
+  lastMessage: string | null;
+}
+
 export interface MessageRow {
   id: string;
   role: "user" | "assistant";
@@ -137,4 +147,50 @@ export async function getConversationDetail(
     messages: msgRows,
     appointment: aptRows[0] ?? null,
   };
+}
+
+/**
+ * Fase 4 human-in-the-loop dashboard: the triage queue — only conversations
+ * the AI has handed off, most recently escalated first, with the reason and
+ * last customer message so a stylist can act without opening every one.
+ */
+export async function listEscalatedConversations(salonId: string): Promise<EscalatedConversationRow[]> {
+  if (!env.DATABASE_URL) return [];
+
+  const rows = await db
+    .select({
+      id: conversations.id,
+      channel: conversations.channel,
+      phoneNumber: conversations.phoneNumber,
+      customerName: conversations.customerName,
+      escalationReason: conversations.escalationReason,
+      updatedAt: conversations.updatedAt,
+    })
+    .from(conversations)
+    .where(and(eq(conversations.salonId, salonId), eq(conversations.status, "escalated")))
+    .orderBy(desc(conversations.updatedAt));
+
+  const withLastMessage = await Promise.all(
+    rows.map(async (r) => {
+      const [last] = await db
+        .select({ content: messages.content })
+        .from(messages)
+        .where(eq(messages.conversationId, r.id))
+        .orderBy(desc(messages.createdAt))
+        .limit(1);
+      return { ...r, lastMessage: last?.content ?? null };
+    }),
+  );
+
+  return withLastMessage;
+}
+
+/** A stylist has taken over — drops the conversation off the triage queue. */
+export async function markConversationHandled(salonId: string, conversationId: string): Promise<boolean> {
+  const [updated] = await db
+    .update(conversations)
+    .set({ status: "closed", closedAt: new Date() })
+    .where(and(eq(conversations.id, conversationId), eq(conversations.salonId, salonId), eq(conversations.status, "escalated")))
+    .returning({ id: conversations.id });
+  return !!updated;
 }

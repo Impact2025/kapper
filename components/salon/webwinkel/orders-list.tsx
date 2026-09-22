@@ -1,4 +1,4 @@
-import { Badge, EmptyState } from "@/components/admin/ui";
+import { Badge, EmptyState } from "@/components/salon/dash-ui";
 import type { OrderWithItems } from "@/lib/webwinkel/queries";
 
 const STATUS_TONE = {

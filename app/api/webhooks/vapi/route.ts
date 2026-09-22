@@ -146,6 +146,12 @@ async function handleToolCalls(payload: VapiPayload) {
           });
         }
         if (escalated) {
+          if (conversationId) {
+            await db
+              .update(conversations)
+              .set({ status: "escalated", escalationReason: escalated.reason })
+              .where(eq(conversations.id, conversationId));
+          }
           await trackEvent({
             type: "escalated",
             salonId: salon.id,
