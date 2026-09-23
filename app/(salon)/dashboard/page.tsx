@@ -3,7 +3,7 @@ import Link from "next/link";
 import { requireSalonOwner } from "@/lib/auth/dal";
 import { getSalonWithSubscription } from "@/lib/salon/queries";
 import { getSalonMetrics } from "@/lib/salon/metrics";
-import { PageHeader, Card, StatCard, Badge } from "@/components/salon/dash-ui";
+import { PageHeader, Card, StatCard } from "@/components/salon/dash-ui";
 import { Icon } from "@/components/ui/icon";
 import { formatEur } from "@/lib/utils";
 import { OnboardingWizard } from "@/components/salon/onboarding-wizard";

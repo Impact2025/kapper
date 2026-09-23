@@ -6,7 +6,6 @@ import { runAiManager } from "@/lib/ai/manager";
 import type { ConversationMessage } from "@/lib/ai/receptionist";
 import { loadSalonContext } from "@/lib/salon/receptionist-context";
 import { sendWatiMessage, sendWatiInteractiveMessage } from "@/lib/salon/wati-client";
-import { amsterdamDateKey, amsterdamTimeKey } from "@/lib/salon/timezone";
 import { trackEvent } from "@/lib/analytics/track";
 import { sendEmail } from "@/lib/mail/resend";
 import { aiLiveEmail } from "@/lib/mail/templates";
