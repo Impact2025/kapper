@@ -23,7 +23,7 @@ export default function ScanPage() {
           <span className="inline-block px-sm py-xs bg-secondary-fixed text-on-secondary-fixed-variant rounded-full font-label-sm text-label-sm mb-md uppercase tracking-wider">
             Gratis &amp; vrijblijvend
           </span>
-          <h1 className="font-display-lg text-display-lg text-on-surface mb-md">
+          <h1 className="mkt-h1 text-display-lg text-on-surface mb-md">
             Hoeveel omzet laat jouw salon liggen?
           </h1>
           <p className="font-body-lg text-body-lg text-on-surface-variant mb-lg">

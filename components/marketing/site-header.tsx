@@ -8,6 +8,7 @@ import { ButtonLink } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 const navLinks = [
+  { href: "/#functies", label: "Functies" },
   { href: "/#hoe-het-werkt", label: "Hoe het werkt" },
   { href: "/diensten", label: "Diensten" },
   { href: "/prijzen", label: "Prijzen" },
@@ -30,7 +31,7 @@ export function SiteHeader() {
             className="h-10 md:h-12 w-auto object-contain"
             priority
           />
-          <span className="font-headline-lg text-headline-lg font-bold text-primary">
+          <span className="mkt-h2 text-headline-lg font-bold text-primary">
             KapperAssistent
           </span>
         </Link>

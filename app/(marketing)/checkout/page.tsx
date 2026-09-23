@@ -24,9 +24,9 @@ export default async function CheckoutPage({
       <div className="mx-auto grid max-w-4xl grid-cols-1 gap-lg px-margin-mobile md:grid-cols-2 md:px-xl">
         {/* Summary */}
         <div className="rounded-xl bg-white p-lg soft-shadow">
-          <h1 className="font-headline-lg text-headline-lg text-on-surface">{plan.name}</h1>
+          <h1 className="mkt-h2 text-headline-lg text-on-surface">{plan.name}</h1>
           <div className="my-sm">
-            <span className="font-display-lg text-[36px] text-primary">{formatEur(plan.price)}</span>
+            <span className="stat-figure mkt-h1 text-[36px] text-primary">{formatEur(plan.price)}</span>
             <span className="text-label-md text-on-surface-variant"> per maand</span>
           </div>
           <p className="text-body-md text-on-surface-variant">{plan.tagline}</p>
@@ -42,7 +42,7 @@ export default async function CheckoutPage({
 
         {/* Form */}
         <div className="rounded-xl bg-white p-lg soft-shadow">
-          <h2 className="mb-md font-headline-md text-headline-md text-on-surface">
+          <h2 className="mb-md mkt-h3 text-headline-md text-on-surface">
             Start je abonnement
           </h2>
           <CheckoutForm plan={plan.id} />

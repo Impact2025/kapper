@@ -23,11 +23,11 @@ export function PricingCards() {
                 Populair
               </div>
             )}
-            <h3 className="font-headline-md text-headline-md text-on-surface mb-xs">
+            <h3 className="mkt-h3 text-headline-md text-on-surface mb-xs">
               {plan.name}
             </h3>
             <div className="mb-md">
-              <span className="font-display-lg text-[36px] text-primary">
+              <span className="stat-figure mkt-h1 text-[36px] text-primary">
                 {formatEur(plan.price)}
               </span>
               <span className="font-label-md text-on-surface-variant"> p/m</span>

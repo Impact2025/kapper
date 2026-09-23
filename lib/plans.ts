@@ -24,7 +24,10 @@ export const PLANS: Plan[] = [
       "AI beantwoordt WhatsApp 24/7 en boekt direct de juiste afspraak",
       "Synct automatisch met Salonized of Phorest — geen dubbele invoer",
       "Onthoudt het gesprek, voelt als een medewerker en niet als een bot",
-      "Automatische afspraakherinneringen via SMS — minder no-shows",
+      "Automatische afspraakherinneringen — minder no-shows",
+      "Digitaal klantdossier: behandelkaarten en voor/na-foto's per klant",
+      "Vraagt automatisch om een review na een geslaagde afspraak",
+      "Stuurt klanten die lang wegblijven vanzelf een berichtje om terug te komen",
     ],
   },
   {
@@ -38,7 +41,11 @@ export const PLANS: Plan[] = [
     features: [
       "Alles uit Essential",
       "AI beantwoordt ook de telefoon — dag en nacht, nooit meer een gemiste oproep",
+      "Herkent foto's die klanten sturen (bijv. kapselinspiratie) en denkt mee",
+      "Vraagt om een aanbetaling bij dure behandelingen — minder no-show-schade",
       "Vult wachttijd tijdens kleurbehandelingen slim op met een extra klant",
+      "Kassa met automatische btw-splitsing en dagafsluiting",
+      "Kan een gesprek altijd doorzetten naar een collega — jij ziet het meteen",
       "WhatsApp-berichtkosten zitten al in de prijs, geen aparte factuur",
     ],
   },
@@ -51,8 +58,8 @@ export const PLANS: Plan[] = [
     valueLine: "Eén AI-team voor al je vestigingen, in plaats van losse abonnementen.",
     features: [
       "Alles uit Pro",
+      "Spaarprogramma: klanten bouwen automatisch punten op bij elke afspraak",
       "Schrijft automatisch SEO-blogs die nieuwe klanten via Google trekken",
-      "Reageert automatisch op Google-reviews",
       "Beheer al je vestigingen en agenda's vanuit één cockpit",
       "Maandelijks rapport: precies wat de AI je heeft opgeleverd",
     ],

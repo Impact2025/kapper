@@ -24,7 +24,7 @@ const principles = [
     bg: "bg-secondary-fixed",
     fg: "text-on-secondary-fixed",
     title: "Privacy by Design",
-    body: "Gegevens over hoofdhuidcondities, allergieën en foto's vallen onder Artikel 9 AVG. Wij weigeren te werken met de consumenten-WhatsApp en hosten alles strikt binnen de EER met PII-masking. Veiligheid vóór winstbejag.",
+    body: "Gegevens over hoofdhuidcondities, allergieën en foto's zijn extra gevoelig (Artikel 9 AVG). Wij gebruiken daarom nooit de gewone consumenten-WhatsApp, en alles staat opgeslagen binnen Europa, apart beveiligd. Veiligheid vóór winstbejag.",
   },
   {
     icon: "nightlight",
@@ -49,7 +49,7 @@ const milestones = [
   {
     year: "2026",
     title: "KapperAssistent staat als een huis",
-    body: "We openen de deuren voor salons door heel Nederland. Direct gekoppeld aan Salonized, Phorest en Treatwell, georkestreerd met flexibele n8n-workflows en de officiële WhatsApp Business API. Geen vage IT-projecten, maar de nuchtere €180-iPhone-mentaliteit: pragmatisch gereedschap dat morgen jouw probleem oplost.",
+    body: "We openen de deuren voor salons door heel Nederland. Direct gekoppeld aan Salonized, Phorest en Treatwell, via het officiële WhatsApp Business-platform. Geen vage IT-projecten, maar de nuchtere €180-iPhone-mentaliteit: pragmatisch gereedschap dat morgen jouw probleem oplost.",
   },
 ];
 
@@ -62,7 +62,7 @@ export default function OverOnsPage() {
           <span className="inline-block px-sm py-xs bg-primary-fixed text-on-primary-fixed-variant rounded-full font-label-sm text-label-sm uppercase tracking-wider">
             Ons verhaal
           </span>
-          <h1 className="font-display-lg text-display-lg text-on-surface leading-tight">
+          <h1 className="mkt-h1 text-display-lg text-on-surface leading-tight">
             Waarom een oud-welzijnsdirecteur Voice-AI bouwt voor de salon.
           </h1>
           <p className="font-body-lg text-body-lg text-on-surface-variant max-w-[40rem] leading-relaxed">
@@ -105,7 +105,7 @@ export default function OverOnsPage() {
             <span className="inline-block w-fit px-sm py-xs bg-white/15 rounded-full font-label-sm text-label-sm uppercase tracking-wider">
               Hoe onze AI werkt
             </span>
-            <h2 className="font-headline-lg text-headline-lg font-bold leading-snug">
+            <h2 className="mkt-h2 text-headline-lg font-bold leading-snug">
               Een AI-assistent die jouw salon écht kent
             </h2>
             <p className="font-body-md text-body-md opacity-90 leading-relaxed">
@@ -134,7 +134,7 @@ export default function OverOnsPage() {
       <section className="bg-surface-container-low py-xl px-margin-mobile md:px-xl">
         <div className="max-w-container-max mx-auto">
           <div className="mb-lg">
-            <h2 className="font-headline-lg text-headline-lg text-on-surface mb-sm">
+            <h2 className="mkt-h2 text-headline-lg text-on-surface mb-sm">
               Onze reis
             </h2>
             <p className="font-body-lg text-body-lg text-on-surface-variant max-w-[40rem]">
@@ -154,7 +154,7 @@ export default function OverOnsPage() {
                       </div>
                     </div>
                     <div className="bg-surface-container-lowest rounded-xl p-md soft-shadow flex-1">
-                      <h3 className="font-headline-md text-headline-md text-on-surface mb-xs">
+                      <h3 className="mkt-h3 text-headline-md text-on-surface mb-xs">
                         {m.title}
                       </h3>
                       <p className="font-body-md text-body-md text-on-surface-variant">
@@ -173,7 +173,7 @@ export default function OverOnsPage() {
       <section className="py-xl px-margin-mobile md:px-xl">
         <div className="max-w-container-max mx-auto">
           <div className="mb-lg">
-            <h2 className="font-headline-lg text-headline-lg text-on-surface mb-sm">
+            <h2 className="mkt-h2 text-headline-lg text-on-surface mb-sm">
               De principes waar we niet aan tornen
             </h2>
             <div className="h-1 w-24 bg-primary-container rounded-full" />
@@ -188,7 +188,7 @@ export default function OverOnsPage() {
                     <Icon name={v.icon} className={v.fg} />
                   </div>
                   <div>
-                    <h3 className="font-headline-md text-headline-md text-on-surface mb-sm">
+                    <h3 className="mkt-h3 text-headline-md text-on-surface mb-sm">
                       {v.title}
                     </h3>
                     <p className="font-body-md text-body-md text-on-surface-variant">
@@ -210,7 +210,7 @@ export default function OverOnsPage() {
               <span className="font-label-md text-label-md text-primary uppercase tracking-widest">
                 De impact in cijfers
               </span>
-              <h2 className="font-display-lg text-display-lg text-on-surface">
+              <h2 className="mkt-h1 text-display-lg text-on-surface">
                 Meer rust, meer omzet.
               </h2>
               <p className="font-body-lg text-body-lg text-on-surface-variant">
@@ -221,7 +221,7 @@ export default function OverOnsPage() {
             </div>
             <div className="flex gap-xl shrink-0 flex-wrap justify-center">
               <div className="text-center">
-                <div className="font-display-lg text-display-lg text-primary font-bold stat-figure">
+                <div className="mkt-h1 text-display-lg text-primary font-bold stat-figure">
                   +23%
                 </div>
                 <p className="font-label-sm text-label-sm text-on-surface-variant mt-xs">
@@ -230,7 +230,7 @@ export default function OverOnsPage() {
               </div>
               <div className="w-px bg-outline-variant" />
               <div className="text-center">
-                <div className="font-display-lg text-display-lg text-secondary font-bold stat-figure">
+                <div className="mkt-h1 text-display-lg text-secondary font-bold stat-figure">
                   10u
                 </div>
                 <p className="font-label-sm text-label-sm text-on-surface-variant mt-xs">
@@ -239,7 +239,7 @@ export default function OverOnsPage() {
               </div>
               <div className="w-px bg-outline-variant" />
               <div className="text-center">
-                <div className="font-display-lg text-display-lg text-on-surface font-bold stat-figure">
+                <div className="mkt-h1 text-display-lg text-on-surface font-bold stat-figure">
                   &lt;2%
                 </div>
                 <p className="font-label-sm text-label-sm text-on-surface-variant mt-xs">
@@ -274,7 +274,7 @@ export default function OverOnsPage() {
       <section className="py-xl px-margin-mobile">
         <div className="max-w-container-max mx-auto bg-primary rounded-[2.5rem] overflow-hidden relative">
           <div className="relative z-10 py-xl px-md flex flex-col items-center text-center space-y-md">
-            <h2 className="font-display-lg text-display-lg text-on-primary">
+            <h2 className="mkt-h1 text-display-lg text-on-primary">
               Klaar voor een rustige salon en een volle agenda?
             </h2>
             <p className="font-body-lg text-body-lg text-on-primary/80 max-w-[36rem]">

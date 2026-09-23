@@ -14,7 +14,7 @@ export default function ContactPage() {
     <section className="py-xl bg-surface">
       <div className="max-w-container-max mx-auto px-margin-mobile md:px-xl grid grid-cols-1 lg:grid-cols-2 gap-xl items-start">
         <div>
-          <h1 className="font-display-lg text-display-lg text-on-surface mb-md">
+          <h1 className="mkt-h1 text-display-lg text-on-surface mb-md">
             Laten we kennismaken.
           </h1>
           <p className="font-body-lg text-body-lg text-on-surface-variant mb-lg">

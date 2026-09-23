@@ -85,7 +85,7 @@ export default async function BlogPostPage({
         </Link>
 
         <header className="mb-lg">
-          <h1 className="font-display-lg text-display-lg text-on-surface">{post.title}</h1>
+          <h1 className="mkt-h1 text-display-lg text-on-surface">{post.title}</h1>
           <p className="mt-sm text-label-md text-on-surface-variant">
             {post.publishedAt ? dateFmt.format(post.publishedAt) : ""} · {minutes} min lezen
           </p>
@@ -127,7 +127,7 @@ export default async function BlogPostPage({
         />
 
         <div className="mt-xl rounded-xl bg-primary-fixed/40 p-lg text-center">
-          <h2 className="font-headline-md text-headline-md text-on-surface">
+          <h2 className="mkt-h3 text-headline-md text-on-surface">
             Klaar om geen boeking meer te missen?
           </h2>
           <p className="mt-xs text-body-md text-on-surface-variant">

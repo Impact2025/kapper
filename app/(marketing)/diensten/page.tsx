@@ -20,10 +20,10 @@ const services = [
     tagline: "Neemt op als een vriendelijke collega",
     body: "Terwijl jij een balayage zet, neemt de AI Voice Agent de telefoon op. De stem klinkt natuurlijk, luistert nauwkeurig en verwerkt de boeking direct — zonder wachtrij of voicemail.",
     bullets: [
-      "Responst in minder dan 800 milliseconden",
+      "Antwoordt binnen minder dan 1 seconde — voelt als een echt gesprek",
       "Herhaalt de gevraagde dienst en stylist exact",
       "Boekt rechtstreeks in jouw agenda-software",
-      "SIP REFER-doorschakeling naar jouw mobiel bij complexe vragen",
+      "Verbindt door naar jouw mobiel bij lastige vragen",
       "Geen gemiste oproepen, ook buiten openingstijden",
     ],
   },
@@ -36,9 +36,9 @@ const services = [
     tagline: "24/7 bereikbaar via WhatsApp Business API",
     body: "Geen trage appjes meer na sluitingstijd. Onze agent handelt boekingen binnen 60 seconden af. We vragen altijd om een actieve bevestiging van de annuleringsvoorwaarden, zodat je bij een no-show sterk staat.",
     bullets: [
-      "Officiële WhatsApp Business API (geen consumer app)",
-      "Actieve bevestigingsknop (pending_confirmation)",
-      "Volledige PII-masking conform Artikel 9 AVG",
+      "Officieel WhatsApp Business-account, geen privénummer",
+      "Klant tikt zelf op een knop om de afspraak te bevestigen",
+      "Gevoelige klantinfo (bijv. allergieën) apart en extra beveiligd, volgens de AVG",
       "Beantwoordt veelgestelde vragen direct",
       "Boekt, verzet en annuleert automatisch",
     ],
@@ -74,17 +74,60 @@ const services = [
     ],
   },
   {
+    icon: "folder_shared",
+    bg: "bg-secondary-fixed",
+    fg: "text-on-secondary-fixed",
+    plan: null,
+    title: "Digitaal klantdossier",
+    tagline: "Elke klant, elke behandeling, altijd bij de hand",
+    body: "Elke keer dat een klant komt, legt de AI de behandeling vast: kleurformule, techniek, voor/na-foto's. Zo weet jij — of een collega — precies wat er de vorige keer is gedaan, zonder ernaar te hoeven vragen.",
+    bullets: [
+      "Automatisch bijgewerkt bij elke boeking",
+      "Voor/na-foto's met toestemming van de klant",
+      "Gevoelige info (allergieën, huidconditie) apart en extra beveiligd (AVG Artikel 9)",
+      "Klant kan altijd om volledige verwijdering vragen — met één klik geregeld",
+    ],
+  },
+  {
+    icon: "favorite",
+    bg: "bg-tertiary-fixed",
+    fg: "text-on-tertiary-fixed",
+    plan: null,
+    title: "Klanten die vanzelf terugkomen",
+    tagline: "Reviews en herhaalbezoek, zonder dat jij eraan hoeft te denken",
+    body: "Na een geslaagde afspraak vraagt de AI vanzelf om een review. Blijft een vaste klant langer weg dan normaal, dan stuurt ze een vriendelijk berichtje om te reactiveren. Op Elite bouwt elke klant er ook nog eens spaarpunten bij op.",
+    bullets: [
+      "Automatisch reviewverzoek na een geslaagde afspraak",
+      "Herkent per klant wanneer een bezoek 'te lang geleden' is",
+      "Spaarprogramma met automatische puntenopbouw (Elite)",
+    ],
+  },
+  {
+    icon: "point_of_sale",
+    bg: "bg-primary-fixed",
+    fg: "text-on-primary-fixed",
+    plan: "Pro & Elite",
+    title: "Kassa aan de stoel",
+    tagline: "Afrekenen zonder gedoe met de btw",
+    body: "Reken direct af bij de klant — contant, pin of kaart — met automatische btw-splitsing tussen behandelingen (9%) en producten (21%). Aan het einde van de dag krijg je een kant-en-klare dagafsluiting.",
+    bullets: [
+      "Automatische btw-uitsplitsing per bon",
+      "Fooi verwerken zonder losse administratie",
+      "Dagafsluiting met één druk op de knop",
+      "Exporteerbaar voor je boekhouding",
+    ],
+  },
+  {
     icon: "insights",
     bg: "bg-secondary-fixed",
     fg: "text-on-secondary-fixed",
     plan: "Elite",
     title: "Lokale SEO & Reputatie-Engine",
     tagline: "Word gevonden als eerste op Google Maps",
-    body: "Consumenten kiezen met hun duim op Google Maps. Onze geautomatiseerde post-behandeling vraagt tevreden klanten 90 minuten na hun bezoek via WhatsApp om een recensie. De ingebouwde blog-engine publiceert autonome, geoptimaliseerde content waardoor jij lokaal onverslaanbaar wordt.",
+    body: "Consumenten kiezen met hun duim op Google Maps. Ons team schrijft en publiceert doorlopend lokale, vindbare content op jouw eigen website, zodat je hoger komt te staan zonder daar zelf tijd in te steken.",
     bullets: [
-      "AI schrijft relevante, lokale content",
-      "SEO-geoptimaliseerd met meta-tags en JSON-LD",
-      "Automatische recensieverzoeken na afspraak",
+      "Content geschreven voor jouw salon en regio",
+      "Geoptimaliseerd zodat Google je goed vindt",
       "Gepubliceerd op jouw eigen domein",
     ],
   },
@@ -167,7 +210,7 @@ export default function DienstenPage() {
           <span className="inline-block px-sm py-xs bg-primary-fixed text-on-primary-fixed-variant rounded-full font-label-sm text-label-sm mb-md uppercase tracking-wider">
             Onze diensten
           </span>
-          <h1 className="font-display-lg text-display-lg md:text-[56px] leading-[1.1] text-on-surface mb-md max-w-3xl mx-auto">
+          <h1 className="mkt-h1 text-display-lg md:text-[56px] leading-[1.1] text-on-surface mb-md max-w-3xl mx-auto">
             Kille technologie voor warme handen aan de behandelstoel.
           </h1>
           <p className="font-body-lg text-body-lg text-on-surface-variant max-w-2xl mx-auto mb-xl">
@@ -211,7 +254,7 @@ export default function DienstenPage() {
                   <p className={`font-label-sm text-label-sm uppercase tracking-wider mb-xs`}>
                     {s.tagline}
                   </p>
-                  <h2 className="font-headline-md text-headline-md text-on-surface mb-sm">
+                  <h2 className="mkt-h3 text-headline-md text-on-surface mb-sm">
                     {s.title}
                   </h2>
                   <p className="font-body-md text-body-md text-on-surface-variant mb-md flex-grow">
@@ -245,7 +288,7 @@ export default function DienstenPage() {
             <span className="inline-block px-sm py-xs bg-primary-fixed text-on-primary-fixed-variant rounded-full font-label-sm text-label-sm uppercase tracking-wider">
               Kerndienst
             </span>
-            <h2 className="font-headline-lg text-headline-lg text-on-surface leading-tight">
+            <h2 className="mkt-h2 text-headline-lg text-on-surface leading-tight">
               Jouw AI-receptionist werkt terwijl jij knipt.
             </h2>
             <p className="font-body-lg text-body-lg text-on-surface-variant leading-relaxed">
@@ -339,7 +382,7 @@ export default function DienstenPage() {
       <section className="py-xl bg-surface">
         <div className="max-w-container-max mx-auto px-margin-mobile md:px-xl">
           <div className="text-center mb-xl">
-            <h2 className="font-headline-lg text-headline-lg text-on-surface mb-sm">
+            <h2 className="mkt-h2 text-headline-lg text-on-surface mb-sm">
               Van aanmelding tot volle agenda in 4 stappen.
             </h2>
             <p className="font-body-md text-on-surface-variant max-w-[36rem] mx-auto">
@@ -351,10 +394,10 @@ export default function DienstenPage() {
             {howSteps.map((s, i) => (
               <Reveal key={s.n} delay={i * 100}>
                 <div className="relative z-10 flex flex-col items-center text-center">
-                  <div className="w-16 h-16 rounded-full bg-primary text-on-primary flex items-center justify-center font-headline-md text-[18px] mb-md shadow-lg">
+                  <div className="w-16 h-16 rounded-full bg-primary text-on-primary flex items-center justify-center mkt-h3 text-[18px] mb-md shadow-lg">
                     {s.n}
                   </div>
-                  <h3 className="font-headline-md text-headline-md text-on-surface mb-xs">
+                  <h3 className="mkt-h3 text-headline-md text-on-surface mb-xs">
                     {s.title}
                   </h3>
                   <p className="font-body-md text-on-surface-variant">{s.body}</p>
@@ -396,7 +439,7 @@ export default function DienstenPage() {
               <div className="absolute -bottom-20 -left-20 w-64 h-64 rounded-full bg-white/5 blur-2xl" />
             </div>
             <div className="relative z-10">
-              <h2 className="font-display-lg text-display-lg text-on-primary mb-md">
+              <h2 className="mkt-h1 text-display-lg text-on-primary mb-md">
                 Klaar om de rust te ervaren?
               </h2>
               <p className="font-body-lg text-body-lg text-on-primary/80 mb-xl max-w-[34rem] mx-auto">

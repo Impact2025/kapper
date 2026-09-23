@@ -14,7 +14,7 @@ export default function CheckoutSuccessPage() {
         <div className="mx-auto mb-md flex h-16 w-16 items-center justify-center rounded-full bg-primary-fixed">
           <Icon name="celebration" className="text-[32px] text-on-primary-fixed" />
         </div>
-        <h1 className="font-display-lg text-display-lg text-on-surface">Welkom aan boord!</h1>
+        <h1 className="mkt-h1 text-display-lg text-on-surface">Welkom aan boord!</h1>
         <p className="mt-sm text-body-lg text-on-surface-variant">
           Je abonnement is geactiveerd. Ons team neemt binnen één werkdag contact op om je
           AI-assistent in te richten — inclusief agenda-koppeling en WhatsApp-platform.

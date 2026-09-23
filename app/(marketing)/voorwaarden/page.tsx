@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 export default function VoorwaardenPage() {
   return (
     <article className="max-w-3xl mx-auto px-margin-mobile md:px-xl py-xl">
-      <h1 className="font-display-lg text-display-lg text-on-surface mb-sm">
+      <h1 className="mkt-h1 text-display-lg text-on-surface mb-sm">
         Algemene Voorwaarden
       </h1>
       <p className="font-label-sm text-label-sm text-on-surface-variant mb-xl">
@@ -32,7 +32,7 @@ export default function VoorwaardenPage() {
         </section>
 
         <section>
-          <h2 className="font-headline-md text-headline-md text-on-surface mb-sm">
+          <h2 className="mkt-h3 text-headline-md text-on-surface mb-sm">
             1. Wie zijn wij?
           </h2>
           <p>
@@ -44,7 +44,7 @@ export default function VoorwaardenPage() {
         </section>
 
         <section>
-          <h2 className="font-headline-md text-headline-md text-on-surface mb-sm">
+          <h2 className="mkt-h3 text-headline-md text-on-surface mb-sm">
             2. Wat leveren wij?
           </h2>
           <p>
@@ -63,7 +63,7 @@ export default function VoorwaardenPage() {
         </section>
 
         <section>
-          <h2 className="font-headline-md text-headline-md text-on-surface mb-sm">
+          <h2 className="mkt-h3 text-headline-md text-on-surface mb-sm">
             3. Proefperiode
           </h2>
           <p>
@@ -75,7 +75,7 @@ export default function VoorwaardenPage() {
         </section>
 
         <section>
-          <h2 className="font-headline-md text-headline-md text-on-surface mb-sm">
+          <h2 className="mkt-h3 text-headline-md text-on-surface mb-sm">
             4. Abonnementen en betaling
           </h2>
           <ul className="list-disc pl-md space-y-xs mb-sm">
@@ -103,7 +103,7 @@ export default function VoorwaardenPage() {
         </section>
 
         <section>
-          <h2 className="font-headline-md text-headline-md text-on-surface mb-sm">
+          <h2 className="mkt-h3 text-headline-md text-on-surface mb-sm">
             5. Opzeggen
           </h2>
           <p>
@@ -121,7 +121,7 @@ export default function VoorwaardenPage() {
         </section>
 
         <section>
-          <h2 className="font-headline-md text-headline-md text-on-surface mb-sm">
+          <h2 className="mkt-h3 text-headline-md text-on-surface mb-sm">
             6. Beschikbaarheid (SLA)
           </h2>
           <p>
@@ -133,7 +133,7 @@ export default function VoorwaardenPage() {
         </section>
 
         <section>
-          <h2 className="font-headline-md text-headline-md text-on-surface mb-sm">
+          <h2 className="mkt-h3 text-headline-md text-on-surface mb-sm">
             7. Jouw verplichtingen
           </h2>
           <ul className="list-disc pl-md space-y-xs">
@@ -158,7 +158,7 @@ export default function VoorwaardenPage() {
         </section>
 
         <section>
-          <h2 className="font-headline-md text-headline-md text-on-surface mb-sm">
+          <h2 className="mkt-h3 text-headline-md text-on-surface mb-sm">
             8. Persoonsgegevens en AVG
           </h2>
           <p>
@@ -174,7 +174,7 @@ export default function VoorwaardenPage() {
         </section>
 
         <section>
-          <h2 className="font-headline-md text-headline-md text-on-surface mb-sm">
+          <h2 className="mkt-h3 text-headline-md text-on-surface mb-sm">
             9. Aansprakelijkheid
           </h2>
           <p>
@@ -189,7 +189,7 @@ export default function VoorwaardenPage() {
         </section>
 
         <section>
-          <h2 className="font-headline-md text-headline-md text-on-surface mb-sm">
+          <h2 className="mkt-h3 text-headline-md text-on-surface mb-sm">
             10. Intellectueel eigendom
           </h2>
           <p>
@@ -200,7 +200,7 @@ export default function VoorwaardenPage() {
         </section>
 
         <section>
-          <h2 className="font-headline-md text-headline-md text-on-surface mb-sm">
+          <h2 className="mkt-h3 text-headline-md text-on-surface mb-sm">
             11. Wijzigingen in de voorwaarden
           </h2>
           <p>
@@ -212,7 +212,7 @@ export default function VoorwaardenPage() {
         </section>
 
         <section>
-          <h2 className="font-headline-md text-headline-md text-on-surface mb-sm">
+          <h2 className="mkt-h3 text-headline-md text-on-surface mb-sm">
             12. Toepasselijk recht
           </h2>
           <p>

@@ -260,6 +260,40 @@ body {
   flex-shrink: 0;
 }
 
+/* ============================================================
+   Marketing-site design language — same "strak, sans-serif" family
+   as the dashboard (.dash-*), scoped to app/(marketing)/** and
+   components/marketing/** only. Kept as its own .mkt-* namespace
+   rather than reusing .dash-* since font sizing differs (marketing
+   headlines run bigger) — never used inside the salon dashboard or
+   /admin, which keep their own look.
+   ============================================================ */
+.mkt-eyebrow {
+  font-family: var(--font-hanken), "Hanken Grotesk", sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.mkt-h1 {
+  font-family: var(--font-hanken), "Hanken Grotesk", sans-serif;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.mkt-h2 {
+  font-family: var(--font-hanken), "Hanken Grotesk", sans-serif;
+  font-weight: 600;
+  letter-spacing: -0.015em;
+}
+
+.mkt-h3 {
+  font-family: var(--font-hanken), "Hanken Grotesk", sans-serif;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
 /* Rendered blog body (from Markdown) */
 .prose-blog h2 {
   font-family: var(--font-headline-lg);

@@ -31,6 +31,54 @@ const steps = [
   },
 ];
 
+const features = [
+  {
+    icon: "chat",
+    title: "WhatsApp & telefoon",
+    body: "Beantwoordt en boekt zelfstandig, 24 uur per dag — ook 's avonds en in het weekend.",
+  },
+  {
+    icon: "photo_camera",
+    title: "Snapt foto's",
+    body: "Stuurt een klant een kapselinspiratie of haarkleur door? De AI kijkt mee en denkt mee.",
+  },
+  {
+    icon: "folder_shared",
+    title: "Digitaal klantdossier",
+    body: "Behandelkaarten, voor/na-foto's en afsprakenhistorie — automatisch bijgehouden per klant.",
+  },
+  {
+    icon: "gpp_good",
+    title: "Veilig met gevoelige info",
+    body: "Allergieën en huidgegevens worden volgens de AVG (Artikel 9) extra beschermd opgeslagen.",
+  },
+  {
+    icon: "payments",
+    title: "Aanbetaling bij dure klussen",
+    body: "Voorkomt dat een no-show je een kleuring aan omzet kost — de klant betaalt vooraf een deel.",
+  },
+  {
+    icon: "support_agent",
+    title: "Schakelt naar jou door",
+    body: "Twijfel, klacht of iets medisch? De AI verbindt eerlijk door naar jou of een collega.",
+  },
+  {
+    icon: "reviews",
+    title: "Vraagt om reviews",
+    body: "Stuurt na een geslaagde afspraak automatisch een verzoek om een Google-review achter te laten.",
+  },
+  {
+    icon: "redo",
+    title: "Wint klanten terug",
+    body: "Blijft een vaste klant langer weg dan gebruikelijk? Dan stuurt de AI uit zichzelf een berichtje.",
+  },
+  {
+    icon: "point_of_sale",
+    title: "Kassa met btw-splitsing",
+    body: "Reken af aan de stoel, met automatische btw-uitsplitsing tussen behandelingen en producten.",
+  },
+];
+
 const stats = [
   {
     icon: "calendar_add_on",
@@ -86,7 +134,7 @@ export default function HomePage() {
             <span className="inline-block px-sm py-xs bg-primary-fixed text-on-primary-fixed-variant rounded-full font-label-sm text-label-sm mb-md uppercase tracking-wider">
               Voorkom no-shows &amp; gemiste afspraken
             </span>
-            <h1 className="font-display-lg text-display-lg md:text-[56px] leading-[1.1] mb-md text-on-surface">
+            <h1 className="mkt-h1 text-display-lg md:text-[56px] leading-[1.1] mb-md text-on-surface">
               Twee handen aan de stoel.
               <br />
               Nul gemiste afspraken aan de balie.
@@ -181,7 +229,7 @@ export default function HomePage() {
       <section id="voordelen" className="bg-surface-container-low py-lg">
         <div className="max-w-container-max mx-auto px-margin-mobile md:px-xl">
           <div className="max-w-[40rem] mx-auto text-center">
-            <h2 className="font-headline-lg text-headline-lg mb-md text-on-surface">
+            <h2 className="mkt-h2 text-headline-lg mb-md text-on-surface">
               Focus op je vak, niet op de telefoon.
             </h2>
             <p className="font-body-lg text-body-lg text-on-surface-variant leading-relaxed">
@@ -209,11 +257,39 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* ---------- Alles wat de AI regelt ---------- */}
+      <section id="functies" className="py-lg bg-surface">
+        <div className="max-w-container-max mx-auto px-margin-mobile md:px-xl">
+          <div className="text-center mb-xl max-w-[36rem] mx-auto">
+            <span className="mkt-eyebrow text-primary mb-xs block">Alles inbegrepen</span>
+            <h2 className="mkt-h2 text-headline-lg text-on-surface mb-sm">
+              Niet alleen de telefoon. Je hele balie.
+            </h2>
+            <p className="font-body-md text-on-surface-variant">
+              Eén AI-assistent die boekt, onthoudt, waarschuwt en meedenkt — zodat jij het niet hoeft te doen.
+            </p>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-md">
+            {features.map((f) => (
+              <div key={f.title} className="flex gap-sm rounded-xl border border-outline-variant/40 bg-white p-md soft-shadow">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary-fixed">
+                  <Icon name={f.icon} className="text-primary text-[20px]" />
+                </div>
+                <div>
+                  <h3 className="mkt-h3 text-body-lg text-on-surface mb-xs">{f.title}</h3>
+                  <p className="font-body-md text-label-md text-on-surface-variant">{f.body}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* ---------- How it works ---------- */}
       <section id="hoe-het-werkt" className="py-lg bg-surface">
         <div className="max-w-container-max mx-auto px-margin-mobile md:px-xl">
           <div className="text-center mb-xl">
-            <h2 className="font-headline-lg text-headline-lg text-on-surface mb-sm">
+            <h2 className="mkt-h2 text-headline-lg text-on-surface mb-sm">
               In 3 simpele stappen naar een rustige salon.
             </h2>
             <p className="text-on-surface-variant font-body-md max-w-[32rem] mx-auto">
@@ -225,10 +301,10 @@ export default function HomePage() {
             {steps.map((s, i) => (
               <Reveal key={s.n} delay={i * 120}>
                 <div className="relative z-10 flex flex-col items-center text-center group">
-                  <div className="w-16 h-16 rounded-full bg-primary text-on-primary flex items-center justify-center font-display-lg text-[24px] mb-md group-hover:scale-110 transition-transform shadow-lg">
+                  <div className="w-16 h-16 rounded-full bg-primary text-on-primary flex items-center justify-center mkt-h1 text-[24px] mb-md group-hover:scale-110 transition-transform shadow-lg">
                     {s.n}
                   </div>
-                  <h3 className="font-headline-md text-headline-md text-on-surface mb-sm">
+                  <h3 className="mkt-h3 text-headline-md text-on-surface mb-sm">
                     {s.title}
                   </h3>
                   <p className="font-body-md text-on-surface-variant">{s.body}</p>
@@ -246,7 +322,7 @@ export default function HomePage() {
             <span className="font-label-sm text-label-sm text-primary uppercase tracking-widest">
               De rekensom voor jouw salon
             </span>
-            <h2 className="font-display-lg text-display-lg text-on-surface my-md">
+            <h2 className="mkt-h1 text-display-lg text-on-surface my-md">
               +€106 netto winst per maand
             </h2>
             <div className="space-y-sm text-left max-w-[28rem] mx-auto mb-lg font-body-md text-on-surface-variant">
@@ -293,7 +369,7 @@ export default function HomePage() {
                 <Icon key={i} name="star" filled className="text-secondary" />
               ))}
             </div>
-            <blockquote className="font-headline-md text-headline-md italic text-on-surface max-w-2xl mb-base">
+            <blockquote className="mkt-h3 text-headline-md italic text-on-surface max-w-2xl mb-base">
               &quot;Eindelijk weer rust in de zaak. Mijn telefoon staat op stil, terwijl de
               boekingen gewoon binnenstromen. Ik kan me 100% concentreren op mijn klanten.&quot;
             </blockquote>
@@ -313,7 +389,7 @@ export default function HomePage() {
       <section id="prijzen" className="py-lg bg-surface">
         <div className="max-w-container-max mx-auto px-margin-mobile md:px-xl">
           <div className="text-center mb-xl">
-            <h2 className="font-headline-lg text-headline-lg text-on-surface mb-sm">
+            <h2 className="mkt-h2 text-headline-lg text-on-surface mb-sm">
               Transparante tarieven voor elke salon.
             </h2>
             <p className="text-on-surface-variant font-body-md max-w-[32rem] mx-auto">
@@ -329,7 +405,7 @@ export default function HomePage() {
         <div className="max-w-container-max mx-auto px-margin-mobile md:px-xl">
           <div className="bg-primary text-on-primary rounded-[2rem] p-lg md:p-xl text-center relative overflow-hidden">
             <div className="relative z-10">
-              <h2 className="font-display-lg text-display-lg mb-md">
+              <h2 className="mkt-h1 text-display-lg mb-md">
                 Klaar voor meer rust?
               </h2>
               <p className="font-body-lg text-body-lg opacity-90 mb-xl max-w-[36rem] mx-auto">

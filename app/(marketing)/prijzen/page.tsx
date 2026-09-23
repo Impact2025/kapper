@@ -43,6 +43,14 @@ const faq = [
     q: "Is er korting bij jaarlijkse betaling?",
     a: "We bieden op aanvraag jaarcontracten aan met een korting van 15%. Stuur ons een mail op hallo@kappersassistent.nl voor een offerte op maat.",
   },
+  {
+    q: "Wat gebeurt er met gevoelige klantgegevens, zoals allergieën?",
+    a: "Die worden apart en extra beveiligd opgeslagen, zoals de AVG (Artikel 9) voorschrijft. De AI geeft nooit zelf een medisch oordeel — bij twijfel verbindt ze altijd door naar jou of een collega.",
+  },
+  {
+    q: "Kan een klant vragen om al zijn gegevens te laten verwijderen?",
+    a: "Ja. Via je dashboard kun je een klant met één bevestigde actie volledig en onherroepelijk verwijderen — inclusief dossier, foto's en gesprekken. Afspraken en bonnen blijven (geanonimiseerd) bewaard, zoals de belastingdienst dat voor je administratie vereist.",
+  },
 ];
 
 export default function PrijzenPage() {
@@ -55,7 +63,7 @@ export default function PrijzenPage() {
             <span className="inline-block px-sm py-xs bg-primary-fixed text-on-primary-fixed-variant rounded-full font-label-sm text-label-sm mb-md uppercase tracking-wider">
               Transparante tarieven
             </span>
-            <h1 className="font-display-lg text-display-lg text-on-surface mb-md">
+            <h1 className="mkt-h1 text-display-lg text-on-surface mb-md">
               Voorspelbare prijzen. Geen verrassingen.
             </h1>
             <p className="font-body-lg text-body-lg text-on-surface-variant mb-sm">
@@ -112,7 +120,7 @@ export default function PrijzenPage() {
       <section className="py-xl bg-surface">
         <div className="max-w-container-max mx-auto px-margin-mobile md:px-xl">
           <div className="mb-xl text-center">
-            <h2 className="font-headline-lg text-headline-lg text-on-surface mb-sm">
+            <h2 className="mkt-h2 text-headline-lg text-on-surface mb-sm">
               Veelgestelde vragen over de prijs
             </h2>
             <p className="font-body-md text-on-surface-variant">
@@ -143,7 +151,7 @@ export default function PrijzenPage() {
       <section className="py-xl bg-surface-container-low">
         <div className="max-w-container-max mx-auto px-margin-mobile md:px-xl">
           <div className="rounded-[2rem] bg-primary p-lg md:p-xl text-center text-on-primary relative overflow-hidden">
-            <h2 className="font-display-lg text-display-lg mb-sm">
+            <h2 className="mkt-h1 text-display-lg mb-sm">
               Nog twijfels? Start gewoon gratis.
             </h2>
             <p className="font-body-lg text-body-lg opacity-90 mb-xl max-w-[34rem] mx-auto">

@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 export default function PrivacyPage() {
   return (
     <article className="max-w-3xl mx-auto px-margin-mobile md:px-xl py-xl">
-      <h1 className="font-display-lg text-display-lg text-on-surface mb-sm">
+      <h1 className="mkt-h1 text-display-lg text-on-surface mb-sm">
         Privacyverklaring
       </h1>
       <p className="font-label-sm text-label-sm text-on-surface-variant mb-xl">
@@ -28,7 +28,7 @@ export default function PrivacyPage() {
         </section>
 
         <section>
-          <h2 className="font-headline-md text-headline-md text-on-surface mb-sm">Wie zijn wij?</h2>
+          <h2 className="mkt-h3 text-headline-md text-on-surface mb-sm">Wie zijn wij?</h2>
           <p>
             KapperAssistent.nl biedt AI-receptiediensten aan kapsalons via telefoon en WhatsApp.
             Wij zijn gevestigd in Nederland en verwerken persoonsgegevens conform de Algemene
@@ -44,7 +44,7 @@ export default function PrivacyPage() {
         </section>
 
         <section>
-          <h2 className="font-headline-md text-headline-md text-on-surface mb-sm">
+          <h2 className="mkt-h3 text-headline-md text-on-surface mb-sm">
             Welke gegevens verwerken wij?
           </h2>
 
@@ -73,7 +73,7 @@ export default function PrivacyPage() {
         </section>
 
         <section>
-          <h2 className="font-headline-md text-headline-md text-on-surface mb-sm">
+          <h2 className="mkt-h3 text-headline-md text-on-surface mb-sm">
             Waarom verwerken wij deze gegevens?
           </h2>
           <ul className="list-disc pl-md space-y-xs">
@@ -85,7 +85,7 @@ export default function PrivacyPage() {
         </section>
 
         <section>
-          <h2 className="font-headline-md text-headline-md text-on-surface mb-sm">
+          <h2 className="mkt-h3 text-headline-md text-on-surface mb-sm">
             Hoe lang bewaren wij uw gegevens?
           </h2>
           <div className="overflow-x-auto">
@@ -107,7 +107,7 @@ export default function PrivacyPage() {
         </section>
 
         <section>
-          <h2 className="font-headline-md text-headline-md text-on-surface mb-sm">
+          <h2 className="mkt-h3 text-headline-md text-on-surface mb-sm">
             Met wie delen wij uw gegevens?
           </h2>
           <p className="mb-sm">
@@ -134,7 +134,7 @@ export default function PrivacyPage() {
         </section>
 
         <section>
-          <h2 className="font-headline-md text-headline-md text-on-surface mb-sm">
+          <h2 className="mkt-h3 text-headline-md text-on-surface mb-sm">
             Doorgifte buiten de EER
           </h2>
           <p>
@@ -146,7 +146,7 @@ export default function PrivacyPage() {
         </section>
 
         <section className="rounded-xl bg-secondary-fixed/30 border border-secondary/20 p-md">
-          <h2 className="font-headline-md text-headline-md text-on-surface mb-sm">
+          <h2 className="mkt-h3 text-headline-md text-on-surface mb-sm">
             AI Act (EU) — transparantie
           </h2>
           <p>
@@ -160,7 +160,7 @@ export default function PrivacyPage() {
         </section>
 
         <section>
-          <h2 className="font-headline-md text-headline-md text-on-surface mb-sm">Uw rechten</h2>
+          <h2 className="mkt-h3 text-headline-md text-on-surface mb-sm">Uw rechten</h2>
           <p className="mb-sm">U heeft het recht om:</p>
           <ul className="list-disc pl-md space-y-xs">
             <li>Inzage te vragen in uw persoonsgegevens</li>
@@ -190,7 +190,7 @@ export default function PrivacyPage() {
         </section>
 
         <section>
-          <h2 className="font-headline-md text-headline-md text-on-surface mb-sm">
+          <h2 className="mkt-h3 text-headline-md text-on-surface mb-sm">
             Cookies en beveiliging
           </h2>
           <p>
@@ -205,7 +205,7 @@ export default function PrivacyPage() {
         </section>
 
         <section>
-          <h2 className="font-headline-md text-headline-md text-on-surface mb-sm">
+          <h2 className="mkt-h3 text-headline-md text-on-surface mb-sm">
             Wijzigingen in deze verklaring
           </h2>
           <p>

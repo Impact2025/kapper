@@ -25,7 +25,7 @@ export function ContactForm() {
     return (
       <div className="bg-white rounded-xl soft-shadow p-lg text-center">
         <Icon name="mark_email_read" className="text-primary text-[48px]" />
-        <h3 className="font-headline-md text-headline-md mt-sm">Bedankt!</h3>
+        <h3 className="mkt-h3 text-headline-md mt-sm">Bedankt!</h3>
         <p className="font-body-md text-on-surface-variant mt-xs">
           We nemen zo snel mogelijk contact met je op.
         </p>

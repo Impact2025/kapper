@@ -84,7 +84,7 @@ export default async function KennisbankIndexPage() {
           <span className="inline-block px-sm py-xs bg-primary-fixed text-on-primary-fixed-variant rounded-full font-label-sm text-label-sm mb-md uppercase tracking-wider">
             Kennisbank
           </span>
-          <h1 className="font-display-lg text-display-lg text-on-surface mb-md">
+          <h1 className="mkt-h1 text-display-lg text-on-surface mb-md">
             Kennisbank voor kapsalons
           </h1>
           <p className="font-body-lg text-body-lg text-on-surface-variant">
@@ -137,7 +137,7 @@ export default async function KennisbankIndexPage() {
                       <div
                         className={`flex h-full w-full items-center justify-center bg-gradient-to-br ${HEADER_GRADIENTS[i % HEADER_GRADIENTS.length]} p-md`}
                       >
-                        <span className="font-headline-md text-headline-md font-semibold text-white text-center line-clamp-3">
+                        <span className="mkt-h3 text-headline-md font-semibold text-white text-center line-clamp-3">
                           {p.title}
                         </span>
                       </div>
@@ -162,7 +162,7 @@ export default async function KennisbankIndexPage() {
                       </span>
                     </div>
 
-                    <h2 className="font-headline-md text-headline-md text-on-surface mb-sm">
+                    <h2 className="mkt-h3 text-headline-md text-on-surface mb-sm">
                       {p.title}
                     </h2>
                     <p className="font-body-md text-on-surface-variant line-clamp-3 mb-md">

@@ -41,7 +41,7 @@ export function SiteFooter() {
                 height={361}
                 className="h-9 w-auto object-contain"
               />
-              <span className="font-headline-md text-headline-md font-bold text-on-surface">
+              <span className="mkt-h3 text-headline-md font-bold text-on-surface">
                 KapperAssistent.nl
               </span>
             </div>

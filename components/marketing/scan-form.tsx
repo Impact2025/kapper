@@ -70,7 +70,7 @@ export function ScanForm() {
             { label: "No-show besparing", value: eur(r.noShowSavings) },
           ].map((s) => (
             <div key={s.label} className="border border-outline-variant rounded-lg p-md">
-              <div className="font-headline-md text-headline-md text-secondary">
+              <div className="mkt-h3 text-headline-md text-secondary">
                 {s.value}
               </div>
               <div className="font-label-sm text-label-sm text-on-surface-variant">
