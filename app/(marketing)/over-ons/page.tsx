@@ -262,10 +262,10 @@ export default function OverOnsPage() {
             className="mx-auto rounded-full object-cover soft-shadow"
           />
           <blockquote className="font-body-lg text-body-lg text-on-surface-variant italic max-w-[36rem] mx-auto leading-relaxed">
-            "Vincent van Munster is sociaal ondernemer, AI-innovator en oprichter van
+            &quot;Vincent van Munster is sociaal ondernemer, AI-innovator en oprichter van
             WeAreImpact en KapperAssistent. Als voormalig welzijnsdirecteur én vader van
             twee kinderen bouwt hij aan AI-oplossingen met één doel: kille technologie
-            inzetten om warme handen en kostbare tijd vrij te spelen."
+            inzetten om warme handen en kostbare tijd vrij te spelen.&quot;
           </blockquote>
         </div>
       </section>

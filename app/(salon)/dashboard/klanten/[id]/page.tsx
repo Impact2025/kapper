@@ -1,16 +1,18 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import Image from "next/image";
 import { notFound } from "next/navigation";
 import { requireSalonOwner } from "@/lib/auth/dal";
 import { getCurrentUser } from "@/lib/auth/dal";
 import { getCustomer } from "@/lib/customers/queries";
 import { listAppointmentsForCustomer } from "@/lib/salon/appointments";
-import { listTreatmentCards, listHealthRecords } from "@/lib/dossier/queries";
+import { listTreatmentCards, listHealthRecords, listPhotos, listStaffOptions } from "@/lib/dossier/queries";
 import { amsterdamDateKey, amsterdamTimeKey } from "@/lib/salon/timezone";
 import { Card, Badge } from "@/components/salon/dash-ui";
 import { Icon } from "@/components/ui/icon";
 import { TreatmentCardForm } from "@/components/salon/treatment-card-form";
 import { HealthRecordForm } from "@/components/salon/health-record-form";
+import { PhotoUploadForm } from "@/components/salon/photo-upload-form";
 import { PurgeCustomerButton } from "@/components/salon/purge-customer-button";
 
 export const metadata: Metadata = { title: "Klantdossier" };
@@ -35,10 +37,12 @@ export default async function KlantDetailPage({
   const customer = await getCustomer(user.salonId, id);
   if (!customer) notFound();
 
-  const [appointmentHistory, treatmentCards, healthRecords] = await Promise.all([
+  const [appointmentHistory, treatmentCards, healthRecords, photos, staffOptions] = await Promise.all([
     listAppointmentsForCustomer(user.salonId, id),
     listTreatmentCards(user.salonId, id),
     currentUser.canAccessHealthRecords ? listHealthRecords(user.salonId, id) : Promise.resolve([]),
+    listPhotos(user.salonId, id),
+    listStaffOptions(user.salonId),
   ]);
 
   const now = new Date();
@@ -136,7 +140,27 @@ export default async function KlantDetailPage({
               ))}
             </div>
           )}
-          <TreatmentCardForm customerId={customer.id} />
+          <TreatmentCardForm customerId={customer.id} staffOptions={staffOptions} />
+        </Card>
+
+        {/* Foto's (voor/na) */}
+        <Card>
+          <h2 className="mb-sm dash-h2 text-headline-md text-on-surface">Foto&apos;s</h2>
+          {photos.length === 0 ? (
+            <p className="mb-md text-body-md text-on-surface-variant">Nog geen foto&apos;s toegevoegd.</p>
+          ) : (
+            <div className="mb-md grid grid-cols-3 gap-sm sm:grid-cols-4">
+              {photos.map((photo) => (
+                <div key={photo.id} className="relative overflow-hidden rounded-lg">
+                  <Image src={photo.blobUrl} alt={photo.type === "before" ? "Voor" : "Na"} width={160} height={160} className="aspect-square w-full object-cover" />
+                  <span className="absolute bottom-xs left-xs">
+                    <Badge tone={photo.type === "before" ? "neutral" : "success"}>{photo.type === "before" ? "Voor" : "Na"}</Badge>
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+          <PhotoUploadForm customerId={customer.id} />
         </Card>
 
         {/* Gezondheidsgegevens (Artikel 9 AVG) */}

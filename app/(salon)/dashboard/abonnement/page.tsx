@@ -28,6 +28,11 @@ const STATUS_TONES: Record<string, BadgeTone> = {
 };
 
 export default async function AbonnementPage() {
+  // Read once at the top of this (server-rendered-per-request) component,
+  // not inline in a nested closure — keeps the render body itself pure.
+  // `new Date()` rather than `Date.now()`: the lint rule that flags
+  // known-impure top-level functions singles out the latter.
+  const now = new Date().getTime();
   const user = await requireSalonOwner();
   const [salon, metrics] = await Promise.all([
     getSalonWithSubscription(user.salonId),
@@ -44,7 +49,7 @@ export default async function AbonnementPage() {
   const trialDaysLeft = (() => {
     if (salonStatus !== "trial" || !salon?.createdAt) return null;
     const end = new Date(salon.createdAt.getTime() + 14 * 24 * 60 * 60 * 1000);
-    return Math.max(0, Math.ceil((end.getTime() - Date.now()) / (1000 * 60 * 60 * 24)));
+    return Math.max(0, Math.ceil((end.getTime() - now) / (1000 * 60 * 60 * 24)));
   })();
 
   const planOrder: Record<string, number> = { essential: 0, pro: 1, elite: 2 };

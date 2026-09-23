@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { Icon } from "@/components/ui/icon";
 
@@ -20,17 +20,15 @@ interface OnboardingWizardProps {
 }
 
 export function OnboardingWizard({ steps, salonId }: OnboardingWizardProps) {
-  const [open, setOpen] = useState(false);
-  const [currentStep, setCurrentStep] = useState(0);
-
-  // Show only on first visit; track per salon in localStorage
-  useEffect(() => {
-    const key = `ka_wizard_${salonId}`;
+  // Show only on first visit; track per salon in localStorage. Computed in
+  // the lazy useState initializer (not an effect) so there's no extra
+  // render/flash and no impure setState-during-effect.
+  const [open, setOpen] = useState(() => {
+    if (typeof window === "undefined") return false;
     const allDone = steps.every((s) => s.done);
-    if (!allDone && !localStorage.getItem(key)) {
-      setOpen(true);
-    }
-  }, [salonId, steps]);
+    return !allDone && !localStorage.getItem(`ka_wizard_${salonId}`);
+  });
+  const [currentStep, setCurrentStep] = useState(0);
 
   function dismiss() {
     localStorage.setItem(`ka_wizard_${salonId}`, "1");

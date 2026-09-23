@@ -58,7 +58,7 @@ export default async function EscalatiesPage() {
                   <p className="truncate text-label-sm font-medium text-on-surface">Reden: {esc.escalationReason}</p>
                 )}
                 {esc.lastMessage && (
-                  <p className="truncate text-label-sm text-on-surface-variant">"{esc.lastMessage}"</p>
+                  <p className="truncate text-label-sm text-on-surface-variant">&quot;{esc.lastMessage}&quot;</p>
                 )}
               </div>
 

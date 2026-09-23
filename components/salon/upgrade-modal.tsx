@@ -28,12 +28,12 @@ export function UpgradeModal({
     else dialogRef.current?.close();
   }, [open]);
 
-  // Re-open default selection when modal opens
-  useEffect(() => {
-    if (open && upgradePlans[0]) setSelectedPlan(upgradePlans[0].id);
-  }, [open, upgradePlans]);
-
   if (upgradePlans.length === 0) return null;
+
+  function openModal() {
+    if (upgradePlans[0]) setSelectedPlan(upgradePlans[0].id);
+    setOpen(true);
+  }
 
   const chosen = upgradePlans.find((p) => p.id === selectedPlan) ?? upgradePlans[0]!;
 
@@ -41,7 +41,7 @@ export function UpgradeModal({
     <>
       <button
         type="button"
-        onClick={() => setOpen(true)}
+        onClick={openModal}
         className={
           triggerClass ??
           "flex w-full items-center justify-center gap-base rounded-full border border-primary px-md py-sm text-label-md font-label-md text-primary transition-all hover:bg-primary hover:text-on-primary"

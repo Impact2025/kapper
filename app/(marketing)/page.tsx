@@ -168,7 +168,7 @@ export default function HomePage() {
                     AI Receptioniste
                   </p>
                   <p className="font-label-sm text-label-sm text-on-surface-variant italic">
-                    "Afspraak bevestigd!"
+                    &quot;Afspraak bevestigd!&quot;
                   </p>
                 </div>
               </div>
@@ -294,8 +294,8 @@ export default function HomePage() {
               ))}
             </div>
             <blockquote className="font-headline-md text-headline-md italic text-on-surface max-w-2xl mb-base">
-              "Eindelijk weer rust in de zaak. Mijn telefoon staat op stil, terwijl de
-              boekingen gewoon binnenstromen. Ik kan me 100% concentreren op mijn klanten."
+              &quot;Eindelijk weer rust in de zaak. Mijn telefoon staat op stil, terwijl de
+              boekingen gewoon binnenstromen. Ik kan me 100% concentreren op mijn klanten.&quot;
             </blockquote>
             <div className="flex items-center gap-sm">
               <div className="w-10 h-10 rounded-full bg-primary-fixed flex items-center justify-center">

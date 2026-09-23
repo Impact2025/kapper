@@ -7,7 +7,13 @@ import { Icon } from "@/components/ui/icon";
 const inputCls =
   "w-full rounded-lg border border-outline-variant bg-surface px-sm py-xs text-body-md text-on-surface focus:outline-none focus:ring-2 focus:ring-primary";
 
-export function TreatmentCardForm({ customerId }: { customerId: string }) {
+export function TreatmentCardForm({
+  customerId,
+  staffOptions = [],
+}: {
+  customerId: string;
+  staffOptions?: { id: string; name: string }[];
+}) {
   const [state, action, pending] = useActionState(addTreatmentCardAction, undefined);
   const formRef = useRef<HTMLFormElement>(null);
 
@@ -24,9 +30,26 @@ export function TreatmentCardForm({ customerId }: { customerId: string }) {
           <input type="text" name="colorFormula" className={inputCls} placeholder="bv. 7.1 + 6% 1:1.5" />
         </div>
         <div>
+          <label className="mb-xs block text-label-sm text-on-surface-variant">Mengverhouding</label>
+          <input type="text" name="mixRatio" className={inputCls} placeholder="bv. 1:1.5" />
+        </div>
+        <div>
           <label className="mb-xs block text-label-sm text-on-surface-variant">Techniek</label>
           <input type="text" name="technique" className={inputCls} placeholder="bv. balayage" />
         </div>
+        {staffOptions.length > 0 && (
+          <div>
+            <label className="mb-xs block text-label-sm text-on-surface-variant">Stylist</label>
+            <select name="staffId" defaultValue="" className={inputCls}>
+              <option value="">— Niet gekoppeld —</option>
+              {staffOptions.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.name}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
       </div>
       <div>
         <label className="mb-xs block text-label-sm text-on-surface-variant">Notities</label>

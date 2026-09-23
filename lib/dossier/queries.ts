@@ -1,7 +1,21 @@
 import "server-only";
 import { and, desc, eq } from "drizzle-orm";
 import { db } from "@/lib/db";
-import { healthRecords, photos, treatmentCards } from "@/lib/db/schema";
+import { healthRecords, photos, treatmentCards, staff } from "@/lib/db/schema";
+
+export interface StaffOption {
+  id: string;
+  name: string;
+}
+
+/** For the behandelkaart-formulier's stylist select on the klantdossier. */
+export async function listStaffOptions(salonId: string): Promise<StaffOption[]> {
+  return db
+    .select({ id: staff.id, name: staff.name })
+    .from(staff)
+    .where(and(eq(staff.salonId, salonId), eq(staff.active, true)))
+    .orderBy(staff.name);
+}
 
 export interface TreatmentCard {
   id: string;
