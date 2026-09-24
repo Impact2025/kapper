@@ -53,6 +53,17 @@ export const LOODGIETER_VERTICAL: VerticalPack = {
       "register_job",
       "escalate_to_staff",
     ],
+    prompt: {
+      spoedRule:
+        "een acuut probleem (water dat blijft lopen of door het plafond komt, gaslucht, geen warm water of verwarming bij kou, veiligheidsrisico) behandel je als spoed. Geef eerst korte veiligheidstips (bijv. hoofdkraan afsluiten, stroom uit bij water bij stopcontacten). Bij gaslucht: ramen open, geen vuur of lichtschakelaars aanraken, het pand verlaten en het gasstoringsnummer 0800-9009 bellen; bij acuut gevaar 112.",
+      hazardExamples: "gaslek, ernstige waterschade",
+      quoteExamples: "een nieuwe ketel of badkamer",
+      photoRule:
+        "gebruik die om in te schatten welke {treatment} en hoeveel tijd nodig is, en noem dat kort in je antwoord. Bij een mogelijk gevaarlijke situatie (gaslek, ernstige waterschade) altijd escalate_to_staff gebruiken in plaats van zelf gerust te stellen. De foto wordt automatisch bij de klus gevoegd.",
+      scene: "onderweg of onder een gootsteen ligt",
+      urgencyHint: "spoed = acuut (water/gas/geen verwarming in de kou/veiligheid); anders normaal",
+      photoSubjects: "een lekkage, leiding of cv-ketel",
+    },
   },
   integrations: ["whatsapp", "phone", "moneybird", "eboekhouden", "exact_online", "google_calendar"],
   jobFields: [

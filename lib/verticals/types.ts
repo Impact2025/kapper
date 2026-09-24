@@ -24,6 +24,27 @@ export type AgentToolId =
   | "register_job"
   | "escalate_to_staff";
 
+/** Vak-specific behaviour rules for the job receptionist. Everything a
+ * plumber's AI must say about gas or water is a *vak* rule, not a platform
+ * rule, so it lives in the pack; a pack without them gets the generic wording
+ * in lib/ai/job-receptionist.ts. */
+export interface JobAgentPrompt {
+  /** What counts as spoed for this vak and what to tell the customer first. */
+  spoedRule: string;
+  /** Situations where the AI must hand over instead of reassuring. */
+  hazardExamples: string;
+  /** Typical offerte-aanvraag examples ("een nieuwe ketel of badkamer"). */
+  quoteExamples: string;
+  /** What to do with a photo the customer sends. */
+  photoRule: string;
+  /** One-line scene: where the vakman is when he cannot pick up the phone. */
+  scene: string;
+  /** Tool-schema hint for register_job's urgency field. */
+  urgencyHint: string;
+  /** Example photo subjects for the model ("een lekkage, leiding of cv-ketel"). */
+  photoSubjects: string;
+}
+
 /** A vak-specific field on a klus (the job-archetype counterpart of the
  * kapper's kleurkaart): oppervlak in m2 for a schilder, "woning ouder dan 2
  * jaar" for a loodgieter. Stored in jobs.details. */
@@ -222,7 +243,7 @@ export interface VerticalPack {
   theme?: VerticalTheme;
   features: VerticalFeatures;
   /** AI-receptionist tools this vertical uses. */
-  agent: { tools: AgentToolId[] };
+  agent: { tools: AgentToolId[]; prompt?: Partial<JobAgentPrompt> };
   /** Integration ids (lib/capabilities/integrations.ts) offered to this vertical. */
   integrations: string[];
   /** Extra klus fields (job archetype). */
