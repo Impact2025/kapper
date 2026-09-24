@@ -902,3 +902,21 @@ export const helpArticles = pgTable("help_articles", {
   updatedBy: uuid("updated_by").references(() => users.id, { onDelete: "set null" }),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull().$onUpdate(() => new Date()),
 });
+
+// Storingen en onderhoud voor de publieke statuspagina (/status). Beheerd in
+// /admin/support/status; updates staan als tijdlijn in `updates`.
+export const statusIncidents = pgTable(
+  "status_incidents",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    title: text("title").notNull(),
+    severity: text("severity").notNull().default("minor"), // minor | major | maintenance
+    status: text("status").notNull().default("investigating"), // investigating | identified | monitoring | resolved
+    components: jsonb("components").$type<string[]>().default([]).notNull(),
+    updates: jsonb("updates").$type<{ at: string; status: string; message: string }[]>().default([]).notNull(),
+    startedAt: timestamp("started_at", { withTimezone: true }).defaultNow().notNull(),
+    resolvedAt: timestamp("resolved_at", { withTimezone: true }),
+    createdBy: uuid("created_by").references(() => users.id, { onDelete: "set null" }),
+  },
+  (t) => [index("status_incidents_started_idx").on(t.startedAt)],
+);

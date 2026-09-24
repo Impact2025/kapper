@@ -3,6 +3,9 @@ import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth/dal";
 import { getSalonWithSubscription } from "@/lib/salon/queries";
 import { SalonSidebar } from "@/components/salon/sidebar";
+import { SupportChatWidget } from "@/components/support/chat-widget";
+import { IncidentBanner } from "@/components/salon/incident-banner";
+import { PageHelp } from "@/components/salon/page-help";
 import { getVerticalConfig, resolveNav } from "@/lib/verticals";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -29,7 +32,12 @@ export default async function SalonLayout({ children }: { children: React.ReactN
         salon={{ name: salon?.name ?? `Mijn ${pack.terms.establishment}`, plan: salon?.plan ?? "essential" }}
         nav={resolveNav(pack.nav)}
       />
-      <main className="flex-1 px-margin-mobile py-md md:px-lg md:py-lg">{children}</main>
+      <main className="flex-1 px-margin-mobile py-md md:px-lg md:py-lg">
+        <IncidentBanner />
+        <PageHelp />
+        {children}
+      </main>
+      <SupportChatWidget />
     </div>
   );
 }

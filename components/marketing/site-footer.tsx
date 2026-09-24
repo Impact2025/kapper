@@ -23,6 +23,7 @@ const cols = [
     links: [
       { href: "/help", label: "Hulpcentrum" },
       { href: "/faq", label: "Veelgestelde vragen" },
+      { href: "/status", label: "Systeemstatus" },
       { href: "/contact", label: "Ticket aanmaken" },
     ],
   },
