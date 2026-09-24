@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { requireSalonOwner } from "@/lib/auth/dal";
+import { getJobContextOrNull } from "@/lib/jobs/access";
+import { JobCustomersView } from "./_job-views";
 import { searchCustomers } from "@/lib/customers/queries";
 import { listTodayAppointments } from "@/lib/salon/appointments";
 import { amsterdamTimeKey, SALON_TIMEZONE } from "@/lib/salon/timezone";
@@ -16,6 +18,9 @@ export default async function KlantenPage({
 }) {
   const { q = "" } = await searchParams;
   const user = await requireSalonOwner();
+  // Job verticals (loodgieter, schilder, ...) get the klus-CRM klantenlijst.
+  const jobCtx = await getJobContextOrNull(user.salonId, user);
+  if (jobCtx) return <JobCustomersView ctx={jobCtx} q={q} />;
   const [today, customers] = await Promise.all([
     listTodayAppointments(user.salonId),
     searchCustomers(user.salonId, q),

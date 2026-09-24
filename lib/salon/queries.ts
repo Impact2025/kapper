@@ -8,6 +8,7 @@ export interface SalonWithSubscription {
   id: string;
   name: string;
   slug: string;
+  vertical: string;
   plan: "essential" | "pro" | "elite";
   status: "trial" | "active" | "past_due" | "canceled";
   mrr: number;
@@ -30,6 +31,7 @@ export async function getSalonWithSubscription(
       id: salons.id,
       name: salons.name,
       slug: salons.slug,
+      vertical: salons.vertical,
       plan: salons.plan,
       status: salons.status,
       mrr: salons.mrr,

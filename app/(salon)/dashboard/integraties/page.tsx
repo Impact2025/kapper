@@ -5,6 +5,9 @@ import { PageHeader, Card, Badge } from "@/components/salon/dash-ui";
 import { Icon } from "@/components/ui/icon";
 import { IntegratiesForm } from "@/components/salon/integraties-form";
 import { decrypt } from "@/lib/crypto";
+import { getVerticalConfig } from "@/lib/verticals";
+import { INTEGRATION_CATEGORY_LABEL, liveAgendaProvidersFor, plannedIntegrationsFor } from "@/lib/capabilities/integrations";
+import { IntegrationInterestButton } from "@/components/salon/integration-interest";
 
 export const metadata: Metadata = { title: "Integraties" };
 
@@ -17,6 +20,11 @@ export default async function IntegratiesPage() {
   const salon = await getSalonWithSubscription(user.salonId);
 
   const ai = (salon?.settings?.ai as Record<string, unknown>) ?? {};
+  const pack = getVerticalConfig(salon?.vertical);
+  // Job verticals plan inside the app (planbord) — an agenda-software link is
+  // a kapper concept, so the card only shows where the pack offers one.
+  const showAgenda = liveAgendaProvidersFor(pack).length > 0;
+  const planned = plannedIntegrationsFor(pack);
 
   // Show placeholder if key is stored (encrypted) — never expose raw value to client
   const hasKey = (v: unknown) => (typeof v === "string" && v.length > 0 ? "••••••••" : "");
@@ -60,12 +68,16 @@ export default async function IntegratiesPage() {
   };
 
   const statusItems = [
-    {
-      label: "Agenda",
-      icon: "calendar_month",
-      active: !!salon?.agendaProvider,
-      value: salon?.agendaProvider ? capitalize(salon.agendaProvider) : "Niet gekoppeld",
-    },
+    ...(showAgenda
+      ? [
+          {
+            label: "Agenda",
+            icon: "calendar_month",
+            active: !!salon?.agendaProvider,
+            value: salon?.agendaProvider ? capitalize(salon.agendaProvider) : "Niet gekoppeld",
+          },
+        ]
+      : []),
     {
       label: "WhatsApp",
       icon: "chat",
@@ -84,11 +96,11 @@ export default async function IntegratiesPage() {
     <div>
       <PageHeader
         title="Integraties"
-        subtitle="Koppel je agenda en communicatiekanalen aan de AI-assistent"
+        subtitle={showAgenda ? "Koppel je agenda en communicatiekanalen aan de AI-assistent" : "Koppel je telefoon en WhatsApp aan de AI-receptionist"}
       />
 
       {/* Status overview */}
-      <div className="mb-lg grid grid-cols-1 gap-md sm:grid-cols-3">
+      <div className={`mb-lg grid grid-cols-1 gap-md ${statusItems.length === 3 ? "sm:grid-cols-3" : "sm:grid-cols-2"}`}>
         {statusItems.map((item) => (
           <Card key={item.label} className="flex items-start gap-sm">
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary-fixed text-on-primary-fixed shrink-0">
@@ -107,7 +119,30 @@ export default async function IntegratiesPage() {
         ))}
       </div>
 
-      <IntegratiesForm integrations={integrations} />
+      <IntegratiesForm integrations={integrations} showAgenda={showAgenda} />
+
+      {planned.length > 0 && (
+        <Card className="mt-md">
+          <h3 className="mb-xs text-body-md font-medium text-on-surface">Binnenkort</h3>
+          <p className="mb-md text-label-sm text-on-surface-variant">
+            Deze koppelingen zijn nog niet beschikbaar. Geef aan welke jij wilt — dat bepaalt wat we als eerste bouwen.
+          </p>
+          <div className="flex flex-col divide-y divide-outline-variant/30">
+            {planned.map((d) => (
+              <div key={d.id} className="flex flex-wrap items-center gap-sm py-sm">
+                <Icon name={d.icon} className="text-[22px] text-on-surface-variant" />
+                <div className="min-w-0 flex-1">
+                  <div className="text-body-md text-on-surface">
+                    {d.label} <span className="text-label-sm text-on-surface-variant">· {INTEGRATION_CATEGORY_LABEL[d.category]}</span>
+                  </div>
+                  <div className="text-label-sm text-on-surface-variant">{d.description}</div>
+                </div>
+                <IntegrationInterestButton id={d.id} />
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
 
       {/* Compliance */}
       <Card className="mt-md">

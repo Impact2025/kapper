@@ -3,7 +3,8 @@ import { complete } from "@/lib/ai/anthropic";
 import { env } from "@/lib/env";
 import { slugify } from "@/lib/utils";
 import { computeSeo } from "@/lib/blog/seo";
-import { publicEnv } from "@/lib/env";
+import { DEFAULT_VERTICAL_ID, getVerticalConfig, type VerticalPack } from "@/lib/verticals";
+import { siteUrlFor } from "@/lib/verticals/site-url";
 
 export interface GeneratedPost {
   title: string;
@@ -17,19 +18,14 @@ export interface GeneratedPost {
   seoScore: number;
 }
 
-const SYSTEM = `Je bent een Nederlandse SEO-contentspecialist voor kapsalons.
-Schrijf praktische, autoritaire en warme blogartikelen (B2B, voor saloneigenaren).
-Gebruik Markdown met ## en ### tussenkoppen, korte alinea's en bullets.
-Vermijd overdrijving en holle marketingtaal. Schrijf in het Nederlands.`;
-
-function buildPrompt(topic: string, keywords?: string[]): string {
+function buildPrompt(topic: string, keywords: string[] | undefined, pack: VerticalPack): string {
   return `Schrijf een diepgaand, SEO-geoptimaliseerd blogartikel over: "${topic}".
 ${keywords?.length ? `Verwerk deze keywords natuurlijk: ${keywords.join(", ")}.` : ""}
 
 Eisen:
 - 700-1000 woorden, Markdown body met minimaal 3 tussenkoppen (##).
-- Praktisch en concreet voor saloneigenaren.
-- Eindig met een korte call-to-action richting KapperAssistent.
+- Praktisch en concreet voor ${pack.content.audience}.
+- Eindig met een korte call-to-action richting ${pack.brand.name}.
 
 Geef UITSLUITEND geldige JSON terug (geen codeblok, geen uitleg) met deze velden:
 {
@@ -60,7 +56,10 @@ function extractJson(raw: string): Record<string, unknown> | null {
 export async function generateBlogPost(
   topic: string,
   keywords?: string[],
+  vertical: string = DEFAULT_VERTICAL_ID,
 ): Promise<GeneratedPost> {
+  const pack = getVerticalConfig(vertical);
+  const siteUrl = siteUrlFor(pack.id);
   if (!env.OPENMODEL_API_KEY) {
     throw new Error("OPENMODEL_API_KEY ontbreekt — AI-generatie niet beschikbaar.");
   }
@@ -68,8 +67,8 @@ export async function generateBlogPost(
   const raw = await complete({
     model: env.OPENMODEL_MODEL,
     maxTokens: 3000,
-    system: SYSTEM,
-    prompt: buildPrompt(topic, keywords),
+    system: pack.content.blogSystemPrompt,
+    prompt: buildPrompt(topic, keywords, pack),
   });
   if (!raw) throw new Error("Geen reactie van het AI-model.");
 
@@ -97,11 +96,11 @@ export async function generateBlogPost(
     description: metaDescription,
     keywords: kw.join(", "),
     inLanguage: "nl-NL",
-    url: `${publicEnv.NEXT_PUBLIC_SITE_URL}/blog/${slug}`,
+    url: `${siteUrl}/blog/${slug}`,
     publisher: {
       "@type": "Organization",
-      name: "KapperAssistent.nl",
-      url: publicEnv.NEXT_PUBLIC_SITE_URL,
+      name: `${pack.brand.name}.nl`,
+      url: siteUrl,
     },
   };
 

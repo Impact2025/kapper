@@ -18,8 +18,10 @@ import { redeemCoupon } from "@/lib/coupons/service";
 import { PLANS, type PlanId } from "@/lib/plans";
 import { slugify } from "@/lib/utils";
 import { sendEmail } from "@/lib/mail/resend";
-import { welcomeEmail } from "@/lib/mail/templates";
-import { publicEnv, env } from "@/lib/env";
+import { welcomeEmail, brandFor } from "@/lib/mail/templates";
+import { isVerticalId } from "@/lib/verticals";
+import { siteUrlFor } from "@/lib/verticals/site-url";
+import { env } from "@/lib/env";
 import { markDepositPaid } from "@/lib/payments-policy/queries";
 import { pushBookingToAgenda } from "@/lib/salon/appointments";
 import { amsterdamDateKey, amsterdamTimeKey } from "@/lib/salon/timezone";
@@ -239,7 +241,7 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
   // Fase 7: which vertical (kapper, loodgieter, ...) this checkout is for —
   // set by the marketing site's checkout call, defaults to "kapper" since
   // that's the only live signup flow today.
-  const vertical = session.metadata?.vertical || "kapper";
+  const vertical = isVerticalId(session.metadata?.vertical) ? session.metadata!.vertical! : "kapper";
   const couponId = session.metadata?.couponId || undefined;
   const email = (session.metadata?.email ?? session.customer_email ?? "").toLowerCase().trim();
   const existingSalonId = session.metadata?.salonId || undefined;
@@ -327,11 +329,11 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
         expires,
       });
 
-      const setPasswordUrl = `${publicEnv.NEXT_PUBLIC_SITE_URL}/reset-password/${rawToken}`;
+      const setPasswordUrl = `${siteUrlFor(vertical)}/reset-password/${rawToken}`;
       await sendEmail({
         to: email,
-        subject: `Welkom bij KapperAssistent — stel je wachtwoord in`,
-        html: welcomeEmail({ salonName, setPasswordUrl }),
+        subject: `Welkom bij ${brandFor(vertical).name} — stel je wachtwoord in`,
+        html: welcomeEmail({ salonName, setPasswordUrl, brand: brandFor(vertical) }),
       });
     } catch (err) {
       console.error("[provision] auto-account creation failed:", err);

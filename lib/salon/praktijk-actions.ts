@@ -4,7 +4,8 @@ import { eq, and } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { db } from "@/lib/db";
-import { locations, treatments, staff, staffLocations, staffTreatments, knowledgeEntries } from "@/lib/db/schema";
+import { locations, treatments, staff, staffLocations, staffTreatments, knowledgeEntries, salons } from "@/lib/db/schema";
+import { getVerticalConfig } from "@/lib/verticals";
 import { requireSalonOwner } from "@/lib/auth/dal";
 import type { ActionState } from "@/lib/salon/actions";
 
@@ -114,8 +115,12 @@ export async function addTreatment(_prev: ActionState | undefined, formData: For
   });
   if (!parsed.success) return { error: "Ongeldige invoer voor de behandeling." };
 
+  // New items start at the vertical's btw default (kapper 9% / plumber 21%) —
+  // the table's own column default is the kapper rate, wrong for other trades.
+  const [salonRow] = await db.select({ vertical: salons.vertical }).from(salons).where(eq(salons.id, user.salonId)).limit(1);
   await db.insert(treatments).values({
     salonId: user.salonId,
+    vatRatePercent: getVerticalConfig(salonRow?.vertical).vatRates.treatment,
     name: parsed.data.name,
     category: parsed.data.category || null,
     durationMinutes: parsed.data.durationMinutes,

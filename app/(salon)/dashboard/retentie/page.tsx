@@ -5,10 +5,12 @@ import { getSalonWithSubscription } from "@/lib/salon/queries";
 import { getSalonPlan, salonHasPlan } from "@/lib/salon/plan";
 import { listTopLoyaltyCustomers } from "@/lib/loyalty/queries";
 import { PageHeader, Card, Badge, EmptyState } from "@/components/salon/dash-ui";
+import { getVerticalConfig } from "@/lib/verticals";
 import { Icon } from "@/components/ui/icon";
 import { MarketingSettingsForm } from "@/components/salon/marketing-settings-form";
 
 export const metadata: Metadata = { title: "Retentie & marketing" };
+
 
 export default async function RetentiePage() {
   const user = await requireSalonOwner();
@@ -24,19 +26,38 @@ export default async function RetentiePage() {
     retentionEnabled: Boolean(marketing.retentionEnabled ?? false),
   };
 
+  const pack = getVerticalConfig(salon?.vertical);
   const isElite = salonHasPlan(plan, "elite");
-  const topCustomers = isElite ? await listTopLoyaltyCustomers(user.salonId) : [];
+  // Loyalty points ride on the kassa — only verticals with that feature have them.
+  const hasLoyalty = pack.features.loyalty;
+  const topCustomers = isElite && hasLoyalty ? await listTopLoyaltyCustomers(user.salonId) : [];
 
   return (
     <div>
       <PageHeader
-        title="Retentie & marketing"
-        subtitle="Reviews, reactivatie en loyaliteit — automatisch, zonder er zelf aan te hoeven denken"
+        title={hasLoyalty ? "Retentie & marketing" : "Reviews & terugkeer"}
+        subtitle={
+          hasLoyalty
+            ? "Reviews, reactivatie en loyaliteit — automatisch, zonder er zelf aan te hoeven denken"
+            : "Reviews na afgeronde klussen en herinneringen voor terugkerend werk — automatisch"
+        }
       />
 
       <div className="grid grid-cols-1 gap-lg lg:grid-cols-2">
         <MarketingSettingsForm settings={settings} />
 
+        {!hasLoyalty && (
+          <Card>
+            <h2 className="dash-h2 mb-sm text-headline-md text-on-surface">Terugkerende omzet</h2>
+            <p className="mb-md text-body-md text-on-surface-variant">
+              Het meeste herhaalwerk ontstaat door onderhoud: met een contract krijgt de klant zijn herinnering en jij je klus vanzelf.
+            </p>
+            <Link href="/dashboard/onderhoud" className="text-label-md text-primary hover:underline">
+              Naar onderhoud &amp; contracten →
+            </Link>
+          </Card>
+        )}
+        {hasLoyalty && (
         <Card>
           <div className="mb-sm flex items-center gap-xs">
             <h2 className="dash-h2 text-headline-md text-on-surface">Loyaliteitspunten</h2>
@@ -79,6 +100,7 @@ export default async function RetentiePage() {
             </div>
           )}
         </Card>
+        )}
       </div>
     </div>
   );

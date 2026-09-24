@@ -1,5 +1,5 @@
 import "server-only";
-import { RECEPTIONIST_TOOLS, buildSystemPrompt, type SalonContext } from "@/lib/ai/receptionist";
+import { getReceptionistTools, buildSystemPrompt, type SalonContext } from "@/lib/ai/receptionist";
 import { env } from "@/lib/env";
 
 const VAPI_BASE = "https://api.vapi.ai";
@@ -82,7 +82,7 @@ type VapiTool = VapiFunctionTool | VapiTransferCallTool;
  * rather than the AI relaying a message. Without a phone number on file it
  * falls back to the ordinary function tool (graceful degradation). */
 function toVapiTools(salon: SalonContext): VapiTool[] {
-  return RECEPTIONIST_TOOLS.map((t): VapiTool => {
+  return getReceptionistTools(salon).map((t): VapiTool => {
     if (t.name === "escalate_to_staff" && salon.phone) {
       return {
         type: "transferCall",

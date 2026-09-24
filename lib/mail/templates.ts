@@ -1,21 +1,41 @@
 import type { ScanResult } from "@/lib/scan/run-scan";
 import { publicEnv } from "@/lib/env";
+import { KAPPER_VERTICAL, getVerticalConfig } from "@/lib/verticals";
 
 const BRAND = "#526350";
 const CREAM = "#fbf9f8";
 const INK = "#1b1c1c";
 
-export function shell(title: string, inner: string): string {
+/** Brand chrome for a mail — defaults to the kapper brand; salon-facing mails
+ * pass `brandFor(salon.vertical)` so a plumber never sees "KapperAssistent". */
+export interface MailBrand {
+  name: string;
+  domain: string;
+  siteUrl: string;
+  supportEmail: string;
+}
+
+export function brandFor(vertical: string | null | undefined): MailBrand {
+  const b = getVerticalConfig(vertical).brand;
+  return { name: b.name, domain: b.domain, siteUrl: b.siteUrl, supportEmail: b.supportEmail };
+}
+
+const DEFAULT_MAIL_BRAND: MailBrand = (() => {
+  const b = KAPPER_VERTICAL.brand;
+  return { name: b.name, domain: b.domain, siteUrl: publicEnv.NEXT_PUBLIC_SITE_URL, supportEmail: b.supportEmail };
+})();
+
+export function shell(title: string, inner: string, brand: MailBrand = DEFAULT_MAIL_BRAND): string {
   return `<!DOCTYPE html><html lang="nl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
 <body style="margin:0;background:${CREAM};font-family:'Hanken Grotesk',Helvetica,Arial,sans-serif;color:${INK};">
   <div style="max-width:560px;margin:0 auto;padding:32px 16px;">
-    <div style="font-size:22px;font-weight:700;color:${BRAND};margin-bottom:24px;">KapperAssistent.nl</div>
+    <div style="font-size:22px;font-weight:700;color:${BRAND};margin-bottom:24px;">${brand.name}.nl</div>
     <div style="background:#ffffff;border-radius:16px;padding:28px;box-shadow:0 4px 20px rgba(143,161,139,0.12);">
       <h1 style="font-family:Georgia,'EB Garamond',serif;font-size:24px;line-height:1.3;margin:0 0 16px;color:${INK};">${title}</h1>
       ${inner}
     </div>
     <p style="font-size:12px;color:#747871;text-align:center;margin-top:24px;">
-      © ${new Date().getFullYear()} KapperAssistent.nl · <a href="${publicEnv.NEXT_PUBLIC_SITE_URL}" style="color:${BRAND};">kappersassistent.nl</a>
+      © ${new Date().getFullYear()} ${brand.name}.nl · <a href="${brand.siteUrl}" style="color:${BRAND};">${brand.domain}</a>
     </p>
   </div>
 </body></html>`;
@@ -32,17 +52,19 @@ function eur(n: number): string {
 export function welcomeEmail({
   salonName,
   setPasswordUrl,
+  brand = DEFAULT_MAIL_BRAND,
 }: {
   salonName: string;
   setPasswordUrl: string;
+  brand?: MailBrand;
 }): string {
   const inner = `
-    <p style="font-size:16px;line-height:1.6;margin:0 0 16px;">Welkom bij KapperAssistent! Je account voor <strong>${salonName}</strong> is aangemaakt.</p>
+    <p style="font-size:16px;line-height:1.6;margin:0 0 16px;">Welkom bij ${brand.name}! Je account voor <strong>${salonName}</strong> is aangemaakt.</p>
     <p style="font-size:16px;line-height:1.6;margin:0 0 24px;">Klik op de knop hieronder om je wachtwoord in te stellen en direct in te loggen. De link is 24 uur geldig.</p>
     <div style="margin-bottom:24px;">${button(setPasswordUrl, "Wachtwoord instellen en inloggen →")}</div>
-    <p style="font-size:13px;color:#747871;">Heb je dit account niet aangemaakt? Neem dan contact met ons op via <a href="mailto:support@kappersassistent.nl" style="color:${BRAND};">support@kappersassistent.nl</a>.</p>
+    <p style="font-size:13px;color:#747871;">Heb je dit account niet aangemaakt? Neem dan contact met ons op via <a href="mailto:${brand.supportEmail}" style="color:${BRAND};">${brand.supportEmail}</a>.</p>
   `;
-  return shell(`Welkom bij KapperAssistent, ${salonName}!`, inner);
+  return shell(`Welkom bij ${brand.name}, ${salonName}!`, inner, brand);
 }
 
 /** Generic email: a title + free-text body (newlines become paragraphs). */

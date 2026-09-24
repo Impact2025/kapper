@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { requireSalonOwner } from "@/lib/auth/dal";
+import { getJobContextOrNull } from "@/lib/jobs/access";
+import { JobDashboardHome } from "./_job-home";
 import { getSalonWithSubscription } from "@/lib/salon/queries";
 import { getSalonMetrics } from "@/lib/salon/metrics";
 import { PageHeader, Card, StatCard } from "@/components/salon/dash-ui";
@@ -12,6 +14,8 @@ export const metadata: Metadata = { title: "Overzicht" };
 
 export default async function DashboardPage() {
   const user = await requireSalonOwner();
+  const jobCtx = await getJobContextOrNull(user.salonId, user);
+  if (jobCtx) return <JobDashboardHome ctx={jobCtx} />;
   const [salon, metrics] = await Promise.all([
     getSalonWithSubscription(user.salonId),
     getSalonMetrics(user.salonId),

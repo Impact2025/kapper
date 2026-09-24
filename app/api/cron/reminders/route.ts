@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { and, eq, isNull, lte, gte } from "drizzle-orm";
 import { db } from "@/lib/db";
+import { getVerticalConfig } from "@/lib/verticals";
 import { appointments, salons } from "@/lib/db/schema";
 import { trackEvent } from "@/lib/analytics/track";
 import { env } from "@/lib/env";
@@ -21,6 +22,7 @@ async function sendWatiReminder(
   salonName: string,
   serviceType: string,
   appointmentTime: Date,
+  vertical?: string | null,
 ): Promise<boolean> {
   const date = appointmentTime.toLocaleDateString("nl-NL", {
     weekday: "long",
@@ -34,9 +36,7 @@ async function sendWatiReminder(
     timeZone: "Europe/Amsterdam",
   });
 
-  const message =
-    `Hoi! Een herinnering van ${salonName}: je hebt een afspraak voor ${serviceType} op ${date} om ${time}. ` +
-    `Kun je niet komen? Annuleer dan tijdig via WhatsApp. Tot dan! 👋`;
+  const message = getVerticalConfig(vertical).messages.reminder({ salonName, serviceType, date, time });
 
   try {
     const res = await fetch(
@@ -117,6 +117,7 @@ export async function GET(req: Request) {
         salon.name,
         apt.serviceType,
         apt.appointmentTime,
+        salon.vertical,
       );
 
       if (ok) {

@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { requireSalonOwner } from "@/lib/auth/dal";
 import { purgeCustomerData } from "@/lib/compliance/purge";
+import { purgeJobData } from "@/lib/jobs/purge";
 import type { ActionState } from "@/lib/salon/actions";
 
 const purgeSchema = z.object({
@@ -23,6 +24,9 @@ export async function purgeCustomerAction(
   });
   if (!parsed.success) return { error: "Bevestig expliciet dat je alle gegevens van deze klant wilt verwijderen." };
 
+  // Klus-CRM data first: it is keyed by customerId, which the customer-row
+  // delete below sets to NULL. A no-op for salons without klussen.
+  await purgeJobData(user.salonId, parsed.data.customerId);
   const result = await purgeCustomerData(user.salonId, parsed.data.customerId);
   if ("error" in result) return { error: result.error };
 

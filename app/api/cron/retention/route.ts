@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { and, eq, ne, isNotNull } from "drizzle-orm";
 import { db } from "@/lib/db";
+import { getVerticalConfig } from "@/lib/verticals";
 import { appointments, customers, salons } from "@/lib/db/schema";
 import { sendWatiMessage } from "@/lib/salon/wati-client";
 import { resolveWatiCredentials } from "@/lib/ai/wati-turn";
@@ -84,7 +85,7 @@ export async function GET(req: Request) {
         credentials.watiBaseUrl,
         credentials.watiApiKey,
         customer.phone,
-        `Hoi ${customer.name.split(" ")[0] || ""}! We hebben je een tijdje niet gezien bij ${salon.name}. Zin om weer een afspraak te maken? Stuur gerust een berichtje 😊`,
+        getVerticalConfig(salon.vertical).messages.retention({ salonName: salon.name, firstName: customer.name.split(" ")[0] || "" }),
       );
 
       await db.update(customers).set({ lastRetentionSentAt: now }).where(eq(customers.id, customer.id));

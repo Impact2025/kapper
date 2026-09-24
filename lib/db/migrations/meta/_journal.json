@@ -150,6 +150,13 @@
       "breakpoints": true
     },
     {
+      "idx": 21,
+      "version": "7",
+      "when": 1790228481663,
+      "tag": "0021_job_crm",
+      "breakpoints": true
+    },
+    {
       "idx": 22,
       "version": "7",
       "when": 1790229296548,
@@ -161,6 +168,20 @@
       "version": "7",
       "when": 1790229930645,
       "tag": "0023_status_incidents",
+      "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1790230554487,
+      "tag": "0024_vertical_content",
+      "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1790232245695,
+      "tag": "0025_job_details",
       "breakpoints": true
     }
   ]

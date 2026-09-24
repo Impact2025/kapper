@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { requireSalonOwner } from "@/lib/auth/dal";
+import { getJobContextOrNull } from "@/lib/jobs/access";
+import { JobReportView } from "./_job-report";
 import { getSalonWithSubscription } from "@/lib/salon/queries";
 import { salonHasPlan } from "@/lib/salon/plan";
 import { getSalonReportData } from "@/lib/salon/reports";
@@ -11,6 +13,8 @@ export const metadata: Metadata = { title: "Rapportage" };
 
 export default async function RapportagePage() {
   const user = await requireSalonOwner();
+  const jobCtx = await getJobContextOrNull(user.salonId, user);
+  if (jobCtx) return <JobReportView ctx={jobCtx} />;
   const salon = await getSalonWithSubscription(user.salonId);
   const isPro = salonHasPlan(salon?.plan ?? "essential", "pro");
 

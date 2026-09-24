@@ -71,7 +71,7 @@ function VapiSyncCard() {
   );
 }
 
-export function IntegratiesForm({ integrations }: { integrations: Integrations }) {
+export function IntegratiesForm({ integrations, showAgenda = true }: { integrations: Integrations; showAgenda?: boolean }) {
   const [state, action, pending] = useActionState(updateIntegrations, undefined);
   const [provider, setProvider] = useState(integrations.agendaProvider);
   const isSalonized = provider === "salonized";
@@ -81,6 +81,8 @@ export function IntegratiesForm({ integrations }: { integrations: Integrations }
   return (
     <div className="flex flex-col gap-md">
     <form action={action} className="flex flex-col gap-md">
+      {showAgenda && (
+        <>
       {/* Agenda */}
       <div className={cardCls}>
         <h3 className="mb-xs flex items-center gap-sm text-body-md font-medium text-on-surface">
@@ -237,6 +239,9 @@ export function IntegratiesForm({ integrations }: { integrations: Integrations }
           )}
         </div>
       </div>
+
+        </>
+      )}
 
       {/* WhatsApp */}
       <div className={cardCls}>

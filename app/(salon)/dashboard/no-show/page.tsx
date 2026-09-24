@@ -4,12 +4,19 @@ import { getSalonWithSubscription } from "@/lib/salon/queries";
 import { PageHeader, Card, Badge } from "@/components/salon/dash-ui";
 import { Icon } from "@/components/ui/icon";
 import { NoShowForm } from "@/components/salon/no-show-form";
+import { getVerticalConfig } from "@/lib/verticals";
 
 export const metadata: Metadata = { title: "No-show beleid" };
 
 export default async function NoShowPage() {
   const user = await requireSalonOwner();
   const salon = await getSalonWithSubscription(user.salonId);
+
+  const pack = getVerticalConfig(salon?.vertical);
+  const isJob = pack.archetype === "job";
+  // Same policy engine for every trade; only the words differ.
+  const unit = isJob ? "klusprijs" : "behandelprijs";
+  const venue = isJob ? "ons bedrijf" : "de salon";
 
   const raw = (salon?.settings?.noShow as Record<string, unknown>) ?? {};
   const policy = {
@@ -24,8 +31,12 @@ export default async function NoShowPage() {
   return (
     <div>
       <PageHeader
-        title="No-show beleid"
-        subtitle="Bescherm je omzet met een transparant en juridisch sluitend beleid"
+        title={isJob ? "Annulering & voorrijkosten" : "No-show beleid"}
+        subtitle={
+          isJob
+            ? "Voorkom dat een monteur voor niets komt aanrijden — met een duidelijk beleid dat de klant vooraf accepteert"
+            : "Bescherm je omzet met een transparant en juridisch sluitend beleid"
+        }
         action={
           <Badge tone={policy.enabled ? "success" : "neutral"}>
             {policy.enabled ? "Actief" : "Inactief"}
@@ -39,14 +50,22 @@ export default async function NoShowPage() {
           <Icon name="gavel" className="mt-0.5 shrink-0 text-[22px] text-secondary" />
           <div>
             <h3 className="mb-xs text-body-md font-medium text-on-surface">
-              Juridische vereiste — Middelburg 2023
+              {isJob ? "Zo maak je kosten afdwingbaar" : "Juridische vereiste — Middelburg 2023"}
             </h3>
             <p className="text-label-sm text-on-surface-variant">
-              Om no-show kosten te mogen vorderen, moet de klant via een{" "}
-              <strong>verplichte checkbox</strong> expliciet akkoord gaan tijdens het online boeken.
-              Passieve huisregels (bordje bij de balie, vermelden in nieuwsbrief) bieden
-              nul juridische bescherming. KapperAssistent voegt deze checkbox automatisch toe aan
-              je boekingsformulier zodra je beleid hieronder activeert.
+              {isJob ? (
+                <>
+                  Kosten bij annulering of vergeefse rit kun je alleen vorderen als de klant het beleid <strong>vooraf uitdrukkelijk heeft
+                  geaccepteerd</strong> — een bordje of vermelding in de kleine lettertjes is niet genoeg. {pack.brand.name} laat de klant het
+                  beleid bevestigen bij het inplannen zodra je het hieronder activeert. Laat je algemene voorwaarden door een jurist toetsen.
+                </>
+              ) : (
+                <>
+                  Om no-show kosten te mogen vorderen, moet de klant via een <strong>verplichte checkbox</strong> expliciet akkoord gaan tijdens het
+                  online boeken. Passieve huisregels (bordje bij de balie, vermelden in nieuwsbrief) bieden nul juridische bescherming.{" "}
+                  {pack.brand.name} voegt deze checkbox automatisch toe aan je boekingsformulier zodra je beleid hieronder activeert.
+                </>
+              )}
             </p>
           </div>
         </div>
@@ -66,25 +85,25 @@ export default async function NoShowPage() {
             <div className="rounded-lg border border-outline-variant/40 bg-surface p-sm text-label-sm text-on-surface-variant space-y-xs">
               <p className="font-medium text-on-surface">Annuleringsbeleid</p>
               <p>
-                Afspraken kunnen kosteloos worden geannuleerd tot{" "}
-                <strong>{policy.freeCancelHours} uur</strong> voor aanvang.
+                {isJob ? "Klussen" : "Afspraken"} kunnen kosteloos worden {isJob ? "verzet of " : ""}geannuleerd tot{" "}
+                <strong>{policy.freeCancelHours} uur</strong> voor {isJob ? "aankomst van de monteur" : "aanvang"}.
               </p>
               {policy.chargePercent > 0 && (
                 <p>
-                  Bij annulering binnen {policy.freeCancelHours} uur of bij no-show wordt{" "}
-                  <strong>{policy.chargePercent}%</strong> van de behandelprijs in rekening gebracht.
+                  Bij annulering binnen {policy.freeCancelHours} uur {isJob ? "of als er niemand aanwezig is" : "of bij no-show"} wordt{" "}
+                  <strong>{policy.chargePercent}%</strong> van de {unit} in rekening gebracht.
                 </p>
               )}
               {policy.depositRequired && policy.depositCents > 0 && (
                 <p>
-                  Bij behandelingen boven €60 is een aanbetaling van{" "}
+                  Bij {isJob ? "klussen" : "behandelingen"} boven €60 is een aanbetaling van{" "}
                   <strong>€{(policy.depositCents / 100).toFixed(0)}</strong> vereist.
                 </p>
               )}
               <div className="mt-sm flex items-start gap-xs rounded border border-outline-variant/40 p-xs">
                 <Icon name="check_box_outline_blank" className="mt-0.5 shrink-0 text-[16px] text-outline" />
                 <span className="text-[11px]">
-                  Ik ga akkoord met het annuleringsbeleid van de salon.
+                  Ik ga akkoord met het annuleringsbeleid van {venue}.
                 </span>
               </div>
             </div>
@@ -109,6 +128,7 @@ export default async function NoShowPage() {
             </div>
           </Card>
 
+          {!isJob && (
           <Card>
             <h3 className="mb-sm dash-h2 text-headline-md text-on-surface">
               ROI bij 4 no-shows/week
@@ -118,6 +138,7 @@ export default async function NoShowPage() {
               per jaar beschermd bij gemiddeld €65 per behandeling
             </div>
           </Card>
+          )}
         </div>
       </div>
     </div>

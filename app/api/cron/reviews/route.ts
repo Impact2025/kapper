@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { and, eq, isNull, lt, gte } from "drizzle-orm";
 import { db } from "@/lib/db";
+import { getVerticalConfig } from "@/lib/verticals";
 import { appointments, salons } from "@/lib/db/schema";
 import { sendWatiMessage } from "@/lib/salon/wati-client";
 import { resolveWatiCredentials } from "@/lib/ai/wati-turn";
@@ -80,7 +81,7 @@ export async function GET(req: Request) {
       credentials.watiBaseUrl,
       credentials.watiApiKey,
       apt.customerPhone,
-      `Hoi! Bedankt voor je bezoek aan ${salon.name}. Was je tevreden? Een review helpt ons enorm: ${reviewLink}`,
+      getVerticalConfig(salon.vertical).messages.review({ salonName: salon.name, reviewLink }),
     );
 
     await db.update(appointments).set({ reviewRequestedAt: now }).where(eq(appointments.id, apt.id));

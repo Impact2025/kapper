@@ -1,8 +1,9 @@
 import "server-only";
-import { desc, eq, and } from "drizzle-orm";
+import { desc, eq, and, ne } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { knowledgePosts } from "@/lib/db/schema";
 import { env } from "@/lib/env";
+import { DEFAULT_VERTICAL_ID } from "@/lib/verticals";
 
 export interface KnowledgePostListItem {
   id: string;
@@ -32,12 +33,14 @@ export async function listKnowledgePosts(): Promise<KnowledgePostListItem[]> {
     .orderBy(desc(knowledgePosts.createdAt));
 }
 
-export async function getKnowledgePost(slug: string) {
+export async function getKnowledgePost(slug: string, vertical: string = DEFAULT_VERTICAL_ID) {
   if (!env.DATABASE_URL) return null;
   const [row] = await db
     .select()
     .from(knowledgePosts)
-    .where(and(eq(knowledgePosts.slug, slug), eq(knowledgePosts.status, "published")))
+    .where(
+      and(eq(knowledgePosts.slug, slug), eq(knowledgePosts.status, "published"), eq(knowledgePosts.vertical, vertical)),
+    )
     .limit(1);
   return row ?? null;
 }
@@ -48,21 +51,23 @@ export async function getKnowledgePostById(id: string) {
   return row ?? null;
 }
 
-export async function listPublishedKnowledgeSlugs(): Promise<{ slug: string; publishedAt: Date | null }[]> {
+export async function listPublishedKnowledgeSlugs(
+  vertical: string = DEFAULT_VERTICAL_ID,
+): Promise<{ slug: string; publishedAt: Date | null }[]> {
   if (!env.DATABASE_URL) return [];
   return db
     .select({ slug: knowledgePosts.slug, publishedAt: knowledgePosts.publishedAt })
     .from(knowledgePosts)
-    .where(eq(knowledgePosts.status, "published"))
+    .where(and(eq(knowledgePosts.status, "published"), eq(knowledgePosts.vertical, vertical)))
     .orderBy(desc(knowledgePosts.publishedAt));
 }
 
-export async function listCategories(): Promise<string[]> {
+export async function listCategories(vertical: string = DEFAULT_VERTICAL_ID): Promise<string[]> {
   if (!env.DATABASE_URL) return [];
   const rows = await db
     .selectDistinct({ category: knowledgePosts.category })
     .from(knowledgePosts)
-    .where(eq(knowledgePosts.status, "published"));
+    .where(and(eq(knowledgePosts.status, "published"), eq(knowledgePosts.vertical, vertical)));
   return rows.map((r) => r.category).filter((c): c is string => c != null);
 }
 
@@ -72,7 +77,7 @@ export async function knowledgeSlugTaken(slug: string, exceptId?: string): Promi
   const rows = await db
     .select({ id: knowledgePosts.id })
     .from(knowledgePosts)
-    .where(exceptId ? undefined : eq(knowledgePosts.slug, slug))
+    .where(exceptId ? and(eq(knowledgePosts.slug, slug), ne(knowledgePosts.id, exceptId)) : eq(knowledgePosts.slug, slug))
     .limit(1);
   return rows.length > 0;
 }

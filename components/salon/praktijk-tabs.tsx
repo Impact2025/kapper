@@ -31,6 +31,14 @@ const TABS = [
 ] as const;
 type TabId = (typeof TABS)[number]["id"];
 
+/** Job verticals (loodgieter, schilder, ...) relabel the same four tabs. */
+const JOB_TAB_LABELS: Record<TabId, { label: string; icon: string }> = {
+  locaties: { label: "Vestigingen", icon: "storefront" },
+  behandelingen: { label: "Diensten & tarieven", icon: "construction" },
+  team: { label: "Monteurs", icon: "engineering" },
+  kennisbank: { label: "Kennisbank", icon: "menu_book" },
+};
+
 function hoursSummary(workingHours: Record<string, [number, number] | null>): string {
   const weekday = workingHours.mon;
   const sat = workingHours.sat;
@@ -72,7 +80,8 @@ function DeleteForm({ action, id }: { action: DeleteAction; id: string }) {
   );
 }
 
-export function PraktijkTabs({ data }: { data: PraktijkData }) {
+export function PraktijkTabs({ data, variant = "appointment" }: { data: PraktijkData; variant?: "appointment" | "job" }) {
+  const isJob = variant === "job";
   const [tab, setTab] = useState<TabId>("locaties");
 
   return (
@@ -86,14 +95,14 @@ export function PraktijkTabs({ data }: { data: PraktijkData }) {
               tab === t.id ? "bg-primary text-on-primary" : "text-on-surface-variant hover:bg-primary/5"
             }`}
           >
-            <Icon name={t.icon} className="text-[18px]" />
-            {t.label}
+            <Icon name={isJob ? JOB_TAB_LABELS[t.id].icon : t.icon} className="text-[18px]" />
+            {isJob ? JOB_TAB_LABELS[t.id].label : t.label}
           </button>
         ))}
       </div>
 
       {tab === "locaties" && <LocatiesTab data={data} />}
-      {tab === "behandelingen" && <BehandelingenTab data={data} />}
+      {tab === "behandelingen" && <BehandelingenTab data={data} isJob={isJob} />}
       {tab === "team" && <TeamTab data={data} />}
       {tab === "kennisbank" && <KennisbankTab data={data} />}
     </div>
@@ -173,13 +182,21 @@ function LocatiesTab({ data }: { data: PraktijkData }) {
   );
 }
 
-function BehandelingenTab({ data }: { data: PraktijkData }) {
+function BehandelingenTab({ data, isJob = false }: { data: PraktijkData; isJob?: boolean }) {
   const [state, action, pending] = useActionState(addTreatment, undefined);
 
   return (
     <div className="flex flex-col gap-md">
       {data.treatments.length === 0 ? (
-        <EmptyState icon="spa" title="Nog geen behandelingen" description="Voeg behandelingen toe met prijs, duur, voorbereiding en nazorg — dit is de kennisbron waar de AI klanten mee adviseert." />
+        <EmptyState
+          icon={isJob ? "construction" : "spa"}
+          title={isJob ? "Nog geen diensten" : "Nog geen behandelingen"}
+          description={
+            isJob
+              ? "Voeg diensten toe met tarief en gemiddelde duur — dit is de kennisbron waar de AI klanten mee adviseert en waaruit je offertes en facturen vult."
+              : "Voeg behandelingen toe met prijs, duur, voorbereiding en nazorg — dit is de kennisbron waar de AI klanten mee adviseert."
+          }
+        />
       ) : (
         <div className="grid grid-cols-1 gap-sm sm:grid-cols-2">
           {data.treatments.map((t) => (
@@ -207,16 +224,16 @@ function BehandelingenTab({ data }: { data: PraktijkData }) {
       )}
 
       <div className={cardCls}>
-        <h3 className="mb-md text-body-md font-medium text-on-surface">Nieuwe behandeling</h3>
+        <h3 className="mb-md text-body-md font-medium text-on-surface">{isJob ? "Nieuwe dienst" : "Nieuwe behandeling"}</h3>
         <form action={action} className="flex flex-col gap-sm">
           <div className="grid grid-cols-1 gap-sm sm:grid-cols-2">
             <div>
               <label className={labelCls}>Naam</label>
-              <input name="name" required placeholder="Chemisch peeling" className={inputCls} />
+              <input name="name" required placeholder={isJob ? "CV-onderhoud" : "Chemisch peeling"} className={inputCls} />
             </div>
             <div>
               <label className={labelCls}>Categorie</label>
-              <input name="category" placeholder="Peeling" className={inputCls} />
+              <input name="category" placeholder={isJob ? "Onderhoud" : "Peeling"} className={inputCls} />
             </div>
           </div>
           <div className="grid grid-cols-2 gap-sm">
@@ -229,6 +246,7 @@ function BehandelingenTab({ data }: { data: PraktijkData }) {
               <input name="priceEuros" type="number" min={0} step={0.5} defaultValue={0} className={inputCls} />
             </div>
           </div>
+          {!isJob && (
           <div>
             <div className={labelCls}>
               Gefaseerde tijden (optioneel — voor Intelligent Double-Booking, bijv. bij kleurbehandelingen)
@@ -251,6 +269,7 @@ function BehandelingenTab({ data }: { data: PraktijkData }) {
               Ingevuld? Dan mag de AI tijdens de inwerktijd een andere klant bij dezelfde stylist inplannen. Leeg laten voor een gewone, doorlopende behandeling.
             </p>
           </div>
+          )}
           <div>
             <label className={labelCls}>Omschrijving</label>
             <textarea name="description" rows={2} className={inputCls} />
@@ -258,15 +277,15 @@ function BehandelingenTab({ data }: { data: PraktijkData }) {
           <div className="grid grid-cols-1 gap-sm sm:grid-cols-2">
             <div>
               <label className={labelCls}>Voorbereiding</label>
-              <textarea name="prepInfo" rows={2} placeholder="Stop met retinol 5 dagen vooraf..." className={inputCls} />
+              <textarea name="prepInfo" rows={2} placeholder={isJob ? "Zorg dat de ketel bereikbaar is..." : "Stop met retinol 5 dagen vooraf..."} className={inputCls} />
             </div>
             <div>
               <label className={labelCls}>Nazorg</label>
-              <textarea name="aftercareInfo" rows={2} placeholder="SPF50 verplicht..." className={inputCls} />
+              <textarea name="aftercareInfo" rows={2} placeholder={isJob ? "Bij storing binnen 14 dagen bellen..." : "SPF50 verplicht..."} className={inputCls} />
             </div>
           </div>
           <div className="flex items-center gap-md">
-            <SubmitButton label="Behandeling toevoegen" pending={pending} />
+            <SubmitButton label={isJob ? "Dienst toevoegen" : "Behandeling toevoegen"} pending={pending} />
             {state?.error && <span className="text-label-sm text-error">{state.error}</span>}
           </div>
         </form>

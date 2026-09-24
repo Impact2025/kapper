@@ -3,6 +3,8 @@ import Link from "next/link";
 import Image from "next/image";
 import { notFound } from "next/navigation";
 import { requireSalonOwner } from "@/lib/auth/dal";
+import { getJobContextOrNull } from "@/lib/jobs/access";
+import { JobCustomerDetailView } from "../_job-views";
 import { getCurrentUser } from "@/lib/auth/dal";
 import { getCustomer } from "@/lib/customers/queries";
 import { listAppointmentsForCustomer } from "@/lib/salon/appointments";
@@ -32,6 +34,8 @@ export default async function KlantDetailPage({
 }) {
   const { id } = await params;
   const user = await requireSalonOwner();
+  const jobCtx = await getJobContextOrNull(user.salonId, user);
+  if (jobCtx) return <JobCustomerDetailView ctx={jobCtx} customerId={id} />;
   const currentUser = await getCurrentUser(); // canAccessHealthRecords flag
 
   const customer = await getCustomer(user.salonId, id);

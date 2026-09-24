@@ -194,6 +194,9 @@ export const blogPosts = pgTable(
     id: uuid("id").defaultRandom().primaryKey(),
     title: text("title").notNull(),
     slug: text("slug").notNull().unique(),
+    // Which marketing site this article belongs to (lib/verticals ids:
+    // kapper | loodgieter | ...). Existing rows are kapper articles.
+    vertical: text("vertical").default("kapper").notNull(),
     status: postStatusEnum("status").default("draft").notNull(),
     excerpt: text("excerpt"),
     bodyMdx: text("body_mdx").notNull().default(""),
@@ -218,7 +221,7 @@ export const blogPosts = pgTable(
     publishedAt: timestamp("published_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   },
-  (t) => [index("blog_status_idx").on(t.status)],
+  (t) => [index("blog_status_idx").on(t.status), index("blog_vertical_idx").on(t.vertical, t.status)],
 );
 
 export const knowledgePosts = pgTable(
@@ -227,6 +230,7 @@ export const knowledgePosts = pgTable(
     id: uuid("id").defaultRandom().primaryKey(),
     title: text("title").notNull(),
     slug: text("slug").notNull().unique(),
+    vertical: text("vertical").default("kapper").notNull(),
     status: postStatusEnum("status").default("draft").notNull(),
     excerpt: text("excerpt"),
     bodyMdx: text("body_mdx").notNull().default(""),
@@ -250,6 +254,7 @@ export const knowledgePosts = pgTable(
   (t) => [
     index("knowledge_status_idx").on(t.status),
     index("knowledge_category_idx").on(t.category),
+    index("knowledge_vertical_idx").on(t.vertical, t.status),
   ],
 );
 
@@ -332,6 +337,11 @@ export const customers = pgTable(
     phone: text("phone").notNull(), // normalized, unique per salon
     email: text("email"),
     birthDate: timestamp("birth_date", { withTimezone: true }),
+    // Klus-CRM (job archetype): private | business | landlord | vve. Kapper
+    // customers stay "private"; addresses/assets live in schema-jobs.ts.
+    customerType: text("customer_type").default("private").notNull(),
+    companyName: text("company_name"),
+    notes: text("notes"),
     source: appointmentSourceEnum("source").notNull().default("manual"),
     marketingOptIn: boolean("marketing_opt_in").default(false).notNull(),
     // Three-strikes no-show policy (Fase 2): coulance on the first no-show,

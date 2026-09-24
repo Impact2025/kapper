@@ -12,6 +12,9 @@ import {
 import { env, publicEnv } from "@/lib/env";
 import { captureError } from "@/lib/observability";
 import { getVerticalConfig } from "@/lib/salon/vertical";
+import { buildJobSystemPrompt, buildJobTools } from "@/lib/ai/job-receptionist";
+import { decodeSlot } from "@/lib/salon/availability";
+import { syncJobFromAppointment } from "@/lib/jobs/lifecycle";
 
 export interface SalonLocation {
   id: string;
@@ -245,6 +248,19 @@ export const RECEPTIONIST_TOOLS: Anthropic.Tool[] = [
   },
 ];
 
+/** The tool catalogue for this salon's vertical. Kapper uses the shared
+ * catalogue unchanged; a job vertical (loodgieter, schilder, ...) gets
+ * register_job and a book_appointment that also captures the klusadres. */
+export function getReceptionistTools(salon: Pick<SalonContext, "vertical">): Anthropic.Tool[] {
+  const pack = getVerticalConfig(salon.vertical);
+  // The pack lists exactly the tools its vertical uses (pack.agent.tools) —
+  // adding or removing a tool for one trade never touches another's.
+  const allowed = new Set<string>(pack.agent.tools);
+  const base = RECEPTIONIST_TOOLS.filter((t) => allowed.has(t.name));
+  const tools = pack.archetype === "job" ? buildJobTools(pack, base) : base;
+  return tools.filter((t) => allowed.has(t.name));
+}
+
 const DUTCH_ONES = [
   "nul", "een", "twee", "drie", "vier", "vijf", "zes", "zeven", "acht", "negen", "tien",
   "elf", "twaalf", "dertien", "veertien", "vijftien", "zestien", "zeventien", "achttien", "negentien",
@@ -359,6 +375,16 @@ export function buildSystemPrompt(salon: SalonContext, opts?: { voice?: boolean 
     knowledgeText = `\n\nKENNISBANK (protocollen/FAQ van de salon zelf):\n${parts.join("\n\n")}`;
   }
 
+  if (vertical.archetype === "job") {
+    return buildJobSystemPrompt(salon, vertical, {
+      voice: opts?.voice,
+      knowledgeText,
+      servicesBlock: treatmentsBlock.replace(/^BEHANDELINGEN/, "DIENSTEN EN TARIEVEN"),
+      staffJson,
+      locationsJson,
+    });
+  }
+
   const complexityGuardTerm = vertical.hasHealthDataGuard
     ? "medische complexiteit, klachten"
     : "technische complexiteit of een veiligheidsrisico (bijv. gaslek, ernstige waterschade)";
@@ -418,6 +444,9 @@ function textOf(response: Anthropic.Message): string {
 interface RunToolState {
   bookedAppointment?: ReceptionistResponse["bookedAppointment"];
   escalated?: ReceptionistResponse["escalated"];
+  /** Job verticals: the most recent photo the customer sent — attached to the
+   * klus when register_job / book_appointment creates it. */
+  lastImageUrl?: string | null;
   /** Slots offered across every check_availability call this turn, most
    * recent first — capped and labeled into suggestedSlots once the turn
    * ends (see getReceptionistReply). */
@@ -429,6 +458,22 @@ function slotLabel(slot: AvailableSlot): string {
   return `${dateLabel} om ${slot.time} bij ${slot.staffName} (${slot.locationName})`;
 }
 
+/** Klusadres from tool args; null unless all four parts are present. */
+function readJobAddress(
+  args: Record<string, unknown>,
+): { street: string; houseNumber: string; postalCode: string; city: string } | null {
+  const street = String(args.street ?? "").trim();
+  const houseNumber = String(args.house_number ?? "").trim();
+  const postalCode = String(args.postal_code ?? "").trim();
+  const city = String(args.city ?? "").trim();
+  return street && houseNumber && postalCode && city ? { street, houseNumber, postalCode, city } : null;
+}
+
+/** Slot staff ids are placeholders when the salon has no staff rows. */
+function realStaffId(id: string): string | null {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id) ? id : null;
+}
+
 async function runTool(
   name: string,
   args: Record<string, unknown>,
@@ -438,6 +483,11 @@ async function runTool(
   state: RunToolState,
   channel: "whatsapp" | "phone" = "whatsapp",
 ): Promise<string> {
+  // A tool the vertical does not offer must not run even if a stale voice
+  // assistant or a hallucinating model asks for it.
+  if (!getVerticalConfig(salon.vertical).agent.tools.includes(name as never)) {
+    return JSON.stringify({ error: `Onbekende tool: ${name}` });
+  }
   switch (name) {
     case "check_availability": {
       const result = await findAvailableSlots({
@@ -467,6 +517,15 @@ async function runTool(
     case "book_appointment": {
       const customerName = String(args.customer_name ?? "");
       const customerPhoneArg = String(args.customer_phone ?? customerPhone);
+      // Job verticals: a booking without a klusadres is useless to the
+      // monteur — bounce back to the model so it asks for it first.
+      const isJobVertical = getVerticalConfig(salon.vertical).archetype === "job";
+      const jobAddress = isJobVertical ? readJobAddress(args) : null;
+      if (isJobVertical && !jobAddress) {
+        return JSON.stringify({
+          error: "Vraag eerst het volledige klusadres (straat, huisnummer, postcode, plaats) en wat er aan de hand is.",
+        });
+      }
       const result = await bookFromSlot({
         salonId: salon.id,
         salonName: salon.name,
@@ -516,8 +575,28 @@ async function runTool(
             ? { confirmationPayload: buildWatiConfirmationPayload(result.appointmentId, result.date, result.time) }
             : {}),
       };
+      let jobNumber: string | undefined;
+      if (isJobVertical && jobAddress) {
+        const decoded = decodeSlot(String(args.slot_id ?? ""));
+        const { registerJobRequest } = await import("@/lib/jobs/intake");
+        const job = await registerJobRequest({
+          salonId: salon.id,
+          customer: { name: customerName, phone: customerPhoneArg },
+          address: jobAddress,
+          description: String(args.description ?? "Bezoek geboekt via de AI-receptionist"),
+          category: args.category ? String(args.category) : null,
+          conversationId,
+          source: channel === "phone" ? "ai_phone" : "ai_whatsapp",
+          photoUrl: state.lastImageUrl ?? null,
+          appointment: decoded
+            ? { id: result.appointmentId, start: new Date(decoded.startISO), staffId: realStaffId(decoded.staffId) }
+            : null,
+        });
+        if (!("error" in job)) jobNumber = job.number;
+      }
       return JSON.stringify({
         ok: true,
+        ...(jobNumber ? { klusnummer: jobNumber } : {}),
         ...(result.depositPayment
           ? { pending_deposit: true, deposit_amount_eur: result.depositPayment.amountCents / 100 }
           : result.pendingConfirmation
@@ -535,11 +614,60 @@ async function runTool(
         String(args.appointment_id ?? ""),
         String(args.new_slot_id ?? ""),
       );
+      if ("ok" in result && getVerticalConfig(salon.vertical).archetype === "job") {
+        await syncJobFromAppointment(String(args.appointment_id ?? ""));
+      }
       return JSON.stringify(result);
     }
     case "cancel_appointment": {
       const result = await cancelById(salon.id, String(args.appointment_id ?? ""));
+      if ("ok" in result && getVerticalConfig(salon.vertical).archetype === "job") {
+        await syncJobFromAppointment(String(args.appointment_id ?? ""));
+      }
       return JSON.stringify(result);
+    }
+    case "register_job": {
+      if (getVerticalConfig(salon.vertical).archetype !== "job") {
+        return JSON.stringify({ error: `Onbekende tool: ${name}` });
+      }
+      const address = readJobAddress(args);
+      if (!address) {
+        return JSON.stringify({
+          error: "Vraag eerst het volledige klusadres (straat, huisnummer, postcode, plaats).",
+        });
+      }
+      const { registerJobRequest } = await import("@/lib/jobs/intake");
+      const job = await registerJobRequest({
+        salonId: salon.id,
+        customer: {
+          name: String(args.customer_name ?? ""),
+          phone: String(args.customer_phone || customerPhone || ""),
+        },
+        address,
+        description: String(args.description ?? ""),
+        category: args.category ? String(args.category) : null,
+        urgency: args.urgency === "spoed" ? "spoed" : "normaal",
+        preferredTime: args.preferred_time ? String(args.preferred_time) : null,
+        conversationId,
+        source: channel === "phone" ? "ai_phone" : "ai_whatsapp",
+        photoUrl: state.lastImageUrl ?? null,
+      });
+      if ("error" in job) return JSON.stringify(job);
+      // A spoed klus must reach a human even if the model forgets to
+      // escalate — the register itself already alerted the owner.
+      if (job.urgent && !state.escalated) {
+        state.escalated = { reason: `Spoedklus ${job.number} — ${job.addressLine ?? "adres onbekend"}` };
+      }
+      return JSON.stringify({
+        ok: true,
+        klusnummer: job.number,
+        spoed: job.urgent,
+        adres: job.addressLine,
+        ...(job.addressWarning ? { let_op: job.addressWarning } : {}),
+        note: job.urgent
+          ? "Spoedklus vastgelegd en de vakman is direct gewaarschuwd."
+          : "Klus vastgelegd; de vakman neemt contact op om in te plannen.",
+      });
     }
     case "escalate_to_staff": {
       const reason = String(args.reason ?? "Vraag van de klant vereist een medewerker.");
@@ -612,7 +740,10 @@ export async function getReceptionistReply(
       : m.content,
   }));
 
-  const state: RunToolState = {};
+  const state: RunToolState = {
+    lastImageUrl: [...history].reverse().find((m) => m.role === "user" && m.imageUrl)?.imageUrl ?? null,
+  };
+  const tools = getReceptionistTools(salon);
 
   try {
     for (let round = 0; round <= MAX_TOOL_ROUNDS; round++) {
@@ -620,7 +751,7 @@ export async function getReceptionistReply(
         model: env.OPENMODEL_MODEL,
         max_tokens: 768,
         system: systemPrompt,
-        tools: RECEPTIONIST_TOOLS,
+        tools,
         messages,
       });
 

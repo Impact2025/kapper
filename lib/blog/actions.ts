@@ -11,7 +11,9 @@ import { generateBlogPost } from "@/lib/blog/generate";
 import { computeSeo } from "@/lib/blog/seo";
 import { slugTaken } from "@/lib/blog/queries";
 import { slugify } from "@/lib/utils";
-import { publicEnv } from "@/lib/env";
+import { DEFAULT_VERTICAL_ID, isVerticalId } from "@/lib/verticals";
+import { siteUrlFor } from "@/lib/verticals/site-url";
+import { revalidateContent } from "@/lib/verticals/revalidate";
 
 export interface PostActionState {
   ok?: boolean;
@@ -31,10 +33,12 @@ export async function generateDraft(
     .split(",")
     .map((k) => k.trim())
     .filter(Boolean);
+  const verticalRaw = String(formData.get("vertical") ?? "");
+  const vertical = isVerticalId(verticalRaw) ? verticalRaw : DEFAULT_VERTICAL_ID;
 
   let draft;
   try {
-    draft = await generateBlogPost(topic, keywords);
+    draft = await generateBlogPost(topic, keywords, vertical);
   } catch (e) {
     return { error: e instanceof Error ? e.message : "Generatie mislukt." };
   }
@@ -49,6 +53,7 @@ export async function generateDraft(
     .values({
       title: draft.title,
       slug,
+      vertical,
       status: "draft",
       excerpt: draft.excerpt,
       bodyMdx: draft.bodyMdx,
@@ -66,8 +71,10 @@ export async function generateDraft(
 }
 
 /** Create an empty draft and jump straight into the full editor. */
-export async function createBlankDraft(): Promise<never> {
+export async function createBlankDraft(formData?: FormData): Promise<never> {
   const author = await getCurrentUser();
+  const verticalRaw = String(formData?.get("vertical") ?? "");
+  const vertical = isVerticalId(verticalRaw) ? verticalRaw : DEFAULT_VERTICAL_ID;
 
   let slug = "nieuw-artikel";
   let i = 2;
@@ -78,6 +85,7 @@ export async function createBlankDraft(): Promise<never> {
     .values({
       title: "Nieuw artikel",
       slug,
+      vertical,
       status: "draft",
       bodyMdx: "",
       keywords: [],
@@ -151,6 +159,8 @@ export async function savePost(
     slug,
   });
 
+  const [existing] = await db.select({ vertical: blogPosts.vertical }).from(blogPosts).where(eq(blogPosts.id, d.id)).limit(1);
+  const vertical = existing?.vertical ?? DEFAULT_VERTICAL_ID;
   const jsonLd: Record<string, unknown> = {
     "@context": "https://schema.org",
     "@type": "BlogPosting",
@@ -158,7 +168,7 @@ export async function savePost(
     description: d.metaDescription || d.excerpt || "",
     keywords: keywords.join(", "),
     inLanguage: "nl-NL",
-    url: `${publicEnv.NEXT_PUBLIC_SITE_URL}/blog/${slug}`,
+    url: `${siteUrlFor(vertical)}/blog/${slug}`,
   };
 
   await db
@@ -184,23 +194,23 @@ export async function savePost(
 
   revalidatePath(`/admin/blog/${d.id}`);
   revalidatePath("/admin/blog");
-  revalidatePath(`/blog/${slug}`);
-  revalidatePath("/blog");
+  revalidateContent(vertical, "blog", slug);
   return { ok: true };
 }
 
 export async function setPostStatus(id: string, status: "draft" | "published"): Promise<void> {
   await getCurrentUser();
-  await db
+  const [row] = await db
     .update(blogPosts)
     .set({
       status,
       publishedAt: status === "published" ? new Date() : null,
     })
-    .where(eq(blogPosts.id, id));
+    .where(eq(blogPosts.id, id))
+    .returning({ vertical: blogPosts.vertical, slug: blogPosts.slug });
   revalidatePath("/admin/blog");
   revalidatePath(`/admin/blog/${id}`);
-  revalidatePath("/blog");
+  if (row) revalidateContent(row.vertical, "blog", row.slug);
 }
 
 export async function deletePost(id: string): Promise<void> {

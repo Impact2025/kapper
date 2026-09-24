@@ -4,24 +4,25 @@ import { randomBytes, createHash } from "node:crypto";
 import { eq, and, gt } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "@/lib/db";
-import { users, verificationTokens } from "@/lib/db/schema";
+import { users, verificationTokens, salons } from "@/lib/db/schema";
 import { hashPassword } from "@/lib/auth/password";
 import { sendEmail } from "@/lib/mail/resend";
-import { publicEnv } from "@/lib/env";
+import { getVerticalConfig } from "@/lib/verticals";
+import { siteUrlFor } from "@/lib/verticals/site-url";
 
-function shell(title: string, inner: string): string {
+function shell(title: string, inner: string, brandName: string): string {
   const BRAND = "#526350";
   const CREAM = "#fbf9f8";
   const INK = "#1b1c1c";
   return `<!DOCTYPE html><html lang="nl"><head><meta charset="utf-8"></head>
 <body style="margin:0;background:${CREAM};font-family:'Hanken Grotesk',Helvetica,Arial,sans-serif;color:${INK};">
   <div style="max-width:560px;margin:0 auto;padding:32px 16px;">
-    <div style="font-size:22px;font-weight:700;color:${BRAND};margin-bottom:24px;">KapperAssistent.nl</div>
+    <div style="font-size:22px;font-weight:700;color:${BRAND};margin-bottom:24px;">${brandName}.nl</div>
     <div style="background:#fff;border-radius:16px;padding:28px;box-shadow:0 4px 20px rgba(143,161,139,.12);">
       <h1 style="font-family:Georgia,serif;font-size:24px;margin:0 0 16px;color:${INK};">${title}</h1>
       ${inner}
     </div>
-    <p style="font-size:12px;color:#747871;text-align:center;margin-top:24px;">© ${new Date().getFullYear()} KapperAssistent.nl</p>
+    <p style="font-size:12px;color:#747871;text-align:center;margin-top:24px;">© ${new Date().getFullYear()} ${brandName}.nl</p>
   </div>
 </body></html>`;
 }
@@ -48,8 +49,9 @@ export async function requestPasswordReset(email: string): Promise<ResetResult> 
 
   // Always return ok to prevent user enumeration
   const user = await db
-    .select({ id: users.id })
+    .select({ id: users.id, vertical: salons.vertical })
     .from(users)
+    .leftJoin(salons, eq(salons.id, users.salonId))
     .where(eq(users.email, normalizedEmail))
     .limit(1);
 
@@ -62,7 +64,10 @@ export async function requestPasswordReset(email: string): Promise<ResetResult> 
     await db.delete(verificationTokens).where(eq(verificationTokens.identifier, identifier));
     await db.insert(verificationTokens).values({ identifier, token: tokenHash, expires });
 
-    const resetUrl = `${publicEnv.NEXT_PUBLIC_SITE_URL}/reset-password/${rawToken}`;
+    // Brand + link follow the user's own vertical, so a plumber never gets a
+    // "KapperAssistent" mail pointing at the kapper domain.
+    const brand = getVerticalConfig(user[0].vertical).brand;
+    const resetUrl = `${siteUrlFor(user[0].vertical)}/reset-password/${rawToken}`;
     const inner = `
       <p style="font-size:16px;line-height:1.6;margin:0 0 16px;">We hebben een verzoek ontvangen om je wachtwoord te resetten.</p>
       <p style="font-size:16px;line-height:1.6;margin:0 0 24px;">Klik op de knop hieronder om een nieuw wachtwoord in te stellen. De link vervalt over 1 uur.</p>
@@ -71,8 +76,8 @@ export async function requestPasswordReset(email: string): Promise<ResetResult> 
     `;
     await sendEmail({
       to: normalizedEmail,
-      subject: "Wachtwoord resetten — KapperAssistent",
-      html: shell("Wachtwoord resetten", inner),
+      subject: `Wachtwoord resetten — ${brand.name}`,
+      html: shell("Wachtwoord resetten", inner, brand.name),
     });
   }
 

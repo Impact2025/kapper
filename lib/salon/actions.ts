@@ -167,3 +167,28 @@ export async function updateIntegrations(
   revalidatePath("/dashboard/integraties");
   return { success: true };
 }
+
+
+/**
+ * "Ik wil deze koppeling" on a planned integration: records the demand as an
+ * analytics event (which is what decides what gets built next) and confirms
+ * honestly that nothing is connected yet.
+ */
+export async function requestIntegrationAction(
+  _prev: ActionState | undefined,
+  formData: FormData,
+): Promise<ActionState> {
+  const user = await requireSalonOwner();
+  const id = String(formData.get("integration") ?? "");
+  const { INTEGRATIONS } = await import("@/lib/capabilities/integrations");
+  const def = INTEGRATIONS[id];
+  if (!def || def.status !== "planned") return { error: "Onbekende koppeling." };
+  const { trackEvent } = await import("@/lib/analytics/track");
+  await trackEvent({
+    type: "integration_interest",
+    salonId: user.salonId,
+    props: { integration: id },
+    dedupeKey: `integration-interest:${user.salonId}:${id}`,
+  });
+  return { success: true };
+}

@@ -3,12 +3,16 @@ import { loadLogoDataUrl, loadOgFonts } from "./font";
 
 export const OG_SIZE = { width: 1200, height: 630 };
 
+/** With no `brand` the card is the KapperAssistent one (logo, name, tagline);
+ * another vertical passes its own name + tagline and gets a text-only mark. */
 export async function renderOgCard({
   eyebrow,
   title,
+  brand,
 }: {
   eyebrow: string;
   title: string;
+  brand?: { name: string; tagline: string };
 }) {
   const [logoSrc, fonts] = await Promise.all([loadLogoDataUrl(), loadOgFonts(title)]);
 
@@ -26,8 +30,10 @@ export async function renderOgCard({
         }}
       >
         <div style={{ display: "flex", alignItems: "center", gap: "20px" }}>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={logoSrc} width={64} height={64} style={{ objectFit: "contain" }} />
+          {!brand && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={logoSrc} width={64} height={64} style={{ objectFit: "contain" }} />
+          )}
           <span
             style={{
               fontFamily: "Hanken Grotesk",
@@ -37,7 +43,7 @@ export async function renderOgCard({
               letterSpacing: "-0.01em",
             }}
           >
-            KapperAssistent.nl
+            {brand?.name ?? "KapperAssistent.nl"}
           </span>
         </div>
 
@@ -76,7 +82,7 @@ export async function renderOgCard({
               color: "#d5e8cf",
             }}
           >
-            Focus op je vak, niet op de telefoon
+            {brand?.tagline ?? "Focus op je vak, niet op de telefoon"}
           </span>
         </div>
       </div>

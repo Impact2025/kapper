@@ -1,12 +1,14 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { headers } from "next/headers";
 import { z } from "zod";
 import type Stripe from "stripe";
 import { PLANS, type PlanId } from "@/lib/plans";
 import { getStripe, planPriceData } from "@/lib/billing/stripe";
 import { previewCoupon } from "@/lib/coupons/service";
-import { publicEnv } from "@/lib/env";
+import { isVerticalId, verticalForHost } from "@/lib/verticals";
+import { siteUrlFor } from "@/lib/verticals/site-url";
 
 export interface CheckoutState {
   error?: string;
@@ -20,6 +22,9 @@ const schema = z.object({
   // Present only for a logged-in owner upgrading their plan — tells the
   // webhook to update this salon instead of provisioning a new one.
   salonId: z.string().uuid().optional().or(z.literal("")),
+  // Which vertical this signup is for. Normally derived from the request host
+  // (loodgietersassistent.nl → loodgieter); a form field may override it.
+  vertical: z.string().max(40).optional().or(z.literal("")),
 });
 
 export async function createCheckout(
@@ -32,11 +37,14 @@ export async function createCheckout(
     email: formData.get("email"),
     coupon: formData.get("coupon"),
     salonId: formData.get("salonId") ?? "",
+    vertical: formData.get("vertical") ?? "",
   });
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? "Controleer de velden." };
   }
   const { plan: planId, salonName, email, coupon, salonId } = parsed.data;
+  const hostVertical = verticalForHost((await headers()).get("host"));
+  const vertical = isVerticalId(parsed.data.vertical) ? parsed.data.vertical : hostVertical.id;
   const plan = PLANS.find((p) => p.id === (planId as PlanId));
   if (!plan) return { error: "Onbekend abonnement." };
 
@@ -50,7 +58,7 @@ export async function createCheckout(
 
   const priceCents = plan.price * 100;
   const subscriptionData: Stripe.Checkout.SessionCreateParams.SubscriptionData = {
-    metadata: { plan: plan.id, salonName },
+    metadata: { plan: plan.id, salonName, vertical },
   };
   const discounts: Stripe.Checkout.SessionCreateParams.Discount[] = [];
   let couponId: string | undefined;
@@ -82,9 +90,9 @@ export async function createCheckout(
     customer_email: email,
     subscription_data: subscriptionData,
     ...(discounts.length ? { discounts } : {}),
-    success_url: `${publicEnv.NEXT_PUBLIC_SITE_URL}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
-    cancel_url: `${publicEnv.NEXT_PUBLIC_SITE_URL}/prijzen`,
-    metadata: { plan: plan.id, salonName, email, couponId: couponId ?? "", salonId: salonId || "" },
+    success_url: `${siteUrlFor(vertical)}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
+    cancel_url: `${siteUrlFor(vertical)}/prijzen`,
+    metadata: { plan: plan.id, salonName, email, couponId: couponId ?? "", salonId: salonId || "", vertical },
   });
 
   if (!session.url) return { error: "Kon geen betaalsessie starten. Probeer opnieuw." };

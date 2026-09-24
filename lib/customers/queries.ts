@@ -10,6 +10,9 @@ export interface Customer {
   phone: string;
   email: string | null;
   birthDate: Date | null;
+  customerType: string;
+  companyName: string | null;
+  notes: string | null;
   source: "ai_whatsapp" | "ai_phone" | "manual";
   marketingOptIn: boolean;
   noShowCount: number;
