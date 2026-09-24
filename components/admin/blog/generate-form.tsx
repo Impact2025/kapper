@@ -1,20 +1,43 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { generateDraft } from "@/lib/blog/actions";
 
-const SUGGESTIONS = [
-  "No-show preventie voor kapsalons",
-  "Lokale SEO voor je kapperszaak",
-  "Hoe AI je salonagenda vult",
-  "Meer terugkerende klanten met slimme herinneringen",
-];
+export interface GenerateVertical {
+  id: string;
+  label: string;
+  topicPlaceholder: string;
+  keywordPlaceholder: string;
+  suggestions: string[];
+}
 
-export function GenerateForm() {
+export function GenerateForm({ verticals }: { verticals: GenerateVertical[] }) {
   const [state, action, pending] = useActionState(generateDraft, undefined);
+  const [verticalId, setVerticalId] = useState(verticals[0]?.id ?? "kapper");
+  const vertical = verticals.find((v) => v.id === verticalId) ?? verticals[0]!;
 
   return (
     <form action={action} className="flex flex-col gap-md">
+      {verticals.length > 1 && (
+        <div className="flex flex-col gap-xs">
+          <label htmlFor="vertical" className="text-label-md font-label-md text-on-surface-variant">
+            Voor welke site?
+          </label>
+          <select
+            id="vertical"
+            name="vertical"
+            value={verticalId}
+            onChange={(e) => setVerticalId(e.target.value)}
+            className="rounded-lg border border-outline-variant bg-surface-container-lowest px-sm py-sm text-body-md outline-none focus:border-primary"
+          >
+            {verticals.map((v) => (
+              <option key={v.id} value={v.id}>
+                {v.label}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
       <div className="flex flex-col gap-xs">
         <label htmlFor="topic" className="text-label-md font-label-md text-on-surface-variant">
           Onderwerp
@@ -23,11 +46,11 @@ export function GenerateForm() {
           id="topic"
           name="topic"
           required
-          placeholder="bijv. No-show preventie voor kapsalons"
+          placeholder={vertical.topicPlaceholder}
           className="rounded-lg border border-outline-variant bg-surface-container-lowest px-sm py-sm text-body-md outline-none focus:border-primary"
         />
         <div className="flex flex-wrap gap-xs">
-          {SUGGESTIONS.map((s) => (
+          {vertical.suggestions.map((s) => (
             <button
               key={s}
               type="button"
@@ -50,7 +73,7 @@ export function GenerateForm() {
         <input
           id="keywords"
           name="keywords"
-          placeholder="kapsalon SEO, no-show, online afspraken"
+          placeholder={vertical.keywordPlaceholder}
           className="rounded-lg border border-outline-variant bg-surface-container-lowest px-sm py-sm text-body-md outline-none focus:border-primary"
         />
       </div>

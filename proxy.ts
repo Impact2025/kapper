@@ -1,15 +1,17 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { decryptSession, SESSION_COOKIE } from "@/lib/auth/jwt";
+import { verticalForHost } from "@/lib/verticals";
+import { verticalRewrite } from "@/lib/verticals/routing";
 
 /**
- * Fase 7 multi-vertical: loodgietersassistent.nl reuses this exact app
- * (dashboard, auth, billing, AI-manager all stay domain-agnostic) — only the
- * public homepage differs per domain. Only the root path is rewritten; every
- * other route behaves identically no matter which domain served the
- * request, so this can never break the existing app if the domain isn't
- * even wired up yet in Vercel/DNS.
+ * Multi-vertical hosting: loodgietersassistent.nl (and every other live
+ * vertical's domain) is served by this same deployment. The app itself —
+ * dashboard, login, auth, billing, AI-manager, quotes/invoices — is shared and
+ * passes through untouched; only the public marketing pages are rewritten to
+ * that vertical's own site under /sites/<vertical> (lib/verticals/routing.ts).
+ * An unknown host (localhost, previews) resolves to the default kapper site,
+ * so this can never break the existing app if a domain isn't wired up yet.
  */
-const LOODGIETER_HOSTS = new Set(["loodgietersassistent.nl", "www.loodgietersassistent.nl"]);
 
 /**
  * Optimistic auth gate. Runs on the Node.js runtime (Next 16 `proxy.ts`
@@ -19,13 +21,18 @@ const LOODGIETER_HOSTS = new Set(["loodgietersassistent.nl", "www.loodgietersass
 export default async function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
-  if (pathname === "/") {
-    const host = (req.headers.get("host") ?? "").split(":")[0]!.toLowerCase();
-    if (LOODGIETER_HOSTS.has(host)) {
-      const url = req.nextUrl.clone();
-      url.pathname = "/loodgietersassistent";
-      return NextResponse.rewrite(url);
-    }
+  // /sites/* is an internal namespace reached only through the rewrite below;
+  // in production a direct hit would duplicate a vertical's site on another
+  // host, so it is a 404. (Open in dev to test without a hosts file.)
+  if (pathname.startsWith("/sites/") && process.env.NODE_ENV === "production") {
+    return new NextResponse("Not found", { status: 404 });
+  }
+
+  const rewrite = verticalRewrite(pathname, verticalForHost(req.headers.get("host")));
+  if (rewrite) {
+    const url = req.nextUrl.clone();
+    url.pathname = rewrite.pathname;
+    return NextResponse.rewrite(url);
   }
 
   const isAdminRoute = pathname.startsWith("/admin");
@@ -56,5 +63,7 @@ export default async function proxy(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/", "/admin/:path*", "/dashboard/:path*", "/login"],
+  // Every page route except Next internals, API routes and files with an
+  // extension — plus the two extension-bearing files that are per-site.
+  matcher: ["/((?!_next/|api/|.*\\..*).*)", "/sitemap.xml", "/robots.txt"],
 };

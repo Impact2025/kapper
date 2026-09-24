@@ -1,14 +1,15 @@
 import { Icon } from "@/components/ui/icon";
 import { ButtonLink } from "@/components/ui/button";
-import { PLANS, SETUP_FEE_FROM } from "@/lib/plans";
+import { PLANS, SETUP_FEE_FROM, type Plan } from "@/lib/plans";
 import { formatEur } from "@/lib/utils";
 import { cn } from "@/lib/utils";
 
-export function PricingCards() {
+/** Plans default to the kapper copy; another vertical passes plansFor(pack). */
+export function PricingCards({ plans = PLANS, setupNote }: { plans?: Plan[]; setupNote?: React.ReactNode } = {}) {
   return (
     <>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-lg items-stretch">
-        {PLANS.map((plan) => (
+        {plans.map((plan) => (
           <div
             key={plan.id}
             className={cn(
@@ -62,8 +63,12 @@ export function PricingCards() {
       </div>
       <p className="text-center font-label-md text-label-md text-on-surface mt-lg">
         <Icon name="info" className="text-on-surface-variant text-[16px] align-[-3px] mr-xs" />
-        Eenmalige setup-fee vanaf <strong>{formatEur(SETUP_FEE_FROM)}</strong> voor
-        configuratie van prijslijst, API-koppeling en WhatsApp-platform.
+        {setupNote ?? (
+          <>
+            Eenmalige setup-fee vanaf <strong>{formatEur(SETUP_FEE_FROM)}</strong> voor
+            configuratie van prijslijst, API-koppeling en WhatsApp-platform.
+          </>
+        )}
       </p>
     </>
   );

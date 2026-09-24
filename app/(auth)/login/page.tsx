@@ -1,13 +1,19 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { headers } from "next/headers";
 import { LoginForm } from "@/components/admin/login-form";
+import { verticalForHost } from "@/lib/verticals";
 
-export const metadata: Metadata = {
-  title: "Inloggen",
-  robots: { index: false, follow: false },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  return { title: "Inloggen", robots: { index: false, follow: false } };
+}
 
-export default function LoginPage() {
+export default async function LoginPage() {
+  // Log in on your own trade's domain (loodgietersassistent.nl, ...): brand
+  // and support address follow the host. The session cookie is per-host, and
+  // the dashboard itself themes on the salon's own vertical.
+  const pack = verticalForHost((await headers()).get("host"));
+  const { brand } = pack;
   return (
     <main className="flex min-h-screen items-center justify-center bg-surface-container-low px-margin-mobile py-xl">
       <div className="w-full max-w-[28rem]">
@@ -16,10 +22,10 @@ export default function LoginPage() {
             href="/"
             className="font-headline-md text-headline-md font-bold text-primary"
           >
-            KapperAssistent
+            {brand.name}
           </Link>
           <p className="mt-xs text-body-md text-on-surface-variant">
-            Salon Cockpit — log in om verder te gaan
+            {pack.archetype === "job" ? "Log in op je bedrijfscockpit" : "Salon Cockpit — log in om verder te gaan"}
           </p>
         </div>
 
@@ -33,8 +39,8 @@ export default function LoginPage() {
           </Link>
           {" · "}
           Vragen? Mail{" "}
-          <a href="mailto:support@kappersassistent.nl" className="text-primary hover:underline">
-            support@kappersassistent.nl
+          <a href={`mailto:${brand.supportEmail}`} className="text-primary hover:underline">
+            {brand.supportEmail}
           </a>
         </p>
       </div>

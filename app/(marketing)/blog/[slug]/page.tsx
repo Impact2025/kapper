@@ -1,146 +1,21 @@
 import type { Metadata } from "next";
-import Image from "next/image";
-import Link from "next/link";
-import { notFound } from "next/navigation";
-import { getPublishedPost, listPublishedSlugs } from "@/lib/blog/queries";
-import { renderMarkdown, readingTimeMinutes, stripHtml } from "@/lib/blog/markdown";
-import { publicEnv } from "@/lib/env";
+import { listPublishedSlugs } from "@/lib/blog/queries";
+import { BlogPostView, blogPostMeta } from "@/components/marketing/pages/content-pages";
+import { KAPPER_VERTICAL } from "@/lib/verticals";
 
 export const revalidate = 3600;
 
 export async function generateStaticParams() {
-  const slugs = await listPublishedSlugs();
+  const slugs = await listPublishedSlugs(KAPPER_VERTICAL.id);
   return slugs.map((s) => ({ slug: s.slug }));
 }
 
-export async function generateMetadata({
-  params,
-}: {
-  params: Promise<{ slug: string }>;
-}): Promise<Metadata> {
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
-  const post = await getPublishedPost(slug);
-  if (!post) return { title: "Artikel niet gevonden" };
-
-  const canonical = `/blog/${post.slug}`;
-  return {
-    title: post.metaTitle ?? post.title,
-    description: post.metaDescription ?? post.excerpt ?? undefined,
-    keywords: post.keywords,
-    alternates: { canonical },
-    openGraph: {
-      type: "article",
-      title: post.metaTitle ?? post.title,
-      description: post.metaDescription ?? post.excerpt ?? undefined,
-      url: `${publicEnv.NEXT_PUBLIC_SITE_URL}${canonical}`,
-      publishedTime: post.publishedAt?.toISOString(),
-    },
-    twitter: {
-      card: "summary_large_image",
-      title: post.metaTitle ?? post.title,
-      description: post.metaDescription ?? post.excerpt ?? undefined,
-    },
-  };
+  return blogPostMeta(KAPPER_VERTICAL, slug);
 }
 
-export default async function BlogPostPage({
-  params,
-}: {
-  params: Promise<{ slug: string }>;
-}) {
+export default async function BlogPostPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const post = await getPublishedPost(slug);
-  if (!post) notFound();
-
-  const html = post.bodyIsHtml ? post.bodyMdx : renderMarkdown(post.bodyMdx);
-  const minutes = readingTimeMinutes(post.bodyIsHtml ? stripHtml(post.bodyMdx) : post.bodyMdx);
-  const dateFmt = new Intl.DateTimeFormat("nl-NL", {
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  });
-
-  const jsonLd = post.jsonLd ?? {
-    "@context": "https://schema.org",
-    "@type": "BlogPosting",
-    headline: post.title,
-    description: post.metaDescription ?? post.excerpt ?? "",
-    datePublished: post.publishedAt?.toISOString(),
-    inLanguage: "nl-NL",
-    url: `${publicEnv.NEXT_PUBLIC_SITE_URL}/blog/${post.slug}`,
-  };
-
-  return (
-    <article className="bg-surface py-xl">
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-      />
-      <div className="mx-auto max-w-3xl px-margin-mobile md:px-xl">
-        <Link
-          href="/blog"
-          className="mb-md inline-flex items-center gap-xs text-label-md text-on-surface-variant hover:text-primary"
-        >
-          ← Terug naar blog
-        </Link>
-
-        <header className="mb-lg">
-          <h1 className="mkt-h1 text-display-lg text-on-surface">{post.title}</h1>
-          <p className="mt-sm text-label-md text-on-surface-variant">
-            {post.publishedAt ? dateFmt.format(post.publishedAt) : ""} · {minutes} min lezen
-          </p>
-        </header>
-
-        {post.coverImage && (
-          <div className="relative mb-lg h-64 w-full overflow-hidden rounded-xl md:h-96">
-            <Image
-              src={post.coverImage}
-              alt={post.coverImageAlt ?? post.title}
-              fill
-              className="object-cover"
-              sizes="(max-width: 768px) 100vw, 768px"
-            />
-          </div>
-        )}
-
-        {post.audioUrl && (
-          <div className="mb-lg rounded-xl border border-outline-variant bg-surface-container-low p-md">
-            <div className="mb-sm flex items-center gap-sm text-label-md font-label-md text-on-surface">
-              <span className="material-symbols-outlined text-[20px] text-primary" aria-hidden="true">podcasts</span>
-              {post.audioTitle || "Beluister dit artikel"}
-            </div>
-            <audio controls src={post.audioUrl} className="w-full" />
-            {post.transcript && (
-              <details className="mt-sm">
-                <summary className="cursor-pointer text-label-md text-on-surface-variant hover:text-primary">
-                  Transcript bekijken
-                </summary>
-                <p className="mt-sm whitespace-pre-wrap text-body-md text-on-surface-variant">{post.transcript}</p>
-              </details>
-            )}
-          </div>
-        )}
-
-        <div
-          className="prose-blog flex flex-col gap-md text-body-lg text-on-surface"
-          dangerouslySetInnerHTML={{ __html: html }}
-        />
-
-        <div className="mt-xl rounded-xl bg-primary-fixed/40 p-lg text-center">
-          <h2 className="mkt-h3 text-headline-md text-on-surface">
-            Klaar om geen boeking meer te missen?
-          </h2>
-          <p className="mt-xs text-body-md text-on-surface-variant">
-            Ontdek wat KapperAssistent voor jouw salon kan betekenen.
-          </p>
-          <Link
-            href="/scan"
-            className="mt-md inline-flex items-center gap-base rounded-full bg-primary px-xl py-sm text-label-md font-label-md text-on-primary transition-all hover:opacity-90 active:scale-95 soft-shadow"
-          >
-            Start je gratis AI-scan
-          </Link>
-        </div>
-      </div>
-    </article>
-  );
+  return <BlogPostView pack={KAPPER_VERTICAL} slug={slug} />;
 }

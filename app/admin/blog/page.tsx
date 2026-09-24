@@ -3,6 +3,7 @@ import { getCurrentUser } from "@/lib/auth/dal";
 import { listPosts } from "@/lib/blog/queries";
 import { PageHeader, Card, Badge, EmptyState, AdminLink } from "@/components/admin/ui";
 import { Icon } from "@/components/ui/icon";
+import { getVerticalConfig } from "@/lib/verticals";
 
 const STATUS_TONE = {
   draft: "neutral",
@@ -66,7 +67,9 @@ export default async function AdminBlogPage() {
                   <td className="px-md py-sm">
                     <Link href={`/admin/blog/${p.id}`} className="block">
                       <div className="text-body-md font-label-md text-on-surface">{p.title}</div>
-                      <div className="text-label-sm text-on-surface-variant">/{p.slug}</div>
+                      <div className="text-label-sm text-on-surface-variant">
+                        {getVerticalConfig(p.vertical).brand.name} · /{p.slug}
+                      </div>
                     </Link>
                   </td>
                   <td className="px-md py-sm">

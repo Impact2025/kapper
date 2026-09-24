@@ -1,9 +1,11 @@
 import { NextResponse } from "next/server";
-import { revalidatePath } from "next/cache";
 import { eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { blogPosts, users } from "@/lib/db/schema";
-import { env, publicEnv } from "@/lib/env";
+import { env } from "@/lib/env";
+import { DEFAULT_VERTICAL_ID, isVerticalId } from "@/lib/verticals";
+import { siteUrlFor } from "@/lib/verticals/site-url";
+import { revalidateContent } from "@/lib/verticals/revalidate";
 import { stripHtml } from "@/lib/blog/markdown";
 import { slugify } from "@/lib/utils";
 
@@ -17,8 +19,14 @@ import { slugify } from "@/lib/utils";
  *
  * Contract (fixed by the AgentOS side, not renegotiable per-project):
  *   POST body: { title, content (HTML fragment), slug, seoTitle,
- *                seoDescription, excerpt, tags: string[], source }
+ *                seoDescription, excerpt, tags: string[], source,
+ *                vertical? }
  *   Response: 200/201 { url }
+ *
+ * Multi-site: which marketing site the article belongs to is `vertical` in
+ * the body, or `?vertical=loodgieter` on the endpoint URL (so a project can
+ * be wired up on the AgentOS side without changing the fixed payload).
+ * Default: the kapper site.
  */
 
 function isAuthorized(req: Request): boolean {
@@ -34,6 +42,7 @@ interface PublishPayload {
   seoDescription?: string;
   excerpt?: string;
   tags?: string[];
+  vertical?: string;
 }
 
 export async function POST(request: Request) {
@@ -46,6 +55,8 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "title and content are required" }, { status: 400 });
   }
 
+  const requested = body.vertical || new URL(request.url).searchParams.get("vertical");
+  const vertical = isVerticalId(requested) ? requested : DEFAULT_VERTICAL_ID;
   const slug = slugify(body.slug || body.title);
   const keywords = Array.isArray(body.tags) ? body.tags.filter(Boolean) : [];
   const metaTitle = (body.seoTitle || body.title).slice(0, 70);
@@ -69,7 +80,7 @@ export async function POST(request: Request) {
     keywords: keywords.join(", "),
     inLanguage: "nl-NL",
     author: { "@type": "Person", name: "Vincent van Munster" },
-    url: `${publicEnv.NEXT_PUBLIC_SITE_URL}/blog/${slug}`,
+    url: `${siteUrlFor(vertical)}/blog/${slug}`,
   };
 
   const [author] = await db
@@ -79,10 +90,15 @@ export async function POST(request: Request) {
     .limit(1);
 
   const [existing] = await db
-    .select({ id: blogPosts.id })
+    .select({ id: blogPosts.id, vertical: blogPosts.vertical })
     .from(blogPosts)
     .where(eq(blogPosts.slug, slug))
     .limit(1);
+  // Slugs are globally unique: never let one site's publish call overwrite
+  // an article that belongs to another site.
+  if (existing && existing.vertical !== vertical) {
+    return NextResponse.json({ error: `slug "${slug}" is already used by the ${existing.vertical} site` }, { status: 409 });
+  }
 
   if (existing) {
     await db
@@ -104,6 +120,7 @@ export async function POST(request: Request) {
     await db.insert(blogPosts).values({
       title: body.title,
       slug,
+      vertical,
       status: "published",
       excerpt: body.excerpt || null,
       bodyMdx: body.content,
@@ -118,11 +135,10 @@ export async function POST(request: Request) {
     });
   }
 
-  revalidatePath("/blog");
-  revalidatePath(`/blog/${slug}`);
+  revalidateContent(vertical, "blog", slug);
 
   return NextResponse.json(
-    { url: `${publicEnv.NEXT_PUBLIC_SITE_URL}/blog/${slug}` },
+    { url: `${siteUrlFor(vertical)}/blog/${slug}` },
     { status: existing ? 200 : 201 },
   );
 }

@@ -6,21 +6,35 @@ import { createCheckout } from "@/lib/billing/checkout";
 const inputCls =
   "rounded-lg border border-outline-variant bg-white px-sm py-sm text-body-md outline-none focus:border-primary";
 
-export function CheckoutForm({ plan }: { plan: string }) {
+export function CheckoutForm({
+  plan,
+  vertical,
+  businessLabel = "Salonnaam",
+  businessPlaceholder = "Salon Bella",
+  emailPlaceholder = "jij@salon.nl",
+}: {
+  plan: string;
+  /** Which trade this signup is for; the server also derives it from the host. */
+  vertical?: string;
+  businessLabel?: string;
+  businessPlaceholder?: string;
+  emailPlaceholder?: string;
+}) {
   const [state, action, pending] = useActionState(createCheckout, undefined);
 
   return (
     <form action={action} className="flex flex-col gap-md">
       <input type="hidden" name="plan" value={plan} />
+      {vertical && <input type="hidden" name="vertical" value={vertical} />}
 
       <label className="flex flex-col gap-xs">
-        <span className="text-label-md font-label-md text-on-surface-variant">Salonnaam</span>
-        <input name="salonName" required placeholder="Salon Bella" className={inputCls} />
+        <span className="text-label-md font-label-md text-on-surface-variant">{businessLabel}</span>
+        <input name="salonName" required placeholder={businessPlaceholder} className={inputCls} />
       </label>
 
       <label className="flex flex-col gap-xs">
         <span className="text-label-md font-label-md text-on-surface-variant">E-mailadres</span>
-        <input name="email" type="email" required placeholder="jij@salon.nl" className={inputCls} />
+        <input name="email" type="email" required placeholder={emailPlaceholder} className={inputCls} />
       </label>
 
       <label className="flex flex-col gap-xs">

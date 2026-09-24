@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
-import { revalidatePath } from "next/cache";
 import { eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { blogPosts } from "@/lib/db/schema";
 import { env } from "@/lib/env";
+import { revalidateContent } from "@/lib/verticals/revalidate";
 
 function isAuthorized(req: Request): boolean {
   if (!env.PUBLISH_API_KEY) return false;
@@ -21,7 +21,7 @@ export async function DELETE(
 
   const { slug } = await params;
   const [existing] = await db
-    .select({ id: blogPosts.id })
+    .select({ id: blogPosts.id, vertical: blogPosts.vertical })
     .from(blogPosts)
     .where(eq(blogPosts.slug, slug))
     .limit(1);
@@ -32,8 +32,7 @@ export async function DELETE(
 
   await db.update(blogPosts).set({ status: "draft" }).where(eq(blogPosts.id, existing.id));
 
-  revalidatePath("/blog");
-  revalidatePath(`/blog/${slug}`);
+  revalidateContent(existing.vertical, "blog", slug);
 
   return NextResponse.json({ success: true, slug });
 }

@@ -7,7 +7,7 @@ import { Icon } from "@/components/ui/icon";
 import { ButtonLink } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
-const navLinks = [
+const defaultNavLinks = [
   { href: "/#functies", label: "Functies" },
   { href: "/#hoe-het-werkt", label: "Hoe het werkt" },
   { href: "/diensten", label: "Diensten" },
@@ -17,23 +17,45 @@ const navLinks = [
   { href: "/contact", label: "Contact" },
 ];
 
-export function SiteHeader() {
+/**
+ * Site header. With no props it is the KapperAssistent header; another
+ * vertical's layout passes its own brand, nav and CTA (see lib/verticals
+ * `marketing`), so one component serves every trade's site.
+ */
+export function SiteHeader({
+  brandName = "KapperAssistent",
+  logoIcon = null,
+  navLinks = defaultNavLinks,
+  cta = { href: "/scan", label: "Gratis AI-scan" },
+}: {
+  brandName?: string;
+  /** Material Symbols icon as logo mark; null = the KapperAssistent logo image. */
+  logoIcon?: string | null;
+  navLinks?: { href: string; label: string }[];
+  cta?: { href: string; label: string };
+}) {
   const [open, setOpen] = useState(false);
 
   return (
     <header className="bg-surface/80 backdrop-blur-md sticky top-0 z-50 shadow-sm">
       <nav className="flex justify-between items-center w-full px-margin-mobile md:px-xl py-base max-w-container-max mx-auto">
         <Link href="/" className="flex items-center gap-sm">
-          <Image
-            src="/logo.png"
-            alt="KapperAssistent logo"
-            width={691}
-            height={361}
-            className="h-10 md:h-12 w-auto object-contain"
-            priority
-          />
+          {logoIcon ? (
+            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-on-primary">
+              <Icon name={logoIcon} className="text-[24px]" />
+            </span>
+          ) : (
+            <Image
+              src="/logo.png"
+              alt="KapperAssistent logo"
+              width={691}
+              height={361}
+              className="h-10 md:h-12 w-auto object-contain"
+              priority
+            />
+          )}
           <span className="mkt-h2 text-headline-lg font-bold text-primary">
-            KapperAssistent
+            {brandName}
           </span>
         </Link>
 
@@ -56,8 +78,8 @@ export function SiteHeader() {
           >
             Inloggen
           </Link>
-          <ButtonLink href="/scan" size="sm" className="hidden sm:inline-flex">
-            Gratis AI-scan
+          <ButtonLink href={cta.href} size="sm" className="hidden sm:inline-flex">
+            {cta.label}
           </ButtonLink>
           <button
             className="md:hidden text-primary"
@@ -94,8 +116,8 @@ export function SiteHeader() {
           >
             Inloggen
           </Link>
-          <ButtonLink href="/scan" className="mt-xs">
-            Gratis AI-scan
+          <ButtonLink href={cta.href} className="mt-xs">
+            {cta.label}
           </ButtonLink>
         </div>
       </div>
