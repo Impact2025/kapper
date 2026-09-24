@@ -16,6 +16,8 @@ const serverSchema = z.object({
   RESEND_API_KEY: z.string().optional(),
   MAIL_FROM: z.string().default("KapperAssistent <no-reply@kappersassistent.nl>"),
   REPORT_RECIPIENT: z.string().default("v.munster@weareimpact.nl"),
+  // Where new-ticket / customer-reply notifications go (falls back to REPORT_RECIPIENT).
+  SUPPORT_RECIPIENT: z.string().optional(),
 
   // AI — routed through the OpenModel gateway (Anthropic Messages API
   // protocol, OpenModel's own key + bare model ids, no "anthropic/" prefix).

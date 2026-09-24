@@ -13,23 +13,6 @@ interface NavItem {
   icon: string;
 }
 
-const NAV: NavItem[] = [
-  { href: "/dashboard", label: "Overzicht", icon: "dashboard" },
-  { href: "/dashboard/klanten", label: "Klanten", icon: "group" },
-  { href: "/dashboard/ai-receptie", label: "AI-Receptie", icon: "smart_toy" },
-  { href: "/dashboard/praktijk", label: "Praktijk", icon: "storefront" },
-  { href: "/dashboard/webwinkel", label: "Webwinkel", icon: "shopping_bag" },
-  { href: "/dashboard/gesprekken", label: "Gesprekken", icon: "forum" },
-  { href: "/dashboard/escalaties", label: "Escalaties", icon: "support_agent" },
-  { href: "/dashboard/afspraken", label: "Afspraken", icon: "calendar_month" },
-  { href: "/dashboard/kassa", label: "Kassa", icon: "point_of_sale" },
-  { href: "/dashboard/rapportage", label: "Rapportage", icon: "monitoring" },
-  { href: "/dashboard/retentie", label: "Retentie & marketing", icon: "loyalty" },
-  { href: "/dashboard/no-show", label: "No-show beleid", icon: "event_busy" },
-  { href: "/dashboard/integraties", label: "Integraties", icon: "cable" },
-  { href: "/dashboard/abonnement", label: "Abonnement", icon: "credit_card" },
-];
-
 const PLAN_LABELS: Record<string, string> = {
   essential: "Essential",
   pro: "Pro",
@@ -39,9 +22,12 @@ const PLAN_LABELS: Record<string, string> = {
 export function SalonSidebar({
   user,
   salon,
+  nav,
 }: {
   user: { name: string | null; email: string };
   salon: { name: string; plan: string };
+  /** Per-vertical menu (lib/verticals nav) resolved on the server. */
+  nav: NavItem[];
 }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
@@ -80,7 +66,7 @@ export function SalonSidebar({
         </div>
 
         <nav className="flex flex-1 flex-col gap-[2px] px-sm py-sm">
-          {NAV.map((item) => (
+          {nav.map((item) => (
             <Link
               key={item.href}
               href={item.href}

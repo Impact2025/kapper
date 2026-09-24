@@ -5,7 +5,7 @@ const BRAND = "#526350";
 const CREAM = "#fbf9f8";
 const INK = "#1b1c1c";
 
-function shell(title: string, inner: string): string {
+export function shell(title: string, inner: string): string {
   return `<!DOCTYPE html><html lang="nl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
 <body style="margin:0;background:${CREAM};font-family:'Hanken Grotesk',Helvetica,Arial,sans-serif;color:${INK};">
   <div style="max-width:560px;margin:0 auto;padding:32px 16px;">
@@ -21,7 +21,7 @@ function shell(title: string, inner: string): string {
 </body></html>`;
 }
 
-function button(href: string, label: string): string {
+export function button(href: string, label: string): string {
   return `<a href="${href}" style="display:inline-block;background:${BRAND};color:#fff;text-decoration:none;padding:12px 28px;border-radius:999px;font-weight:600;font-size:14px;">${label}</a>`;
 }
 

@@ -2,12 +2,13 @@ import type { MetadataRoute } from "next";
 import { publicEnv } from "@/lib/env";
 import { listPublishedSlugs } from "@/lib/blog/queries";
 import { listPublishedKnowledgeSlugs } from "@/lib/kennisbank/queries";
+import { HELP_ARTICLES, HELP_CATEGORIES } from "@/lib/help/articles";
 
 export const revalidate = 3600;
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const base = publicEnv.NEXT_PUBLIC_SITE_URL;
-  const routes = ["", "/diensten", "/prijzen", "/over-ons", "/contact", "/scan", "/blog", "/kennisbank", "/privacy", "/voorwaarden"];
+  const routes = ["", "/diensten", "/prijzen", "/over-ons", "/contact", "/scan", "/blog", "/kennisbank", "/help", "/faq", "/privacy", "/voorwaarden"];
   const now = new Date();
 
   const staticEntries: MetadataRoute.Sitemap = routes.map((r) => ({
@@ -43,5 +44,20 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     // DB unavailable at build/preview — ship static routes only.
   }
 
-  return [...staticEntries, ...postEntries, ...knowledgeEntries];
+  const helpEntries: MetadataRoute.Sitemap = [
+    ...HELP_CATEGORIES.map((c) => ({
+      url: `${base}/help/categorie/${c.id}`,
+      lastModified: now,
+      changeFrequency: "monthly" as const,
+      priority: 0.5,
+    })),
+    ...HELP_ARTICLES.map((a) => ({
+      url: `${base}/help/${a.slug}`,
+      lastModified: now,
+      changeFrequency: "monthly" as const,
+      priority: 0.5,
+    })),
+  ];
+
+  return [...staticEntries, ...postEntries, ...knowledgeEntries, ...helpEntries];
 }

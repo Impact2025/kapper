@@ -771,3 +771,117 @@ export const reports = pgTable("reports", {
   summary: text("summary"),
   sentAt: timestamp("sent_at", { withTimezone: true }).defaultNow().notNull(),
 });
+
+/* ============================ Support: tickets, chat, helpcentrum ============================ */
+// Klantenservice voor KapperAssistent zelf (prospects + salons) — niet te
+// verwarren met `conversations`, dat zijn gesprekken tussen een salon en haar
+// eigen klanten. Statussen/categorieën staan als tekst + TS-unions in
+// lib/support/ticket-model.ts (geen pgEnum: bijstellen zonder migratie).
+export const supportTickets = pgTable(
+  "support_tickets",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    // Klantvriendelijk nummer (KA-10001…), door Postgres uitgedeeld.
+    ticketNumber: integer("ticket_number").generatedAlwaysAsIdentity({ startWith: 10001 }).notNull().unique(),
+    subject: text("subject").notNull(),
+    category: text("category").notNull().default("overig"),
+    status: text("status").notNull().default("open"),
+    priority: text("priority").notNull().default("normaal"),
+    source: text("source").notNull().default("formulier"), // formulier | chat | dashboard | mail
+    salonId: uuid("salon_id").references(() => salons.id, { onDelete: "set null" }),
+    userId: uuid("user_id").references(() => users.id, { onDelete: "set null" }),
+    requesterName: text("requester_name").notNull(),
+    requesterEmail: text("requester_email").notNull(),
+    // Onraadbaar token voor de gastlink (/support/[token]) — geen account nodig.
+    guestToken: text("guest_token").notNull().unique(),
+    assignedTo: uuid("assigned_to").references(() => users.id, { onDelete: "set null" }),
+    slaTier: text("sla_tier").notNull().default("prospect"),
+    slaDueAt: timestamp("sla_due_at", { withTimezone: true }),
+    firstResponseAt: timestamp("first_response_at", { withTimezone: true }),
+    resolvedAt: timestamp("resolved_at", { withTimezone: true }),
+    chatId: uuid("chat_id"),
+    csatScore: integer("csat_score"), // 1-5, na oplossen
+    csatComment: text("csat_comment"),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull().$onUpdate(() => new Date()),
+  },
+  (t) => [
+    index("support_tickets_status_idx").on(t.status),
+    index("support_tickets_salon_idx").on(t.salonId),
+    index("support_tickets_email_idx").on(t.requesterEmail),
+  ],
+);
+
+export const ticketMessages = pgTable(
+  "ticket_messages",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    ticketId: uuid("ticket_id")
+      .notNull()
+      .references(() => supportTickets.id, { onDelete: "cascade" }),
+    // klant | agent | systeem | notitie (interne notitie — nooit zichtbaar voor de klant)
+    authorType: text("author_type").notNull(),
+    authorUserId: uuid("author_user_id").references(() => users.id, { onDelete: "set null" }),
+    authorName: text("author_name"),
+    body: text("body").notNull(),
+    attachments: jsonb("attachments").$type<{ url: string; name: string; size: number; type: string }[]>().default([]).notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [index("ticket_messages_ticket_idx").on(t.ticketId)],
+);
+
+export const supportChats = pgTable(
+  "support_chats",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    sessionId: text("session_id").notNull().unique(),
+    audience: text("audience").notNull().default("prospect"), // prospect | salon
+    salonId: uuid("salon_id").references(() => salons.id, { onDelete: "set null" }),
+    userId: uuid("user_id").references(() => users.id, { onDelete: "set null" }),
+    pagePath: text("page_path"),
+    ticketId: uuid("ticket_id").references(() => supportTickets.id, { onDelete: "set null" }),
+    escalationReason: text("escalation_reason"),
+    // Opeenvolgende antwoorden zonder bron/met 👎 — na 2 bieden we een ticket aan.
+    consecutiveMisses: integer("consecutive_misses").notNull().default(0),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull().$onUpdate(() => new Date()),
+  },
+  (t) => [index("support_chats_salon_idx").on(t.salonId)],
+);
+
+export const supportChatMessages = pgTable(
+  "support_chat_messages",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    chatId: uuid("chat_id")
+      .notNull()
+      .references(() => supportChats.id, { onDelete: "cascade" }),
+    role: messageRoleEnum("role").notNull(),
+    content: text("content").notNull(),
+    // Slugs van de helpartikelen waarop het antwoord is gebaseerd.
+    sources: jsonb("sources").$type<string[]>().default([]).notNull(),
+    helpful: boolean("helpful"),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [index("support_chat_messages_chat_idx").on(t.chatId)],
+);
+
+export const helpFeedback = pgTable(
+  "help_feedback",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    articleSlug: text("article_slug").notNull(),
+    helpful: boolean("helpful").notNull(),
+    comment: text("comment"),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [index("help_feedback_slug_idx").on(t.articleSlug)],
+);
+
+// Zoekopdrachten zonder resultaat → content-backlog voor nieuwe artikelen.
+export const helpSearchMisses = pgTable("help_search_misses", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  query: text("query").notNull(),
+  source: text("source").notNull().default("zoeken"), // zoeken | chat
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+});

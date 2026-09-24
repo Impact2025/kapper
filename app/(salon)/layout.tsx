@@ -3,23 +3,31 @@ import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth/dal";
 import { getSalonWithSubscription } from "@/lib/salon/queries";
 import { SalonSidebar } from "@/components/salon/sidebar";
+import { getVerticalConfig, resolveNav } from "@/lib/verticals";
 
-export const metadata: Metadata = {
-  title: { default: "Mijn KapperAssistent", template: "%s — KapperAssistent" },
-  robots: { index: false, follow: false },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const user = await getCurrentUser();
+  const salon = user.salonId ? await getSalonWithSubscription(user.salonId) : null;
+  const pack = getVerticalConfig(salon?.vertical);
+  return {
+    title: { default: pack.brand.dashboardTitle, template: `%s — ${pack.brand.name}` },
+    robots: { index: false, follow: false },
+  };
+}
 
 export default async function SalonLayout({ children }: { children: React.ReactNode }) {
   const user = await getCurrentUser();
   if (user.role !== "owner") redirect("/admin");
 
   const salon = user.salonId ? await getSalonWithSubscription(user.salonId) : null;
+  const pack = getVerticalConfig(salon?.vertical);
 
   return (
     <div className="flex min-h-screen flex-col bg-surface-container-lowest md:flex-row">
       <SalonSidebar
         user={{ name: user.name, email: user.email }}
-        salon={{ name: salon?.name ?? "Mijn Salon", plan: salon?.plan ?? "essential" }}
+        salon={{ name: salon?.name ?? `Mijn ${pack.terms.establishment}`, plan: salon?.plan ?? "essential" }}
+        nav={resolveNav(pack.nav)}
       />
       <main className="flex-1 px-margin-mobile py-md md:px-lg md:py-lg">{children}</main>
     </div>

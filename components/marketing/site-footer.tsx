@@ -19,6 +19,14 @@ const cols = [
     ],
   },
   {
+    title: "Hulp",
+    links: [
+      { href: "/help", label: "Hulpcentrum" },
+      { href: "/faq", label: "Veelgestelde vragen" },
+      { href: "/contact", label: "Ticket aanmaken" },
+    ],
+  },
+  {
     title: "Juridisch",
     links: [
       { href: "/privacy", label: "Privacy Policy" },
@@ -50,7 +58,7 @@ export function SiteFooter() {
               boekingen, minder no-shows, meer rust.
             </p>
           </div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-md">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-md">
             {cols.map((col) => (
               <div key={col.title}>
                 <h4 className="font-label-md text-label-md text-on-surface mb-sm">

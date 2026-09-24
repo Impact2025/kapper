@@ -18,6 +18,7 @@ const NAV: NavItem[] = [
   { href: "/admin", label: "Overzicht", icon: "dashboard" },
   { href: "/admin/crm", label: "CRM & Leads", icon: "groups" },
   { href: "/admin/blog", label: "Blog & SEO", icon: "article" },
+  { href: "/admin/support", label: "Support", icon: "support_agent" },
   { href: "/admin/coupons", label: "Coupons", icon: "sell" },
   { href: "/admin/billing", label: "Abonnementen", icon: "credit_card" },
   { href: "/admin/reports", label: "Rapporten", icon: "monitoring" },
