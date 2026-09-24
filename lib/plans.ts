@@ -21,7 +21,7 @@ export const PLANS: Plan[] = [
     audience: "Solo & klein",
     valueLine: "Terugverdiend met 1 extra afspraak per maand.",
     features: [
-      "AI beantwoordt WhatsApp 24/7 en boekt direct de juiste afspraak",
+      "AI beantwoordt WhatsApp én telefoon 24/7 — dag en nacht, nooit meer een gemiste oproep",
       "Synct automatisch met Salonized of Phorest — geen dubbele invoer",
       "Onthoudt het gesprek, voelt als een medewerker en niet als een bot",
       "Automatische afspraakherinneringen — minder no-shows",
@@ -40,7 +40,6 @@ export const PLANS: Plan[] = [
     valueLine: "Verdient zich gemiddeld al in de eerste maand terug.",
     features: [
       "Alles uit Essential",
-      "AI beantwoordt ook de telefoon — dag en nacht, nooit meer een gemiste oproep",
       "Herkent foto's die klanten sturen (bijv. kapselinspiratie) en denkt mee",
       "Vraagt om een aanbetaling bij dure behandelingen — minder no-show-schade",
       "Vult wachttijd tijdens kleurbehandelingen slim op met een extra klant",
@@ -52,7 +51,7 @@ export const PLANS: Plan[] = [
   {
     id: "elite",
     name: "Elite Salon Cockpit",
-    price: 499,
+    price: 649,
     tagline: "Voor grote salons en ketens.",
     audience: "Keten / groot",
     valueLine: "Eén AI-team voor al je vestigingen, in plaats van losse abonnementen.",

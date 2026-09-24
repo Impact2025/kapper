@@ -13,7 +13,11 @@ export const metadata: Metadata = {
 const faq = [
   {
     q: "Zijn er variabele kosten per gesprek of per minuut?",
-    a: "Nee. Je betaalt één vast bedrag per maand, ongeacht hoeveel oproepen of WhatsApp-berichten je AI-assistent afhandelt. Geen verrassingen op je factuur.",
+    a: "Nee, nooit. Je betaalt één vast bedrag per maand, ongeacht hoeveel oproepen of WhatsApp-berichten je AI-assistent afhandelt — ook niet in een drukke maand. Veel concurrenten rekenen wél per belminuut boven een limiet; bij ons krijg je nooit een verrassingsfactuur.",
+  },
+  {
+    q: "Betaal ik dit naast mijn agendasoftware (Salonized, Phorest, Treatwell)?",
+    a: "Ja — KapperAssistent vervangt je agendasoftware niet, maar werkt ernaast en synct ermee. Reken voor een kleine salon op zo'n €170–€260 per maand totaal (agendasoftware + Essential), oplopend tot €580+ voor een grotere salon met Elite. Die investering verdien je terug via gemiste oproepen die voortaan wél worden aangenomen — zie de rekensom op de homepage.",
   },
   {
     q: "Wat houdt de setup-fee in?",
