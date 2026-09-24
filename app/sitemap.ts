@@ -3,6 +3,7 @@ import { publicEnv } from "@/lib/env";
 import { listPublishedSlugs } from "@/lib/blog/queries";
 import { listPublishedKnowledgeSlugs } from "@/lib/kennisbank/queries";
 import { HELP_ARTICLES, HELP_CATEGORIES } from "@/lib/help/articles";
+import { getHelpCorpus } from "@/lib/help/store";
 
 export const revalidate = 3600;
 
@@ -44,6 +45,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     // DB unavailable at build/preview — ship static routes only.
   }
 
+  let helpArticles = HELP_ARTICLES;
+  try {
+    helpArticles = await getHelpCorpus();
+  } catch {
+    // DB unavailable at build/preview — code-defined articles only.
+  }
   const helpEntries: MetadataRoute.Sitemap = [
     ...HELP_CATEGORIES.map((c) => ({
       url: `${base}/help/categorie/${c.id}`,
@@ -51,7 +58,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: "monthly" as const,
       priority: 0.5,
     })),
-    ...HELP_ARTICLES.map((a) => ({
+    ...helpArticles.map((a) => ({
       url: `${base}/help/${a.slug}`,
       lastModified: now,
       changeFrequency: "monthly" as const,

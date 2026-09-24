@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { HELP_ARTICLES, getHelpArticle, getHelpCategory } from "@/lib/help/articles";
+import { getHelpCorpus, getPublishedArticle } from "@/lib/help/store";
 import { renderMarkdown } from "@/lib/blog/markdown";
 import { publicEnv } from "@/lib/env";
 import { ArticleFeedback } from "@/components/help/article-feedback";
@@ -10,13 +11,18 @@ import { ButtonLink } from "@/components/ui/button";
 
 export const revalidate = 3600;
 
-export function generateStaticParams() {
-  return HELP_ARTICLES.map((a) => ({ slug: a.slug }));
+export async function generateStaticParams() {
+  // Build must not depend on the DB: extra/edited slugs render on demand (ISR).
+  try {
+    return (await getHelpCorpus()).map((a) => ({ slug: a.slug }));
+  } catch {
+    return HELP_ARTICLES.map((a) => ({ slug: a.slug }));
+  }
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
-  const article = getHelpArticle(slug);
+  const article = await getPublishedArticle(slug);
   if (!article) return { title: "Artikel niet gevonden" };
   return {
     title: article.title,
@@ -27,11 +33,12 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
 export default async function HelpArticlePage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const article = getHelpArticle(slug);
+  const article = await getPublishedArticle(slug);
   if (!article) notFound();
 
   const category = getHelpCategory(article.category);
-  const related = (article.related ?? []).map((s) => getHelpArticle(s)).filter((a) => a != null);
+  const corpus = await getHelpCorpus();
+  const related = (article.related ?? []).map((s) => getHelpArticle(s, corpus)).filter((a) => a != null);
   const base = publicEnv.NEXT_PUBLIC_SITE_URL;
 
   const jsonLd = [

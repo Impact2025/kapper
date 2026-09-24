@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { requireRole } from "@/lib/auth/dal";
 import { getSupportInsights } from "@/lib/support/insights";
-import { getHelpArticle } from "@/lib/help/articles";
+import { getManagedArticles } from "@/lib/help/store";
 import { PageHeader, Card, StatCard, EmptyState } from "@/components/admin/ui";
 
 function fmtMinutes(m: number | null): string {
@@ -13,7 +13,8 @@ function fmtMinutes(m: number | null): string {
 
 export default async function SupportInsightsPage() {
   await requireRole("admin");
-  const i = await getSupportInsights(30);
+  const [i, articles] = await Promise.all([getSupportInsights(30), getManagedArticles()]);
+  const titleOf = (slug: string) => articles.find((a) => a.slug === slug)?.title ?? slug;
 
   return (
     <div>
@@ -40,7 +41,7 @@ export default async function SupportInsightsPage() {
                 {i.unanswered.map((u) => (
                   <li key={u.query} className="flex items-center justify-between gap-md px-md py-sm">
                     <span className="truncate text-body-md text-on-surface">{u.query}</span>
-                    <span className="shrink-0 rounded-full bg-secondary-fixed px-sm py-[2px] text-label-sm">{u.n}×</span>
+                    <span className="flex shrink-0 items-center gap-xs"><span className="rounded-full bg-secondary-fixed px-sm py-[2px] text-label-sm">{u.n}×</span><Link href={`/admin/support/artikelen/nieuw?titel=${encodeURIComponent(u.query)}`} className="text-label-sm text-primary underline">Schrijf artikel</Link></span>
                   </li>
                 ))}
               </ul>
@@ -59,7 +60,7 @@ export default async function SupportInsightsPage() {
                   <li key={w.slug} className="px-md py-sm">
                     <div className="flex items-center justify-between gap-md">
                       <Link href={`/help/${w.slug}`} target="_blank" className="truncate text-body-md text-primary hover:underline">
-                        {getHelpArticle(w.slug)?.title ?? w.slug}
+                        {titleOf(w.slug)}
                       </Link>
                       <span className="shrink-0 text-label-sm text-on-surface-variant">👎 {w.down} · 👍 {w.up}</span>
                     </div>

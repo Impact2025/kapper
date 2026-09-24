@@ -16,9 +16,13 @@ const PHONE_RE = /(?:\+31|0031|0)[\s-]?[1-9](?:[\s-]?\d){7,8}\b/g;
 const HEALTH_STEMS = ["allergie", "allergisch", "ammoniak", "psoriasis", "eczeem", "zwanger"];
 const HEALTH_RE = new RegExp(`\\p{L}*(?:${HEALTH_STEMS.join("|")})\\p{L}*`, "giu");
 
-/** Catches a customer introducing themselves inline, e.g. "ik ben Anna Jansen" / "mijn naam is Anna". */
+/** Catches a customer introducing themselves inline, e.g. "ik ben Anna Jansen" / "mijn naam is Anna" /
+ * a phone greeting "Met Anna Jansen". The intro phrase is matched case-insensitively by spelling out
+ * both cases — the name itself MUST start with a capital (no `i` flag, otherwise any word after "met"
+ * or "ik ben" would count as a name). Bare "met" only counts at the start of a sentence, so
+ * "Werkt het met Booksy?" is not mistaken for an introduction. */
 const SELF_INTRO_RE =
-  /\b(?:ik ben|ik heet|mijn naam is|met)\s+([A-ZÀ-ÖØ-Þ][a-zà-öø-ÿ'-]+(?:\s[A-ZÀ-ÖØ-Þ][a-zà-öø-ÿ'-]+)*)/gi;
+  /(?:\b(?:[Ii]k ben|[Ii]k heet|[Mm]ijn naam is)|(?:^|(?<=[.!?]\s+))[Mm]et)\s+([A-ZÀ-ÖØ-Þ][a-zà-öø-ÿ'-]+(?:\s[A-ZÀ-ÖØ-Þ][a-zà-öø-ÿ'-]+)*)/g;
 
 export type PiiMapping = Record<string, string>;
 

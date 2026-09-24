@@ -781,14 +781,14 @@ Deel **nooit** je wachtwoord of API-sleutels in een ticket.`,
   },
 ];
 
-export function getHelpArticle(slug: string): HelpArticle | undefined {
-  return HELP_ARTICLES.find((a) => a.slug === slug);
+export function getHelpArticle(slug: string, corpus: HelpArticle[] = HELP_ARTICLES): HelpArticle | undefined {
+  return corpus.find((a) => a.slug === slug);
 }
 
 export function getHelpCategory(id: string): HelpCategory | undefined {
   return HELP_CATEGORIES.find((c) => c.id === id);
 }
 
-export function articlesByCategory(categoryId: string): HelpArticle[] {
-  return HELP_ARTICLES.filter((a) => a.category === categoryId);
+export function articlesByCategory(categoryId: string, corpus: HelpArticle[] = HELP_ARTICLES): HelpArticle[] {
+  return corpus.filter((a) => a.category === categoryId);
 }

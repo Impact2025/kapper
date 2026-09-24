@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Icon } from "@/components/ui/icon";
 import { HELP_CATEGORIES, articlesByCategory, getHelpCategory } from "@/lib/help/articles";
+import { getHelpCorpus } from "@/lib/help/store";
 
 export const revalidate = 3600;
 
@@ -25,7 +26,7 @@ export default async function HelpCategoryPage({ params }: { params: Promise<{ i
   const { id } = await params;
   const category = getHelpCategory(id);
   if (!category) notFound();
-  const articles = articlesByCategory(category.id);
+  const articles = articlesByCategory(category.id, await getHelpCorpus());
 
   return (
     <section className="bg-surface py-xl">

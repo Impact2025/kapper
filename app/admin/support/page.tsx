@@ -47,9 +47,14 @@ export default async function AdminSupportPage({ searchParams }: { searchParams:
         title="Support"
         subtitle="Helpdesk voor prospects en salons. Gesorteerd op SLA-deadline."
         action={
-          <Link href="/admin/support/inzichten" className="rounded-full border border-primary px-md py-sm text-label-md font-label-md text-primary hover:bg-primary/5">
-            Inzichten
-          </Link>
+          <div className="flex gap-xs">
+            <Link href="/admin/support/artikelen" className="rounded-full border border-primary px-md py-sm text-label-md font-label-md text-primary hover:bg-primary/5">
+              Artikelen
+            </Link>
+            <Link href="/admin/support/inzichten" className="rounded-full border border-primary px-md py-sm text-label-md font-label-md text-primary hover:bg-primary/5">
+              Inzichten
+            </Link>
+          </div>
         }
       />
 

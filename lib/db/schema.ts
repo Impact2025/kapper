@@ -885,3 +885,20 @@ export const helpSearchMisses = pgTable("help_search_misses", {
   source: text("source").notNull().default("zoeken"), // zoeken | chat
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 });
+
+// Helpcentrum-artikelen die in /admin zijn aangepast of toegevoegd. Artikelen in
+// lib/help/articles.ts blijven de standaard; een rij met dezelfde slug overschrijft
+// ze (of verbergt ze), een rij met een nieuwe slug is een extra artikel.
+export const helpArticles = pgTable("help_articles", {
+  slug: text("slug").primaryKey(),
+  title: text("title").notNull(),
+  category: text("category").notNull(),
+  summary: text("summary").notNull(),
+  body: text("body").notNull(),
+  keywords: jsonb("keywords").$type<string[]>().default([]).notNull(),
+  audience: text("audience").notNull().default("both"), // prospect | salon | both
+  related: jsonb("related").$type<string[]>().default([]).notNull(),
+  hidden: boolean("hidden").default(false).notNull(),
+  updatedBy: uuid("updated_by").references(() => users.id, { onDelete: "set null" }),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull().$onUpdate(() => new Date()),
+});

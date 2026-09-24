@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { searchHelp, CONFIDENT_SCORE } from "@/lib/help/search";
+import { getHelpCorpus } from "@/lib/help/store";
 import { clientIp, rateLimit } from "@/lib/support/rate-limit";
 
 export const runtime = "nodejs";
@@ -10,7 +11,7 @@ export async function GET(req: Request) {
     return NextResponse.json({ results: [] }, { status: 429 });
   }
   const q = new URL(req.url).searchParams.get("q")?.slice(0, 200) ?? "";
-  const results = searchHelp(q, { limit: 3 })
+  const results = searchHelp(q, { limit: 3, corpus: await getHelpCorpus() })
     .filter((h) => h.score >= CONFIDENT_SCORE)
     .map((h) => ({ slug: h.article.slug, title: h.article.title, summary: h.article.summary }));
   return NextResponse.json({ results });

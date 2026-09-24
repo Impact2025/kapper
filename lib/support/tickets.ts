@@ -121,6 +121,7 @@ export async function createTicket(input: CreateTicketInput): Promise<CreateTick
   const url = ticketUrlForGuest(guestToken);
   await safeSend({
     to: email,
+    replyTo: env.SUPPORT_INBOUND_ADDRESS,
     subject: ticketSubject(ticket.ticketNumber, `We hebben je vraag ontvangen`),
     html: ticketConfirmationEmail({
       name: input.requesterName,
@@ -156,6 +157,12 @@ export async function createTicket(input: CreateTicketInput): Promise<CreateTick
 }
 
 /* ------------------------------ reads ------------------------------ */
+
+export async function getTicketByNumber(n: number): Promise<TicketRow | null> {
+  if (!env.DATABASE_URL) return null;
+  const [row] = await db.select().from(supportTickets).where(eq(supportTickets.ticketNumber, n)).limit(1);
+  return row ?? null;
+}
 
 export async function getTicketById(id: string): Promise<TicketRow | null> {
   if (!env.DATABASE_URL) return null;
@@ -294,6 +301,7 @@ export async function addMessage(input: AddMessageInput): Promise<{ ok: boolean 
   if (input.authorType === "agent") {
     await safeSend({
       to: ticket.requesterEmail,
+      replyTo: env.SUPPORT_INBOUND_ADDRESS,
       subject: ticketSubject(ticket.ticketNumber, ticket.subject),
       html: ticketReplyEmail({
         name: ticket.requesterName,

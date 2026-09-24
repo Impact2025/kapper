@@ -3,6 +3,7 @@ import { getAnthropic } from "@/lib/ai/anthropic";
 import { env } from "@/lib/env";
 import { captureError } from "@/lib/observability";
 import { searchHelp } from "@/lib/help/search";
+import { getHelpCorpus } from "@/lib/help/store";
 import type { TicketMessageRow, TicketRow } from "@/lib/support/tickets";
 import { categoryLabel } from "@/lib/support/ticket-model";
 
@@ -22,7 +23,7 @@ export async function draftAgentReply(ticket: TicketRow, messages: TicketMessage
 
   const conversation = messages.filter((m) => m.authorType === "klant" || m.authorType === "agent");
   const lastCustomer = [...conversation].reverse().find((m) => m.authorType === "klant")?.body ?? "";
-  const hits = searchHelp(`${ticket.subject} ${lastCustomer}`, { limit: 3 });
+  const hits = searchHelp(`${ticket.subject} ${lastCustomer}`, { limit: 3, corpus: await getHelpCorpus() });
   const context = hits.map((h) => `### ${h.article.title}\n${h.article.summary}\n${h.article.body}`).join("\n\n") || "(geen relevante artikelen)";
 
   const transcript = conversation

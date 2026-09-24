@@ -140,3 +140,84 @@ describe("guardMessage", () => {
     expect(shouldOfferTicketAfterMisses(2)).toBe(true);
   });
 });
+
+import {
+  extractSenderEmail,
+  extractSenderName,
+  isAutoReply,
+  stripQuotedReply,
+  ticketNumberFromMail,
+} from "@/lib/support/inbound-parse";
+
+describe("inbound mail parsing", () => {
+  it("haalt naam en adres uit een From-header", () => {
+    expect(extractSenderEmail('"Jan de Vries" <Jan@Example.nl>')).toBe("jan@example.nl");
+    expect(extractSenderEmail("jan@example.nl")).toBe("jan@example.nl");
+    expect(extractSenderName('"Jan de Vries" <jan@example.nl>')).toBe("Jan de Vries");
+    expect(extractSenderName("<jan@example.nl>")).toBe("jan");
+  });
+
+  it("herkent auto-replies en no-reply-afzenders", () => {
+    expect(isAutoReply({ "Auto-Submitted": "auto-replied" }, "a@b.nl")).toBe(true);
+    expect(isAutoReply({ Precedence: "bulk" }, "a@b.nl")).toBe(true);
+    expect(isAutoReply(null, "MAILER-DAEMON@x.nl")).toBe(true);
+    expect(isAutoReply({ "Auto-Submitted": "no" }, "klant@salon.nl")).toBe(false);
+  });
+
+  it("knipt geciteerde geschiedenis weg (NL en EN)", () => {
+    const nl = "Ja, het is Salonized.\n\nOp ma 1 jan 2026 om 10:00 schreef KapperAssistent <hallo@kappersassistent.nl>:\n> Kun je aangeven welke agenda?";
+    expect(stripQuotedReply(nl)).toBe("Ja, het is Salonized.");
+    const en = "Thanks!\n\nOn Mon, Jan 1, 2026 at 10:00 AM Support wrote:\n> hi";
+    expect(stripQuotedReply(en)).toBe("Thanks!");
+    const wrapped = "Klopt.\n\nOp ma 1 jan 2026 om 10:00 schreef Support\n<hallo@kappersassistent.nl>:\n> hoi";
+    expect(stripQuotedReply(wrapped)).toBe("Klopt.");
+    expect(stripQuotedReply("Alleen dit.\n-----Original Message-----\nrest")).toBe("Alleen dit.");
+  });
+
+  it("laat de mail intact als er alleen citaat is", () => {
+    expect(stripQuotedReply("> alleen citaat")).toBe("> alleen citaat");
+  });
+
+  it("vindt het ticketnummer in onderwerp of plus-adres", () => {
+    expect(ticketNumberFromMail("Re: [KA-10482] Koppeling", [])).toBe(10482);
+    expect(ticketNumberFromMail("Re: iets", ["support+KA-10001@kappersassistent.nl"])).toBe(10001);
+    expect(ticketNumberFromMail("Nieuwe vraag", ["support@kappersassistent.nl"])).toBeNull();
+  });
+});
+
+import { mergeArticles, publishedOnly, SLUG_RE } from "@/lib/help/merge";
+
+describe("mergeArticles", () => {
+  const base = HELP_ARTICLES.slice(0, 2);
+  const row = (slug: string, over: Record<string, unknown> = {}) => ({
+    slug,
+    title: "Nieuwe titel",
+    category: "aan-de-slag",
+    summary: "Een samenvatting van genoeg lengte.",
+    body: "Een uitleg van genoeg lengte om te mogen.",
+    keywords: ["a"],
+    audience: "both",
+    related: [],
+    hidden: false,
+    ...over,
+  });
+
+  it("laat standaardartikelen ongemoeid zonder override", () => {
+    const all = mergeArticles(base, []);
+    expect(all.map((a) => a.source)).toEqual(["standaard", "standaard"]);
+    expect(publishedOnly(all)).toHaveLength(2);
+  });
+
+  it("overschrijft op slug, voegt nieuwe toe en verbergt op verzoek", () => {
+    const all = mergeArticles(base, [row(base[0]!.slug), row("helemaal-nieuw"), row(base[1]!.slug, { hidden: true })]);
+    expect(all.find((a) => a.slug === base[0]!.slug)).toMatchObject({ title: "Nieuwe titel", source: "aangepast" });
+    expect(all.find((a) => a.slug === "helemaal-nieuw")?.source).toBe("nieuw");
+    expect(publishedOnly(all).map((a) => a.slug)).not.toContain(base[1]!.slug);
+  });
+
+  it("valideert slugs", () => {
+    expect(SLUG_RE.test("goede-slug-2")).toBe(true);
+    expect(SLUG_RE.test("Slecht Slug")).toBe(false);
+    expect(SLUG_RE.test("../etc")).toBe(false);
+  });
+});

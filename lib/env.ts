@@ -18,6 +18,10 @@ const serverSchema = z.object({
   REPORT_RECIPIENT: z.string().default("v.munster@weareimpact.nl"),
   // Where new-ticket / customer-reply notifications go (falls back to REPORT_RECIPIENT).
   SUPPORT_RECIPIENT: z.string().optional(),
+  // Inbound ticket mail (Resend "email.received" webhook). Without the secret the
+  // webhook refuses everything; without the address, replies go to MAIL_FROM's inbox.
+  RESEND_WEBHOOK_SECRET: z.string().optional(),
+  SUPPORT_INBOUND_ADDRESS: z.string().optional(), // e.g. support@kappersassistent.nl
 
   // AI — routed through the OpenModel gateway (Anthropic Messages API
   // protocol, OpenModel's own key + bare model ids, no "anthropic/" prefix).

@@ -148,6 +148,13 @@
       "when": 1790227463098,
       "tag": "0020_support_tickets",
       "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1790229296548,
+      "tag": "0022_help_articles",
+      "breakpoints": true
     }
   ]
 }

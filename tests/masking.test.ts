@@ -101,3 +101,17 @@ describe("withPiiMasking — anthropic.ts gateway integration", () => {
     });
   });
 });
+
+describe("MaskingSession — zelfintroductie-heuristiek", () => {
+  it("maskeert geen gewone woorden of merknamen na 'met' of 'ik ben'", () => {
+    const s = new MaskingSession();
+    const input = "Werkt het met Booksy? Ik ben benieuwd, ik wil een afspraak met een stylist.";
+    expect(s.mask(input)).toBe(input);
+  });
+
+  it("herkent nog steeds 'ik ben Anna' en een telefoon-begroeting 'Met Anna Jansen'", () => {
+    expect(new MaskingSession().mask("Hoi, ik ben Anna.")).toContain("[KLANT_NAAM_1]");
+    expect(new MaskingSession().mask("Met Anna Jansen, ik wil boeken.")).toContain("[KLANT_NAAM_1]");
+    expect(new MaskingSession().mask("Goedemiddag. Met Anna")).toContain("[KLANT_NAAM_1]");
+  });
+});

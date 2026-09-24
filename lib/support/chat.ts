@@ -4,7 +4,7 @@ import { getAnthropic } from "@/lib/ai/anthropic";
 import { env } from "@/lib/env";
 import { captureError } from "@/lib/observability";
 import { getSalonWithSubscription } from "@/lib/salon/queries";
-import { getHelpArticle } from "@/lib/help/articles";
+import { getHelpCorpus } from "@/lib/help/store";
 import { CONFIDENT_SCORE, searchHelp, type SearchHit } from "@/lib/help/search";
 import { guardMessage, type EscalationReason } from "@/lib/support/chat-guard";
 import { listSalonTickets } from "@/lib/support/tickets";
@@ -193,7 +193,8 @@ export async function answerSupportQuestion(
   }
 
   // 2. Retrieval over the help corpus.
-  const hits = searchHelp(retrievalQuery(history), { audience: ctx.audience, limit: 4 });
+  const corpus = await getHelpCorpus();
+  const hits = searchHelp(retrievalQuery(history), { audience: ctx.audience, limit: 4, corpus });
   const sources = toSources(hits);
   const confident = sources.length > 0;
 
@@ -202,7 +203,7 @@ export async function answerSupportQuestion(
   // 3. No model configured → answer straight from the best article, or admit the miss.
   if (!anthropic) {
     if (confident) {
-      const top = getHelpArticle(sources[0]!.slug)!;
+      const top = corpus.find((a) => a.slug === sources[0]!.slug)!;
       return {
         reply: `${top.summary}\n\nMeer uitleg: [${top.title}](/help/${top.slug})`,
         sources,

@@ -3,7 +3,7 @@ import { z } from "zod";
 import { db } from "@/lib/db";
 import { helpFeedback, helpSearchMisses } from "@/lib/db/schema";
 import { env } from "@/lib/env";
-import { getHelpArticle } from "@/lib/help/articles";
+import { getPublishedArticle } from "@/lib/help/store";
 import { clientIp, rateLimit } from "@/lib/support/rate-limit";
 
 export const runtime = "nodejs";
@@ -27,7 +27,7 @@ export async function POST(req: Request) {
   const d = parsed.data;
 
   if (d.type === "article") {
-    if (!getHelpArticle(d.slug)) return NextResponse.json({ ok: false }, { status: 404 });
+    if (!(await getPublishedArticle(d.slug))) return NextResponse.json({ ok: false }, { status: 404 });
     await db.insert(helpFeedback).values({ articleSlug: d.slug, helpful: d.helpful, comment: d.comment?.trim() || null });
   } else {
     await db.insert(helpSearchMisses).values({ query: d.query, source: "zoeken" });

@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Icon } from "@/components/ui/icon";
 import { ButtonLink } from "@/components/ui/button";
-import { HELP_ARTICLES, HELP_CATEGORIES, articlesByCategory, getHelpCategory } from "@/lib/help/articles";
+import { HELP_CATEGORIES, articlesByCategory, getHelpCategory } from "@/lib/help/articles";
+import { getHelpCorpus } from "@/lib/help/store";
 import { searchHelp } from "@/lib/help/search";
 import { HelpSearchForm } from "@/components/help/help-search-form";
 import { SearchMissBeacon } from "@/components/help/search-miss-beacon";
@@ -27,7 +28,8 @@ const POPULAR = [
 export default async function HelpPage({ searchParams }: { searchParams: Promise<{ q?: string }> }) {
   const { q } = await searchParams;
   const query = q?.trim().slice(0, 120) ?? "";
-  const hits = query ? searchHelp(query, { limit: 12 }) : [];
+  const corpus = await getHelpCorpus();
+  const hits = query ? searchHelp(query, { limit: 12, corpus }) : [];
 
   return (
     <>
@@ -100,7 +102,7 @@ export default async function HelpPage({ searchParams }: { searchParams: Promise
                     </div>
                     <div className="font-label-md text-body-md text-on-surface group-hover:text-primary">{c.title}</div>
                     <p className="mt-xs text-label-md text-on-surface-variant">{c.description}</p>
-                    <div className="mt-sm text-label-sm text-primary">{articlesByCategory(c.id).length} artikelen →</div>
+                    <div className="mt-sm text-label-sm text-primary">{articlesByCategory(c.id, corpus).length} artikelen →</div>
                   </Link>
                 ))}
               </div>
@@ -112,7 +114,7 @@ export default async function HelpPage({ searchParams }: { searchParams: Promise
               <h2 className="mkt-h3 mb-md text-headline-md text-on-surface">Populaire vragen</h2>
               <ul className="divide-y divide-outline-variant/40 rounded-xl border border-outline-variant/50 bg-white">
                 {POPULAR.map((slug) => {
-                  const a = HELP_ARTICLES.find((x) => x.slug === slug);
+                  const a = corpus.find((x) => x.slug === slug);
                   if (!a) return null;
                   return (
                     <li key={slug}>

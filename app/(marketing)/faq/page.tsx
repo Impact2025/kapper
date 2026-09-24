@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Icon } from "@/components/ui/icon";
 import { HELP_CATEGORIES, articlesByCategory } from "@/lib/help/articles";
+import { getHelpCorpus } from "@/lib/help/store";
 import { renderMarkdown } from "@/lib/blog/markdown";
 import { HelpSearchForm } from "@/components/help/help-search-form";
 import { OpenChatButton } from "@/components/help/open-chat-button";
@@ -16,8 +17,9 @@ export const metadata: Metadata = {
 
 export const revalidate = 3600;
 
-export default function FaqPage() {
-  const groups = HELP_CATEGORIES.map((c) => ({ category: c, articles: articlesByCategory(c.id) })).filter((g) => g.articles.length);
+export default async function FaqPage() {
+  const corpus = await getHelpCorpus();
+  const groups = HELP_CATEGORIES.map((c) => ({ category: c, articles: articlesByCategory(c.id, corpus) })).filter((g) => g.articles.length);
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "FAQPage",

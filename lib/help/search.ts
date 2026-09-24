@@ -36,6 +36,8 @@ function tokenMatches(queryToken: string, docToken: string): boolean {
 export interface SearchOptions {
   audience?: "prospect" | "salon";
   limit?: number;
+  /** Defaults to the code-defined articles; pass the DB-merged corpus on the server. */
+  corpus?: HelpArticle[];
 }
 
 export interface SearchHit {
@@ -75,7 +77,7 @@ export function searchHelp(query: string, opts: SearchOptions = {}): SearchHit[]
   if (!qTokens.length) return [];
 
   const hits: SearchHit[] = [];
-  for (const article of HELP_ARTICLES) {
+  for (const article of opts.corpus ?? HELP_ARTICLES) {
     if (!audienceOk(article.audience, opts.audience)) continue;
     const score = scoreArticle(qTokens, qNorm, article);
     if (score > 0) hits.push({ article, score });
