@@ -6,6 +6,7 @@ import {
   KAPPER_VERTICAL,
   LOODGIETER_VERTICAL,
   SCHILDER_VERTICAL,
+  HOVENIER_VERTICAL,
   hostMismatch,
   listVerticals,
   listLiveVerticals,
@@ -25,8 +26,8 @@ const JOB_PACKS = listVerticals().filter((v) => v.archetype === "job");
 const KAPPER_WORDS = /kapper|kapsalon|salon|stylist|hoofdhuid|patch-?test|balayage|knippen/i;
 
 describe("vertical registry", () => {
-  it("has kapper, loodgieter and schilder", () => {
-    expect(listVerticals().map((v) => v.id).sort()).toEqual(["kapper", "loodgieter", "schilder"]);
+  it("has kapper, loodgieter, schilder and hovenier", () => {
+    expect(listVerticals().map((v) => v.id).sort()).toEqual(["hovenier", "kapper", "loodgieter", "schilder"]);
   });
 
   it("falls back to kapper for unknown ids", () => {
@@ -293,4 +294,30 @@ describe("pack conformance (every vertical, current and future)", () => {
       }
     });
   }
+});
+
+describe("hovenier", () => {
+  it("is a job vertical with its own green theme, and does not claim its host until live", () => {
+    expect(HOVENIER_VERTICAL.archetype).toBe("job");
+    expect(HOVENIER_VERTICAL.theme?.primary).not.toBe(undefined);
+    expect(HOVENIER_VERTICAL.live).toBe(false);
+    expect(verticalForHost("hovenierassistent.nl").id).toBe("kapper");
+  });
+
+  it("treats stormschade as spoed and has no gas/water-leak categories", () => {
+    const urgent = HOVENIER_VERTICAL.jobCategories.filter((c) => c.urgent).map((c) => c.key);
+    expect(urgent).toEqual(["storm"]);
+    expect(HOVENIER_VERTICAL.jobCategories.map((c) => c.key)).not.toContain("lekkage");
+  });
+
+  it("has its own pricing copy without another trade's vocabulary", () => {
+    const copy = JSON.stringify(plansFor(HOVENIER_VERTICAL).map((p) => [p.name, p.tagline, p.features]));
+    expect(copy).not.toMatch(/monteur|installatiepaspoort|serienummer|cv-|ketel/i);
+    expect(copy).toMatch(/hovenier/i);
+  });
+
+  it("only offers klusvelden for existing categories", () => {
+    const cats = new Set(HOVENIER_VERTICAL.jobCategories.map((c) => c.key));
+    for (const f of HOVENIER_VERTICAL.jobFields) for (const c of f.categories ?? []) expect(cats.has(c)).toBe(true);
+  });
 });

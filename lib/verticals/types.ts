@@ -148,6 +148,16 @@ export interface OnboardingEntry {
   href?: string;
 }
 
+/** Pricing-page copy for one plan. Price and plan id always come from
+ * lib/plans.ts; only the words differ per doelgroep. */
+export interface PlanCopy {
+  name: string;
+  tagline: string;
+  audience: string;
+  valueLine: string;
+  features: string[];
+}
+
 export interface VerticalBrand {
   name: string;
   domain: string;
@@ -242,6 +252,9 @@ export interface VerticalPack {
   /** Optional accent palette; omitted = the default (sage) palette. */
   theme?: VerticalTheme;
   features: VerticalFeatures;
+  /** Own pricing copy per plan (job archetype); omitted = the shared job copy
+   * in lib/verticals/plans.ts. Must match what lib/jobs/access.ts gates. */
+  pricing?: Partial<Record<"essential" | "pro" | "elite", PlanCopy>>;
   /** AI-receptionist tools this vertical uses. */
   agent: { tools: AgentToolId[]; prompt?: Partial<JobAgentPrompt> };
   /** Integration ids (lib/capabilities/integrations.ts) offered to this vertical. */

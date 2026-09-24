@@ -3,7 +3,7 @@ import { describe, it, expect, vi } from "vitest";
 vi.mock("server-only", () => ({}));
 
 import { buildJobSystemPrompt, buildJobTools, agentPromptFor } from "@/lib/ai/job-receptionist";
-import { LOODGIETER_VERTICAL, SCHILDER_VERTICAL, listVerticals } from "@/lib/verticals";
+import { HOVENIER_VERTICAL, LOODGIETER_VERTICAL, SCHILDER_VERTICAL, listVerticals } from "@/lib/verticals";
 import type { SalonContext } from "@/lib/ai/receptionist";
 
 const salon = {
@@ -34,6 +34,13 @@ describe("job receptionist — vak rules live in the pack", () => {
     expect(p).not.toMatch(/gas|hoofdkraan|gootsteen|ketel|lekkage|0800-9009/i);
     expect(p).toContain("SPOED:");
     expect(p).toContain("escalate_to_staff");
+  });
+
+  it("gives the hovenier storm and tree rules instead of gas and water", () => {
+    const p = promptFor(HOVENIER_VERTICAL);
+    expect(p).toContain("stroomkabel");
+    expect(p).toContain("omgevallen boom");
+    expect(p).not.toMatch(/gaslucht|hoofdkraan|gootsteen|ketel|0800-9009/i);
   });
 
   it("uses the pack's own spoed hint in the register_job tool schema", () => {

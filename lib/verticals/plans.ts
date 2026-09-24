@@ -52,5 +52,5 @@ const JOB_COPY: Record<Plan["id"], Pick<Plan, "name" | "tagline" | "audience" | 
 
 export function plansFor(pack: VerticalPack): Plan[] {
   if (pack.archetype === "appointment") return PLANS;
-  return PLANS.map((p) => ({ ...p, ...JOB_COPY[p.id] }));
+  return PLANS.map((p) => ({ ...p, ...JOB_COPY[p.id], ...pack.pricing?.[p.id] }));
 }
