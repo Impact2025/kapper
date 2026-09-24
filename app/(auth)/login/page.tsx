@@ -3,6 +3,7 @@ import Link from "next/link";
 import { headers } from "next/headers";
 import { LoginForm } from "@/components/admin/login-form";
 import { verticalForHost } from "@/lib/verticals";
+import { themeStyle } from "@/lib/verticals/theme";
 
 export async function generateMetadata(): Promise<Metadata> {
   return { title: "Inloggen", robots: { index: false, follow: false } };
@@ -15,7 +16,7 @@ export default async function LoginPage() {
   const pack = verticalForHost((await headers()).get("host"));
   const { brand } = pack;
   return (
-    <main className="flex min-h-screen items-center justify-center bg-surface-container-low px-margin-mobile py-xl">
+    <main style={themeStyle(pack.theme)} className="flex min-h-screen items-center justify-center bg-surface-container-low px-margin-mobile py-xl">
       <div className="w-full max-w-[28rem]">
         <div className="mb-lg text-center">
           <Link

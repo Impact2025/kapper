@@ -44,13 +44,31 @@ export const getVertical = getVerticalConfig;
  * resolve to the default vertical.
  */
 export function verticalForHost(host: string | null | undefined): VerticalPack {
+  return claimedVerticalForHost(host) ?? KAPPER_VERTICAL;
+}
+
+/** The live vertical that explicitly claims this host, or null for unknown
+ * hosts (localhost, previews) — unlike verticalForHost there is no default. */
+export function claimedVerticalForHost(host: string | null | undefined): VerticalPack | null {
   const h = (host ?? "").split(":")[0]!.trim().toLowerCase();
-  if (h) {
-    for (const v of Object.values(VERTICAL_REGISTRY)) {
-      if (v.live && v.brand.hosts.includes(h)) return v;
-    }
+  if (!h) return null;
+  for (const v of Object.values(VERTICAL_REGISTRY)) {
+    if (v.live && v.brand.hosts.includes(h)) return v;
   }
-  return KAPPER_VERTICAL;
+  return null;
+}
+
+/**
+ * Keeps every customer inside their own environment: a salon of vertical X
+ * that reaches the app on the domain of vertical Y (a plumber on
+ * kappersassistent.nl) must not see a dashboard there. Returns the vertical
+ * whose domain the user belongs on, or null when the host is fine (matching
+ * host, or an unclaimed host such as localhost / a preview deploy).
+ */
+export function hostMismatch(host: string | null | undefined, salonVertical: string | null | undefined): VerticalPack | null {
+  const claimed = claimedVerticalForHost(host);
+  const own = getVerticalConfig(salonVertical);
+  return claimed && claimed.id !== own.id ? own : null;
 }
 
 /** True if a job-archetype vertical (klus-CRM surface). */

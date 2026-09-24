@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { SiteHeader } from "@/components/marketing/site-header";
 import { SiteFooter } from "@/components/marketing/site-footer";
 import { SupportChatWidget } from "@/components/support/chat-widget";
+import { themeStyle } from "@/lib/verticals/theme";
 import { DEFAULT_VERTICAL_ID, getVerticalConfig, isVerticalId, listLiveVerticals } from "@/lib/verticals";
 
 /**
@@ -55,7 +56,7 @@ export default async function VerticalSiteLayout({
   };
 
   return (
-    <div className="flex min-h-screen flex-col">
+    <div style={themeStyle(pack.theme)} className="flex min-h-screen flex-col">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(organization) }} />
       <SiteHeader
         brandName={pack.brand.name}

@@ -104,6 +104,29 @@ export interface MarketingConfig {
   landing: LandingCopy | null;
 }
 
+/** Accent palette per doelgroep (see lib/verticals/theme.ts). Neutrals and
+ * surfaces stay shared so every product keeps the same UI quality. */
+export interface VerticalTheme {
+  primary: string;
+  onPrimary: string;
+  primaryContainer: string;
+  onPrimaryContainer: string;
+  primaryFixed: string;
+  primaryFixedDim: string;
+  onPrimaryFixed: string;
+  onPrimaryFixedVariant: string;
+  inversePrimary: string;
+}
+
+export type OnboardingKey = "business" | "services" | "team" | "whatsapp" | "phone" | "firstJob";
+
+export interface OnboardingEntry {
+  key: OnboardingKey;
+  /** Overrides the catalog label / destination for this vertical. */
+  label?: string;
+  href?: string;
+}
+
 export interface VerticalBrand {
   name: string;
   domain: string;
@@ -195,6 +218,8 @@ export interface VerticalPack {
    * special-category data). */
   hasHealthDataGuard: boolean;
   brand: VerticalBrand;
+  /** Optional accent palette; omitted = the default (sage) palette. */
+  theme?: VerticalTheme;
   features: VerticalFeatures;
   /** AI-receptionist tools this vertical uses. */
   agent: { tools: AgentToolId[] };
@@ -204,6 +229,8 @@ export interface VerticalPack {
   jobFields: JobField[];
   marketing: MarketingConfig;
   nav: NavEntry[];
+  /** Onboarding checklist (job archetype), in order; omitted = the default set. */
+  onboarding?: OnboardingEntry[];
   /** Job archetype only. */
   jobCategories: JobCategory[];
   assetKinds: AssetKind[];

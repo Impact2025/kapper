@@ -6,6 +6,7 @@ import {
   KAPPER_VERTICAL,
   LOODGIETER_VERTICAL,
   SCHILDER_VERTICAL,
+  hostMismatch,
   listVerticals,
   listLiveVerticals,
   getVerticalConfig,
@@ -15,6 +16,7 @@ import {
   NAV_CATALOG,
 } from "@/lib/verticals";
 import { plansFor } from "@/lib/verticals/plans";
+import { resolveOnboarding } from "@/lib/verticals/onboarding";
 import { PLANS } from "@/lib/plans";
 
 const JOB_PACKS = listVerticals().filter((v) => v.archetype === "job");
@@ -67,6 +69,25 @@ describe("host resolution", () => {
   it("no two verticals share a host", () => {
     const all = listVerticals().flatMap((v) => v.brand.hosts);
     expect(new Set(all).size).toBe(all.length);
+  });
+});
+
+describe("hostMismatch", () => {
+  it("passes a salon on its own domain", () => {
+    expect(hostMismatch("loodgietersassistent.nl", "loodgieter")).toBeNull();
+    expect(hostMismatch("www.kappersassistent.nl", "kapper")).toBeNull();
+  });
+
+  it("sends a salon on another trade's domain to its own vertical", () => {
+    expect(hostMismatch("kappersassistent.nl", "loodgieter")?.id).toBe("loodgieter");
+    expect(hostMismatch("loodgietersassistent.nl", "kapper")?.id).toBe("kapper");
+  });
+
+  it("never blocks unclaimed hosts (localhost, previews) or a missing vertical", () => {
+    expect(hostMismatch("localhost:2190", "loodgieter")).toBeNull();
+    expect(hostMismatch("x-git-y.vercel.app", "loodgieter")).toBeNull();
+    expect(hostMismatch(null, "loodgieter")).toBeNull();
+    expect(hostMismatch("kappersassistent.nl", null)).toBeNull();
   });
 });
 
@@ -175,4 +196,101 @@ describe("plansFor", () => {
   it("kapper plans are the unmodified core plans", () => {
     expect(plansFor(KAPPER_VERTICAL)).toBe(PLANS);
   });
+});
+
+describe("onboarding", () => {
+  const none = { business: false, services: false, team: false, whatsapp: false, phone: false, firstJob: false };
+
+  it("falls back to the default set and derives labels from the pack terms", () => {
+    const steps = resolveOnboarding(LOODGIETER_VERTICAL, { ...none, services: true });
+    expect(steps.map((s) => s.key)).toEqual(["business", "services", "team", "whatsapp", "phone"]);
+    expect(steps.find((s) => s.key === "team")?.label).toMatch(new RegExp(`^${LOODGIETER_VERTICAL.terms.practitionerPlural}`, "i"));
+    expect(steps.find((s) => s.key === "services")?.done).toBe(true);
+    expect(steps.find((s) => s.key === "business")?.done).toBe(false);
+  });
+
+  it("lets a pack pick, order and relabel its own steps", () => {
+    const pack = {
+      ...SCHILDER_VERTICAL,
+      onboarding: [{ key: "firstJob" as const, label: "Eerste project" }, { key: "business" as const }],
+    };
+    const steps = resolveOnboarding(pack, { ...none, firstJob: true });
+    expect(steps.map((s) => s.label)).toEqual(["Eerste project", "Bedrijfsgegevens voor facturen"]);
+    expect(steps[0]?.done).toBe(true);
+  });
+
+  it("every pack onboarding entry resolves to an in-app destination", () => {
+    for (const v of listVerticals()) {
+      for (const s of resolveOnboarding(v, none)) expect(s.href.startsWith("/dashboard")).toBe(true);
+    }
+  });
+});
+
+describe("pack conformance (every vertical, current and future)", () => {
+  const HEX = /^#[0-9a-f]{6}$/i;
+
+  for (const pack of listVerticals()) {
+    describe(pack.id, () => {
+      it("has a well-formed identity and unique, lowercase hosts", () => {
+        expect(pack.id).toMatch(/^[a-z]+$/);
+        expect(pack.brand.hosts.length).toBeGreaterThan(0);
+        for (const h of pack.brand.hosts) expect(h).toBe(h.toLowerCase());
+        expect(pack.brand.siteUrl.startsWith("https://")).toBe(true);
+        expect(pack.brand.supportEmail.endsWith(`@${pack.brand.domain}`)).toBe(true);
+      });
+
+      it("always shows the overview first and has no duplicate nav keys", () => {
+        const keys = pack.nav.map((n) => n.key);
+        expect(keys[0]).toBe("overview");
+        expect(new Set(keys).size).toBe(keys.length);
+      });
+
+      it("only enables surfaces its nav actually exposes", () => {
+        const keys = pack.nav.map((n) => n.key);
+        if (pack.features.jobs) expect(keys).toContain("jobs");
+        if (pack.features.quotes) expect(keys).toContain("billing");
+        if (pack.features.contracts) expect(keys).toContain("maintenance");
+      });
+
+      if (pack.theme) {
+        it("has a complete hex theme", () => {
+          for (const v of Object.values(pack.theme!)) expect(v).toMatch(HEX);
+        });
+      }
+
+      if (pack.archetype === "job") {
+        it("has unique job categories, each with a checklist and an 'overig' fallback", () => {
+          const keys = pack.jobCategories.map((c) => c.key);
+          expect(new Set(keys).size).toBe(keys.length);
+          expect(keys).toContain("overig");
+          for (const c of pack.jobCategories) {
+            expect(c.checklist.length).toBeGreaterThan(0);
+            expect(c.estimatedMinutes).toBeGreaterThan(0);
+          }
+        });
+
+        it("has unique asset kinds and a starter catalog on a known category", () => {
+          const kinds = pack.assetKinds.map((a) => a.key);
+          expect(new Set(kinds).size).toBe(kinds.length);
+          const cats = new Set(pack.jobCategories.map((c) => c.key));
+          for (const t of pack.serviceTemplates) expect(cats.has(t.category)).toBe(true);
+        });
+
+        it("keeps VAT rates a deliberate choice (21% unless documented otherwise)", () => {
+          expect([9, 21]).toContain(pack.vatRates.treatment);
+          expect([9, 21]).toContain(pack.vatRates.product);
+        });
+      }
+
+      if (pack.live) {
+        it("is complete enough to be public: landing copy, faq and content", () => {
+          if (pack.archetype === "job") {
+            expect(pack.marketing.landing).not.toBeNull();
+            expect(pack.marketing.landing!.faq.length).toBeGreaterThan(2);
+          }
+          expect(pack.content.blogSuggestions.length).toBeGreaterThan(0);
+        });
+      }
+    });
+  }
 });

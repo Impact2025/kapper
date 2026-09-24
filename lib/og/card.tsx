@@ -32,7 +32,7 @@ export async function renderOgCard({
         <div style={{ display: "flex", alignItems: "center", gap: "20px" }}>
           {!brand && (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={logoSrc} width={64} height={64} style={{ objectFit: "contain" }} />
+            <img src={logoSrc} alt="" width={64} height={64} style={{ objectFit: "contain" }} />
           )}
           <span
             style={{

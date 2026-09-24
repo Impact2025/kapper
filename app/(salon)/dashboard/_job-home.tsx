@@ -2,6 +2,8 @@ import Link from "next/link";
 import { eq, sql } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { staff, treatments } from "@/lib/db/schema";
+import { jobs } from "@/lib/db/schema-jobs";
+import { resolveOnboarding } from "@/lib/verticals/onboarding";
 import type { JobContext } from "@/lib/jobs/access";
 import { getJobStats, listOpenJobsForBoard, listScheduledJobs } from "@/lib/jobs/queries";
 import { missingInvoiceFields, parseBusinessProfile } from "@/lib/jobs/business";
@@ -16,23 +18,25 @@ export async function JobDashboardHome({ ctx }: { ctx: JobContext }) {
   const dayStart = amsterdamWallTimeToUtc(now, 0, 0);
   const dayEnd = amsterdamWallTimeToUtc(now, 1, 0);
 
-  const [stats, today, open, [treatmentCount], [staffCount]] = await Promise.all([
+  const [stats, today, open, [treatmentCount], [staffCount], [jobCount]] = await Promise.all([
     getJobStats(ctx.salonId, now),
     listScheduledJobs(ctx.salonId, dayStart, dayEnd),
     listOpenJobsForBoard(ctx.salonId),
     db.select({ n: sql<number>`count(*)::int` }).from(treatments).where(eq(treatments.salonId, ctx.salonId)),
     db.select({ n: sql<number>`count(*)::int` }).from(staff).where(eq(staff.salonId, ctx.salonId)),
+    db.select({ n: sql<number>`count(*)::int` }).from(jobs).where(eq(jobs.salonId, ctx.salonId)),
   ]);
 
   const ai = (ctx.settings.ai as Record<string, unknown> | undefined) ?? {};
   const business = parseBusinessProfile(ctx.settings, ctx.salonName);
-  const steps = [
-    { label: "Bedrijfsgegevens voor facturen", done: missingInvoiceFields(business).length === 0, href: "/dashboard/facturatie/instellingen" },
-    { label: "Diensten en tarieven", done: (treatmentCount?.n ?? 0) > 0, href: "/dashboard/praktijk" },
-    { label: `${ctx.pack.terms.practitionerPlural.charAt(0).toUpperCase()}${ctx.pack.terms.practitionerPlural.slice(1)} toegevoegd`, done: (staffCount?.n ?? 0) > 0, href: "/dashboard/praktijk" },
-    { label: "WhatsApp-receptie actief", done: !!ai.whatsappEnabled, href: "/dashboard/integraties" },
-    { label: "Telefonische receptie actief", done: !!ai.phoneEnabled, href: "/dashboard/integraties" },
-  ];
+  const steps = resolveOnboarding(ctx.pack, {
+    business: missingInvoiceFields(business).length === 0,
+    services: (treatmentCount?.n ?? 0) > 0,
+    team: (staffCount?.n ?? 0) > 0,
+    whatsapp: !!ai.whatsappEnabled,
+    phone: !!ai.phoneEnabled,
+    firstJob: (jobCount?.n ?? 0) > 0,
+  });
   const doneCount = steps.filter((s) => s.done).length;
   const urgent = open.filter((j) => j.priority === "urgent");
   const firstName = ctx.userName?.split(" ")[0] ?? ctx.pack.terms.owner;
@@ -60,7 +64,7 @@ export async function JobDashboardHome({ ctx }: { ctx: JobContext }) {
           </div>
           <div className="flex flex-col gap-xs">
             {steps.map((s) => (
-              <div key={s.label} className="flex items-center gap-sm">
+              <div key={s.key} className="flex items-center gap-sm">
                 <Icon name={s.done ? "check_circle" : "radio_button_unchecked"} filled={s.done} className={`text-[20px] ${s.done ? "text-primary" : "text-outline"}`} />
                 <span className={`text-body-md ${s.done ? "text-on-surface-variant line-through" : "text-on-surface"}`}>{s.label}</span>
                 {!s.done && (
