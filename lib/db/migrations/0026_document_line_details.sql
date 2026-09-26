@@ -1,0 +1,1 @@
+ALTER TABLE "job_document_lines" ADD COLUMN "details" jsonb DEFAULT '{}'::jsonb NOT NULL;

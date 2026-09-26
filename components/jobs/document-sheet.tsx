@@ -2,6 +2,8 @@ import type { BusinessProfile } from "@/lib/jobs/business";
 import { formatIban } from "@/lib/jobs/business";
 import type { DocumentParty } from "@/lib/db/schema-jobs";
 import { LINE_KIND_LABEL, formatMoney, formatQuantity, lineNetCents, type LineKind } from "@/lib/jobs/model";
+import { lineDetailSummary } from "@/lib/jobs/line-fields";
+import type { VerticalPack } from "@/lib/verticals";
 
 export interface SheetLine {
   kind: string;
@@ -10,6 +12,7 @@ export interface SheetLine {
   unit: string;
   unitPriceCents: number;
   vatRatePercent: number;
+  details?: Record<string, string> | null;
 }
 
 const DATE = new Intl.DateTimeFormat("nl-NL", { timeZone: "Europe/Amsterdam", day: "numeric", month: "long", year: "numeric" });
@@ -36,6 +39,7 @@ export function DocumentSheet({
   introText,
   footerText,
   paid,
+  pack,
 }: {
   kind: "quote" | "invoice";
   number: string;
@@ -52,6 +56,8 @@ export function DocumentSheet({
   introText: string | null;
   footerText: string | null;
   paid?: boolean;
+  /** Vak-specific regelvelden (positielijst); omitted = no extra regel-detail. */
+  pack?: Pick<VerticalPack, "quoteLineFields">;
 }) {
   const isDraft = number.startsWith("CONCEPT");
   return (
@@ -136,11 +142,14 @@ export function DocumentSheet({
           <tbody>
             {lines.map((l, i) => {
               const qty = Number(l.quantity);
+              const positieSummary = pack ? lineDetailSummary(pack, l.kind as LineKind, l.details) : "";
               return (
                 <tr key={i} className="border-b border-outline-variant/20 align-top">
                   <td className="py-xs pr-sm">
                     {l.description}
-                    <div className="text-label-sm text-on-surface-variant">{LINE_KIND_LABEL[l.kind as LineKind] ?? ""}</div>
+                    <div className="text-label-sm text-on-surface-variant">
+                      {[LINE_KIND_LABEL[l.kind as LineKind] ?? "", positieSummary].filter(Boolean).join(" · ")}
+                    </div>
                   </td>
                   <td className="py-xs pr-sm text-right tabular-nums">
                     {formatQuantity(qty)} {l.unit}

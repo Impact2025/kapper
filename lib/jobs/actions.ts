@@ -50,6 +50,8 @@ import {
 } from "@/lib/jobs/documents";
 import { notifyEnRoute } from "@/lib/jobs/customer-messages";
 import { sanitizeDetails } from "@/lib/jobs/fields";
+import { sanitizeLineDetails } from "@/lib/jobs/line-fields";
+import type { VerticalPack } from "@/lib/verticals";
 import { isValidIban, isValidKvk, isValidVatNumber, normalizeIban } from "@/lib/jobs/business";
 
 export interface JobActionState {
@@ -380,9 +382,10 @@ const lineSchema = z.object({
   unit: z.string().min(1).max(20),
   unitPriceEuros: z.union([z.number(), z.string()]),
   vatRatePercent: z.number().refine((v) => (VAT_RATES as readonly number[]).includes(v), "Ongeldig btw-tarief."),
+  details: z.record(z.string(), z.string()).optional(),
 });
 
-function parseLinesFromForm(fd: FormData): { lines: DocLineDraft[] } | { error: string } {
+function parseLinesFromForm(fd: FormData, pack: Pick<VerticalPack, "quoteLineFields">): { lines: DocLineDraft[] } | { error: string } {
   let raw: unknown;
   try {
     raw = JSON.parse(str(fd, "lines") || "[]");
@@ -403,6 +406,7 @@ function parseLinesFromForm(fd: FormData): { lines: DocLineDraft[] } | { error: 
       unit: l.unit,
       unitPriceCents: Math.round(euros * 100),
       vatRatePercent: l.vatRatePercent,
+      details: sanitizeLineDetails(pack, l.kind, (key) => l.details?.[key]),
     });
   }
   return { lines };
@@ -414,7 +418,7 @@ export async function saveDocumentAction(_prev: JobActionState | undefined, fd: 
   const documentId = str(fd, "documentId");
   if (!uuid.safeParse(documentId).success) return { error: "Ongeldig document." };
 
-  const parsed = parseLinesFromForm(fd);
+  const parsed = parseLinesFromForm(fd, ctx.pack);
   if ("error" in parsed) return { error: parsed.error };
 
   const res = await saveDraftLines(ctx.salonId, documentId, parsed.lines, {
@@ -436,7 +440,7 @@ export async function sendDocumentAction(_prev: JobActionState | undefined, fd: 
   const send = str(fd, "send") !== "false";
   // Save what's on screen first, so "verstuur" never sends stale lines.
   if (fd.has("lines")) {
-    const parsed = parseLinesFromForm(fd);
+    const parsed = parseLinesFromForm(fd, ctx.pack);
     if ("error" in parsed) return { error: parsed.error };
     const saved = await saveDraftLines(ctx.salonId, documentId, parsed.lines);
     if ("error" in saved) return { error: saved.error };

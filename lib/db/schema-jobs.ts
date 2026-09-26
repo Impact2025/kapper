@@ -312,6 +312,10 @@ export const jobDocumentLines = pgTable(
     unit: text("unit").notNull().default("stuk"),
     unitPriceCents: integer("unit_price_cents").notNull().default(0), // excl. btw
     vatRatePercent: integer("vat_rate_percent").notNull().default(21),
+    // Vak-specific regelvelden (VerticalPack.quoteLineFields): B×H/profiel/glas
+    // voor een kozijnregel, oppervlak/kleur voor een schilderregel. Keyed by
+    // field key, same shape as jobs.details.
+    details: jsonb("details").$type<Record<string, string>>().default({}).notNull(),
   },
   (t) => [index("job_document_lines_doc_idx").on(t.documentId, t.position)],
 );

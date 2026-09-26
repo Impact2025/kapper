@@ -277,6 +277,12 @@ export interface VerticalPack {
   /** Units offertelijnen mogen gebruiken (job archetype); omitted = the
    * default set in lib/jobs/model.ts (LINE_UNITS). See lineUnitsFor(). */
   lineUnits?: readonly string[];
+  /** Extra offerte-/factuurregelvelden (job archetype): B×H/profiel/glas voor
+   * een kozijnregel. `categories` filters by LineKind ("material", ...)
+   * instead of a job category. Stored in job_document_lines.details — see
+   * lib/jobs/line-fields.ts (the jobFields/fields.ts counterpart for regels).
+   * Omitted = a plain description/aantal/prijs regel (the platform default). */
+  quoteLineFields?: JobField[];
   /** Placeholder job title shown in the "nieuwe klus" form. */
   jobTitleExample?: string;
   marketing: MarketingConfig;

@@ -11,7 +11,7 @@ export default async function PublicInvoicePage({ params }: { params: Promise<{ 
   const { token } = await params;
   const found = await getDocumentByToken(token);
   if (!found || found.doc.kind !== "invoice") notFound();
-  const { doc, lines, business } = found;
+  const { doc, lines, business, pack } = found;
 
   return (
     <main className="min-h-screen bg-surface-container-low px-margin-mobile py-xl print:bg-white print:p-0">
@@ -36,6 +36,7 @@ export default async function PublicInvoicePage({ params }: { params: Promise<{ 
           introText={doc.introText}
           footerText={doc.footerText}
           paid={doc.status === "paid"}
+          pack={pack}
         />
       </div>
     </main>

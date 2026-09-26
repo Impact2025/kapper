@@ -10,8 +10,9 @@ import type { VerticalPack } from "./types";
  * Pas op `live: true` zetten als kozijnassistent.nl op Vercel/Resend hangt.
  *
  * Alles in de landing- en prijs-copy hieronder bestaat nu echt (klus-CRM,
- * planbord, werkbon, offerte/factuur, object per adres, contracten, foto's).
- * Positielijst-offertes (B×H, profiel, glas), offerte-varianten, orderfase
+ * planbord, werkbon, offerte/factuur, object per adres, contracten, foto's,
+ * positielijst-offertes met B×H, profiel en glas per regel — zie
+ * quoteLineFields en lib/jobs/line-fields.ts). Offerte-varianten, orderfase
  * (besteld → geleverd) en termijnfacturatie zijn gepland en worden pas
  * gecommuniceerd als ze gebouwd zijn — zie de kwartaal-check op claims vs. code.
  */
@@ -38,6 +39,16 @@ export const KOZIJN_VERTICAL: VerticalPack = {
   },
   // Kozijnen worden per stuk/set geoffreerd, glas en afwerking per m² of m.
   lineUnits: ["stuk", "set", "m", "m²", "uur", "post"],
+  // Positielijst: op een materiaalregel (een kozijn, deur of glaspaneel) kan de
+  // monteur B×H, profiel en glas vastleggen naast de gewone omschrijving —
+  // zie lib/jobs/line-fields.ts. Arbeids-/voorrijregels blijven een gewone regel.
+  quoteLineFields: [
+    { key: "positie", label: "Positie", type: "text", placeholder: "bijv. 1 of gevel-west-1", hint: "Herkenbaar op de gevel/tekening, hoeft niet uniek te zijn.", categories: ["material"] },
+    { key: "breedteMm", label: "Breedte", type: "number", unit: "mm", placeholder: "1200", categories: ["material"] },
+    { key: "hoogteMm", label: "Hoogte", type: "number", unit: "mm", placeholder: "1500", categories: ["material"] },
+    { key: "profiel", label: "Profiel", type: "select", options: ["Kunststof", "Aluminium", "Hout", "Hout-aluminium"], categories: ["material"] },
+    { key: "glas", label: "Glas", type: "select", options: ["HR++", "Triple", "Veiligheidsglas", "Geluidswerend", "Blijft zoals het is"], categories: ["material"] },
+  ],
   hasHealthDataGuard: false,
   brand: {
     name: "KozijnAssistent",

@@ -40,6 +40,9 @@ export interface DocLineDraft {
   unit: string;
   unitPriceCents: number;
   vatRatePercent: number;
+  /** Vak-specific regelvelden (positielijst: B×H/profiel/glas) — see
+   * lib/jobs/line-fields.ts. Empty object when the pack has none for this kind. */
+  details?: Record<string, string>;
 }
 
 const newToken = () => randomBytes(24).toString("base64url");
@@ -170,6 +173,7 @@ async function insertLines(documentId: string, salonId: string, lines: DocLineDr
       unit: l.unit,
       unitPriceCents: l.unitPriceCents,
       vatRatePercent: l.vatRatePercent,
+      details: l.details ?? {},
     })),
   );
 }
@@ -216,6 +220,7 @@ export function lineRowsToDrafts(rows: LineRow[]): DocLineDraft[] {
     unit: r.unit,
     unitPriceCents: r.unitPriceCents,
     vatRatePercent: r.vatRatePercent,
+    details: r.details ?? {},
   }));
 }
 

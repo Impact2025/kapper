@@ -8,13 +8,14 @@ import { Icon } from "@/components/ui/icon";
 import {
   LINE_KINDS,
   LINE_KIND_LABEL,
-  LINE_UNITS,
   VAT_RATES,
   computeDocumentTotals,
   formatMoney,
   lineNetCents,
   type LineKind,
 } from "@/lib/jobs/model";
+import { lineFieldsForKind } from "@/lib/jobs/line-fields";
+import type { VerticalPack } from "@/lib/verticals";
 
 export interface EditorLine {
   kind: LineKind;
@@ -23,6 +24,8 @@ export interface EditorLine {
   unit: string;
   unitPrice: string; // euros, decimal comma or point
   vat: number;
+  /** Vak-specific regelvelden (positielijst: B×H/profiel/glas), keyed by field key. */
+  details: Record<string, string>;
 }
 
 export interface CatalogItem {
@@ -48,6 +51,8 @@ export function DocumentEditor({
   catalog,
   defaultVat,
   canSend,
+  lineUnits,
+  pack,
 }: {
   documentId: string;
   kind: "quote" | "invoice";
@@ -58,6 +63,10 @@ export function DocumentEditor({
   catalog: CatalogItem[];
   defaultVat: number;
   canSend: boolean;
+  /** Units offered in the eenheid-select; see lineUnitsFor(pack). */
+  lineUnits: readonly string[];
+  /** Vak-specific regelvelden (positielijst); omitted pack = no extra fields. */
+  pack: Pick<VerticalPack, "quoteLineFields">;
 }) {
   const [lines, setLines] = useState<EditorLine[]>(initialLines.length ? initialLines : [blank(defaultVat)]);
 
@@ -81,10 +90,13 @@ export function DocumentEditor({
         unit: l.unit,
         unitPriceEuros: toNumber(l.unitPrice),
         vatRatePercent: l.vat,
+        details: l.details,
       })),
   );
 
   const update = (i: number, patch: Partial<EditorLine>) => setLines((ls) => ls.map((l, idx) => (idx === i ? { ...l, ...patch } : l)));
+  const updateDetail = (i: number, key: string, value: string) =>
+    setLines((ls) => ls.map((l, idx) => (idx === i ? { ...l, details: { ...l.details, [key]: value } } : l)));
 
   return (
     <div className="flex flex-col gap-md">
@@ -101,36 +113,70 @@ export function DocumentEditor({
 
       {lines.map((l, i) => {
         const net = lineNetCents({ quantity: toNumber(l.quantity), unitPriceCents: Math.round(toNumber(l.unitPrice) * 100) });
+        const fields = lineFieldsForKind(pack, l.kind);
         return (
-          <div key={i} className="grid grid-cols-2 gap-xs rounded-lg border border-outline-variant/30 p-xs lg:grid-cols-[6.5rem_1fr_4.5rem_5rem_6.5rem_4.5rem_6rem_2rem] lg:items-center lg:border-0 lg:p-0">
-            <select value={l.kind} onChange={(e) => update(i, { kind: e.target.value as LineKind })} className={inputCls} aria-label="Soort">
-              {LINE_KINDS.map((k) => (
-                <option key={k} value={k}>
-                  {LINE_KIND_LABEL[k]}
-                </option>
-              ))}
-            </select>
-            <input value={l.description} onChange={(e) => update(i, { description: e.target.value })} placeholder="Omschrijving" className={`${inputCls} col-span-2 lg:col-span-1`} aria-label="Omschrijving" />
-            <input value={l.quantity} onChange={(e) => update(i, { quantity: e.target.value })} inputMode="decimal" className={inputCls} aria-label="Aantal" />
-            <select value={l.unit} onChange={(e) => update(i, { unit: e.target.value })} className={inputCls} aria-label="Eenheid">
-              {LINE_UNITS.map((u) => (
-                <option key={u} value={u}>
-                  {u}
-                </option>
-              ))}
-            </select>
-            <input value={l.unitPrice} onChange={(e) => update(i, { unitPrice: e.target.value })} inputMode="decimal" placeholder="0,00" className={inputCls} aria-label="Prijs" />
-            <select value={l.vat} onChange={(e) => update(i, { vat: Number(e.target.value) })} className={inputCls} aria-label="Btw">
-              {VAT_RATES.map((v) => (
-                <option key={v} value={v}>
-                  {v}%
-                </option>
-              ))}
-            </select>
-            <div className="text-right text-body-md tabular-nums text-on-surface">{formatMoney(net)}</div>
-            <button type="button" onClick={() => setLines((ls) => (ls.length > 1 ? ls.filter((_, idx) => idx !== i) : [blank(defaultVat)]))} className="justify-self-end text-on-surface-variant hover:text-error" aria-label="Regel verwijderen">
-              <Icon name="delete" className="text-[20px]" />
-            </button>
+          <div key={i} className="rounded-lg border border-outline-variant/30 p-xs lg:border-0 lg:p-0">
+            <div className="grid grid-cols-2 gap-xs lg:grid-cols-[6.5rem_1fr_4.5rem_5rem_6.5rem_4.5rem_6rem_2rem] lg:items-center">
+              <select value={l.kind} onChange={(e) => update(i, { kind: e.target.value as LineKind })} className={inputCls} aria-label="Soort">
+                {LINE_KINDS.map((k) => (
+                  <option key={k} value={k}>
+                    {LINE_KIND_LABEL[k]}
+                  </option>
+                ))}
+              </select>
+              <input value={l.description} onChange={(e) => update(i, { description: e.target.value })} placeholder="Omschrijving" className={`${inputCls} col-span-2 lg:col-span-1`} aria-label="Omschrijving" />
+              <input value={l.quantity} onChange={(e) => update(i, { quantity: e.target.value })} inputMode="decimal" className={inputCls} aria-label="Aantal" />
+              <select value={l.unit} onChange={(e) => update(i, { unit: e.target.value })} className={inputCls} aria-label="Eenheid">
+                {lineUnits.map((u) => (
+                  <option key={u} value={u}>
+                    {u}
+                  </option>
+                ))}
+              </select>
+              <input value={l.unitPrice} onChange={(e) => update(i, { unitPrice: e.target.value })} inputMode="decimal" placeholder="0,00" className={inputCls} aria-label="Prijs" />
+              <select value={l.vat} onChange={(e) => update(i, { vat: Number(e.target.value) })} className={inputCls} aria-label="Btw">
+                {VAT_RATES.map((v) => (
+                  <option key={v} value={v}>
+                    {v}%
+                  </option>
+                ))}
+              </select>
+              <div className="text-right text-body-md tabular-nums text-on-surface">{formatMoney(net)}</div>
+              <button type="button" onClick={() => setLines((ls) => (ls.length > 1 ? ls.filter((_, idx) => idx !== i) : [blank(defaultVat)]))} className="justify-self-end text-on-surface-variant hover:text-error" aria-label="Regel verwijderen">
+                <Icon name="delete" className="text-[20px]" />
+              </button>
+            </div>
+            {fields.length > 0 && (
+              <div className="mt-xs grid grid-cols-2 gap-xs sm:grid-cols-3 lg:grid-cols-5 lg:pl-[6.5rem]">
+                {fields.map((f) => (
+                  <label key={f.key} className="flex flex-col gap-[2px]">
+                    <span className="text-label-sm text-on-surface-variant">
+                      {f.label}
+                      {f.unit ? ` (${f.unit})` : ""}
+                    </span>
+                    {f.type === "select" ? (
+                      <select value={l.details[f.key] ?? ""} onChange={(e) => updateDetail(i, f.key, e.target.value)} className={inputCls} aria-label={f.label}>
+                        <option value="">—</option>
+                        {f.options?.map((o) => (
+                          <option key={o} value={o}>
+                            {o}
+                          </option>
+                        ))}
+                      </select>
+                    ) : (
+                      <input
+                        value={l.details[f.key] ?? ""}
+                        onChange={(e) => updateDetail(i, f.key, e.target.value)}
+                        inputMode={f.type === "number" ? "decimal" : undefined}
+                        placeholder={f.placeholder}
+                        className={inputCls}
+                        aria-label={f.label}
+                      />
+                    )}
+                  </label>
+                ))}
+              </div>
+            )}
           </div>
         );
       })}
@@ -148,7 +194,7 @@ export function DocumentEditor({
               if (!item) return;
               setLines((ls) => [
                 ...ls.filter((l) => l.description.trim() !== ""),
-                { kind: item.kind, description: item.name, quantity: "1", unit: item.unit, unitPrice: String(item.priceEuros).replace(".", ","), vat: item.vat },
+                { kind: item.kind, description: item.name, quantity: "1", unit: item.unit, unitPrice: String(item.priceEuros).replace(".", ","), vat: item.vat, details: {} },
               ]);
             }}
             className={`${inputCls} w-auto`}
@@ -209,7 +255,7 @@ export function DocumentEditor({
 }
 
 function blank(vat: number): EditorLine {
-  return { kind: "labor", description: "", quantity: "1", unit: "uur", unitPrice: "", vat };
+  return { kind: "labor", description: "", quantity: "1", unit: "uur", unitPrice: "", vat, details: {} };
 }
 
 function Row({ label, value, muted, bold }: { label: string; value: string; muted?: boolean; bold?: boolean }) {

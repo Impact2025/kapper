@@ -17,6 +17,7 @@ import {
 } from "@/lib/jobs/model";
 import { siteUrlFor } from "@/lib/verticals/site-url";
 import { eligibleForReducedVatHint } from "@/lib/jobs/fields";
+import { lineUnitsFor } from "@/lib/jobs/labels";
 import { getJobRow } from "@/lib/jobs/queries";
 import { Badge, Card } from "@/components/salon/dash-ui";
 import { Icon } from "@/components/ui/icon";
@@ -61,6 +62,7 @@ export default async function DocumentPage({ params }: { params: Promise<{ id: s
       unit: l.unit,
       unitPrice: (l.unitPriceCents / 100).toFixed(2).replace(".", ","),
       vat: l.vatRatePercent,
+      details: l.details ?? {},
     }));
   } else {
     // keep totals honest even if a stored breakdown were ever missing
@@ -151,6 +153,8 @@ export default async function DocumentPage({ params }: { params: Promise<{ id: s
             catalog={catalog}
             defaultVat={ctx.pack.vatRates.treatment}
             canSend={ctx.can.quotes}
+            lineUnits={lineUnitsFor(ctx.pack)}
+            pack={ctx.pack}
           />
           <div className="mt-md border-t border-outline-variant/30 pt-md">
             <ActionForm action={deleteDraftAction} submitLabel="Concept verwijderen" buttonClassName={btnDanger} confirm="Dit concept verwijderen?">
@@ -199,6 +203,7 @@ export default async function DocumentPage({ params }: { params: Promise<{ id: s
             introText={doc.introText}
             footerText={doc.footerText}
             paid={doc.status === "paid"}
+            pack={ctx.pack}
           />
         </>
       )}

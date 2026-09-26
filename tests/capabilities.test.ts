@@ -2,10 +2,11 @@ import { describe, it, expect, vi } from "vitest";
 
 vi.mock("server-only", () => ({}));
 
-import { listVerticals, KAPPER_VERTICAL, LOODGIETER_VERTICAL, SCHILDER_VERTICAL } from "@/lib/verticals";
+import { listVerticals, KAPPER_VERTICAL, LOODGIETER_VERTICAL, SCHILDER_VERTICAL, KOZIJN_VERTICAL } from "@/lib/verticals";
 import { INTEGRATIONS, integrationsFor, liveAgendaProvidersFor, plannedIntegrationsFor } from "@/lib/capabilities/integrations";
 import { getReceptionistTools, RECEPTIONIST_TOOLS } from "@/lib/ai/receptionist";
 import { fieldsForCategory, sanitizeDetails, detailRows, eligibleForReducedVatHint } from "@/lib/jobs/fields";
+import { lineFieldsForKind, sanitizeLineDetails, lineDetailRows, lineDetailSummary } from "@/lib/jobs/line-fields";
 import { buildJobReport } from "@/lib/jobs/report-model";
 
 describe("integration registry", () => {
@@ -77,6 +78,41 @@ describe("vak-specific klus fields", () => {
     expect(eligibleForReducedVatHint({ woningOuderDan2Jaar: "Ja" })).toBe(true);
     expect(eligibleForReducedVatHint({ woningOuderDan2Jaar: "Nee" })).toBe(false);
     expect(eligibleForReducedVatHint(null)).toBe(false);
+  });
+});
+
+describe("positielijst-offertes: vak-specific regelvelden", () => {
+  it("kozijn offers B×H/profiel/glas only on material-regels, and other packs offer none", () => {
+    expect(lineFieldsForKind(KOZIJN_VERTICAL, "material").map((f) => f.key)).toEqual(["positie", "breedteMm", "hoogteMm", "profiel", "glas"]);
+    expect(lineFieldsForKind(KOZIJN_VERTICAL, "labor")).toEqual([]);
+    expect(lineFieldsForKind(LOODGIETER_VERTICAL, "material")).toEqual([]);
+  });
+
+  it("sanitizes: unknown keys dropped, numbers validated, selects restricted", () => {
+    const input: Record<string, string> = {
+      positie: "  1a  ",
+      breedteMm: "1200",
+      hoogteMm: "abc",
+      profiel: "Kunststof",
+      glas: "Onzin",
+      hacker: "x",
+    };
+    const out = sanitizeLineDetails(KOZIJN_VERTICAL, "material", (k) => input[k]);
+    expect(out).toEqual({ positie: "1a", breedteMm: "1200", profiel: "Kunststof" });
+  });
+
+  it("builds a compact B×H summary for the editor and the printed sheet", () => {
+    const details = { positie: "1", breedteMm: "1200", hoogteMm: "1500", profiel: "Kunststof", glas: "HR++" };
+    expect(lineDetailRows(KOZIJN_VERTICAL, "material", details)).toEqual([
+      { label: "Positie", value: "1" },
+      { label: "Breedte", value: "1200 mm" },
+      { label: "Hoogte", value: "1500 mm" },
+      { label: "Profiel", value: "Kunststof" },
+      { label: "Glas", value: "HR++" },
+    ]);
+    expect(lineDetailSummary(KOZIJN_VERTICAL, "material", details)).toBe("1 · 1200 mm · 1500 mm · Kunststof · HR++");
+    expect(lineDetailSummary(KOZIJN_VERTICAL, "material", null)).toBe("");
+    expect(lineDetailSummary(KOZIJN_VERTICAL, "labor", details)).toBe("");
   });
 });
 

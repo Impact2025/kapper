@@ -13,7 +13,7 @@ export default async function PublicQuotePage({ params }: { params: Promise<{ to
   const { token } = await params;
   const found = await getDocumentByToken(token);
   if (!found || found.doc.kind !== "quote") notFound();
-  const { doc, lines, business } = found;
+  const { doc, lines, business, pack } = found;
 
   const expired = doc.status === "expired" || isQuoteExpired({ status: doc.status, validUntil: doc.validUntil });
   const answerable = doc.status === "sent" && !expired;
@@ -48,6 +48,7 @@ export default async function PublicQuotePage({ params }: { params: Promise<{ to
           dueAt={doc.dueAt}
           introText={doc.introText}
           footerText={doc.footerText}
+          pack={pack}
         />
 
         {answerable && <QuoteResponse token={token} />}
