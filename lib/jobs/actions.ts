@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { and, eq, sql } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "@/lib/db";
-import { customers, salons, treatments } from "@/lib/db/schema";
+import { customers, salons, staff, treatments } from "@/lib/db/schema";
 import { customerAddresses, jobs } from "@/lib/db/schema-jobs";
 import { requireJobOwner, UPGRADE_ASSETS, UPGRADE_CONTRACTS, UPGRADE_QUOTES } from "@/lib/jobs/access";
 import {
@@ -71,6 +71,18 @@ function parseEuros(input: unknown): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
+/** A staffId from the form only if that medewerker belongs to this salon —
+ * otherwise a crafted POST could link (and then display) another salon's staff. */
+async function ownedStaffId(salonId: string, raw: string): Promise<string | null> {
+  if (!uuid.safeParse(raw).success) return null;
+  const [s] = await db
+    .select({ id: staff.id })
+    .from(staff)
+    .where(and(eq(staff.id, raw), eq(staff.salonId, salonId)))
+    .limit(1);
+  return s?.id ?? null;
+}
+
 function revalidateJob(jobId?: string) {
   revalidatePath("/dashboard/klussen");
   revalidatePath("/dashboard/planbord");
@@ -133,7 +145,13 @@ export async function createJobAction(_prev: JobActionState | undefined, fd: For
     const [a] = await db
       .select({ id: customerAddresses.id })
       .from(customerAddresses)
-      .where(and(eq(customerAddresses.id, addressId), eq(customerAddresses.customerId, customerId)))
+      .where(
+        and(
+          eq(customerAddresses.id, addressId),
+          eq(customerAddresses.customerId, customerId),
+          eq(customerAddresses.salonId, ctx.salonId),
+        ),
+      )
       .limit(1);
     if (!a) addressId = null;
   }
@@ -165,7 +183,7 @@ export async function createJobAction(_prev: JobActionState | undefined, fd: For
     category: parsed.data.category,
     priority: parsed.data.priority as JobPriority | undefined,
     source: "manual",
-    assignedStaffId: uuid.safeParse(staffId).success ? staffId : null,
+    assignedStaffId: await ownedStaffId(ctx.salonId, staffId),
     scheduledStart: start,
     estimatedMinutes: Number.isFinite(estimated) && estimated > 0 ? Math.min(estimated, 60 * 24) : null,
     actorUserId: ctx.userId,
@@ -206,7 +224,7 @@ export async function scheduleJobAction(_prev: JobActionState | undefined, fd: F
     jobId,
     {
       start,
-      staffId: uuid.safeParse(staffRaw).success ? staffRaw : null,
+      staffId: await ownedStaffId(ctx.salonId, staffRaw),
       minutes: Number.isFinite(minutes) && minutes > 0 ? Math.min(minutes, 60 * 24) : null,
     },
     ctx.userId,
@@ -277,7 +295,7 @@ export async function updateJobDetailsAction(_prev: JobActionState | undefined, 
       priority: d.priority,
       workSummary: d.workSummary ?? null,
       internalNotes: d.internalNotes ?? null,
-      assignedStaffId: uuid.safeParse(staffRaw).success ? staffRaw : null,
+      assignedStaffId: await ownedStaffId(ctx.salonId, staffRaw),
       details: sanitizeDetails(ctx.pack, category?.key ?? "overig", (name) => (fd.get(name) as string | null) ?? null),
     })
     .where(and(eq(jobs.id, d.jobId), eq(jobs.salonId, ctx.salonId)));
@@ -573,7 +591,7 @@ export async function addAssetAction(_prev: JobActionState | undefined, fd: Form
   const basis = lastServiceAt ?? installedAt;
   if (!nextServiceDue && basis && kindDef.serviceIntervalMonths) nextServiceDue = addMonths(basis, kindDef.serviceIntervalMonths);
 
-  await createAsset({
+  const created = await createAsset({
     salonId: ctx.salonId,
     customerId,
     addressId: uuid.safeParse(addressId).success ? addressId : null,
@@ -587,6 +605,7 @@ export async function addAssetAction(_prev: JobActionState | undefined, fd: Form
     nextServiceDue,
     notes: opt(fd, "notes"),
   });
+  if ("error" in created) return { error: created.error };
   revalidatePath(`/dashboard/klanten/${customerId}`);
   revalidatePath("/dashboard/onderhoud");
   return { success: true };
@@ -628,7 +647,7 @@ export async function createContractAction(_prev: JobActionState | undefined, fd
   const assetId = str(fd, "assetId");
   const addressId = str(fd, "addressId");
 
-  await createContract({
+  const created = await createContract({
     salonId: ctx.salonId,
     customerId: parsed.data.customerId,
     name: parsed.data.name,
@@ -641,6 +660,7 @@ export async function createContractAction(_prev: JobActionState | undefined, fd
     addressId: uuid.safeParse(addressId).success ? addressId : null,
     notes: opt(fd, "notes"),
   });
+  if ("error" in created) return { error: created.error };
   revalidatePath(`/dashboard/klanten/${parsed.data.customerId}`);
   revalidatePath("/dashboard/onderhoud");
   return { success: true };

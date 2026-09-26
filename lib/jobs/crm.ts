@@ -7,6 +7,40 @@ import { findCustomerByPhone, upsertCustomerByPhone } from "@/lib/customers/quer
 import { listJobs } from "@/lib/jobs/queries";
 import { normalizePostalCode, type CustomerType } from "@/lib/jobs/model";
 
+/* ------------------------------ tenant guards ------------------------------ */
+/** Ids from a form are untrusted: a crafted POST can carry another salon's
+ * klant/adres/installatie. Every write that links to one checks ownership. */
+async function customerInSalon(salonId: string, customerId: string) {
+  const [c] = await db
+    .select({ id: customers.id })
+    .from(customers)
+    .where(and(eq(customers.id, customerId), eq(customers.salonId, salonId)))
+    .limit(1);
+  return !!c;
+}
+
+/** The address id if it belongs to this salon's klant, else null. */
+async function ownedAddressId(salonId: string, customerId: string, addressId: string | null | undefined) {
+  if (!addressId) return null;
+  const [a] = await db
+    .select({ id: customerAddresses.id })
+    .from(customerAddresses)
+    .where(and(eq(customerAddresses.id, addressId), eq(customerAddresses.salonId, salonId), eq(customerAddresses.customerId, customerId)))
+    .limit(1);
+  return a?.id ?? null;
+}
+
+/** The asset id if it belongs to this salon's klant, else null. */
+async function ownedAssetId(salonId: string, customerId: string, assetId: string | null | undefined) {
+  if (!assetId) return null;
+  const [a] = await db
+    .select({ id: assets.id })
+    .from(assets)
+    .where(and(eq(assets.id, assetId), eq(assets.salonId, salonId), eq(assets.customerId, customerId)))
+    .limit(1);
+  return a?.id ?? null;
+}
+
 /* ------------------------------ customers ------------------------------ */
 /** Klus-CRM customer search: naam, bedrijf, telefoon, e-mail én adres
  * (straat/postcode/plaats) — a plumber often only knows "die man op de
@@ -78,9 +112,21 @@ export async function getCustomer360(salonId: string, customerId: string) {
   if (!customer) return null;
 
   const [addresses, customerAssets, contracts, customerJobs, docs] = await Promise.all([
-    db.select().from(customerAddresses).where(eq(customerAddresses.customerId, customerId)).orderBy(asc(customerAddresses.createdAt)),
-    db.select().from(assets).where(eq(assets.customerId, customerId)).orderBy(asc(assets.createdAt)),
-    db.select().from(serviceContracts).where(eq(serviceContracts.customerId, customerId)).orderBy(asc(serviceContracts.nextDueAt)),
+    db
+      .select()
+      .from(customerAddresses)
+      .where(and(eq(customerAddresses.salonId, salonId), eq(customerAddresses.customerId, customerId)))
+      .orderBy(asc(customerAddresses.createdAt)),
+    db
+      .select()
+      .from(assets)
+      .where(and(eq(assets.salonId, salonId), eq(assets.customerId, customerId)))
+      .orderBy(asc(assets.createdAt)),
+    db
+      .select()
+      .from(serviceContracts)
+      .where(and(eq(serviceContracts.salonId, salonId), eq(serviceContracts.customerId, customerId)))
+      .orderBy(asc(serviceContracts.nextDueAt)),
     listJobs(salonId, { customerId, limit: 100 }),
     db
       .select({
@@ -133,6 +179,7 @@ export interface AddressInput {
 export async function createAddress(input: AddressInput) {
   const postalCode = normalizePostalCode(input.postalCode);
   if (!postalCode) return { error: "Ongeldige postcode (bijv. 1234 AB)." as const };
+  if (!(await customerInSalon(input.salonId, input.customerId))) return { error: "Klant niet gevonden." as const };
   const [row] = await db
     .insert(customerAddresses)
     .values({
@@ -183,12 +230,14 @@ export interface AssetInput {
 }
 
 export async function createAsset(input: AssetInput) {
+  if (!(await customerInSalon(input.salonId, input.customerId))) return { error: "Klant niet gevonden." as const };
+  const addressId = await ownedAddressId(input.salonId, input.customerId, input.addressId);
   const [row] = await db
     .insert(assets)
     .values({
       salonId: input.salonId,
       customerId: input.customerId,
-      addressId: input.addressId ?? null,
+      addressId,
       kind: input.kind,
       brand: input.brand?.trim() || null,
       model: input.model?.trim() || null,
@@ -200,7 +249,7 @@ export async function createAsset(input: AssetInput) {
       notes: input.notes?.trim() || null,
     })
     .returning();
-  return row!;
+  return { ok: true as const, asset: row! };
 }
 
 export async function deleteAsset(salonId: string, assetId: string) {
@@ -247,13 +296,18 @@ export interface ContractInput {
 }
 
 export async function createContract(input: ContractInput) {
+  if (!(await customerInSalon(input.salonId, input.customerId))) return { error: "Klant niet gevonden." as const };
+  const [addressId, assetId] = await Promise.all([
+    ownedAddressId(input.salonId, input.customerId, input.addressId),
+    ownedAssetId(input.salonId, input.customerId, input.assetId),
+  ]);
   const [row] = await db
     .insert(serviceContracts)
     .values({
       salonId: input.salonId,
       customerId: input.customerId,
-      addressId: input.addressId ?? null,
-      assetId: input.assetId ?? null,
+      addressId,
+      assetId,
       name: input.name.trim(),
       jobCategory: input.jobCategory,
       priceCents: input.priceCents,
@@ -265,10 +319,13 @@ export async function createContract(input: ContractInput) {
       notes: input.notes?.trim() || null,
     })
     .returning();
-  if (input.assetId) {
-    await db.update(assets).set({ nextServiceDue: input.firstDueAt }).where(eq(assets.id, input.assetId));
+  if (assetId) {
+    await db
+      .update(assets)
+      .set({ nextServiceDue: input.firstDueAt })
+      .where(and(eq(assets.id, assetId), eq(assets.salonId, input.salonId)));
   }
-  return row!;
+  return { ok: true as const, contract: row! };
 }
 
 export async function setContractStatus(salonId: string, contractId: string, status: "active" | "paused" | "ended") {
