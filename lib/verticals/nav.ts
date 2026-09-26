@@ -30,11 +30,46 @@ export const NAV_CATALOG: Record<NavKey, NavCatalogItem> = {
   support: { href: "/dashboard/support", label: "Support", icon: "help" },
 };
 
+/** Sidebar sections, in display order. The overview stays ungrouped on top. */
+export const NAV_GROUP_ORDER = ["work", "money", "reception", "business"] as const;
+export type NavGroup = (typeof NAV_GROUP_ORDER)[number];
+
+export const NAV_GROUP_LABEL: Record<NavGroup, string> = {
+  work: "Dagelijks werk",
+  money: "Geld",
+  reception: "AI-receptie",
+  business: "Bedrijf",
+};
+
+/** Which section every destination lives in; sector-neutral like the catalog. */
+const NAV_GROUP: Partial<Record<NavKey, NavGroup>> = {
+  jobs: "work",
+  planner: "work",
+  appointments: "work",
+  customers: "work",
+  maintenance: "work",
+  billing: "money",
+  kassa: "money",
+  webshop: "money",
+  reports: "money",
+  ai: "reception",
+  conversations: "reception",
+  escalations: "reception",
+  practice: "business",
+  retention: "business",
+  noshow: "business",
+  integrations: "business",
+  subscription: "business",
+  support: "business",
+};
+
 export interface ResolvedNavItem {
   key: NavKey;
   href: string;
   label: string;
   icon: string;
+  /** Undefined = top level (overview). */
+  group?: NavGroup;
 }
 
 export function resolveNav(entries: NavEntry[]): ResolvedNavItem[] {
@@ -42,6 +77,6 @@ export function resolveNav(entries: NavEntry[]): ResolvedNavItem[] {
   const withSupport = entries.some((e) => e.key === "support") ? entries : [...entries, { key: "support" as const }];
   return withSupport.map((e) => {
     const base = NAV_CATALOG[e.key];
-    return { key: e.key, href: base.href, icon: base.icon, label: e.label ?? base.label };
+    return { key: e.key, href: base.href, icon: base.icon, label: e.label ?? base.label, group: NAV_GROUP[e.key] };
   });
 }

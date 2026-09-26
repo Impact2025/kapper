@@ -6,7 +6,7 @@ import { login, type LoginState } from "@/lib/auth/actions";
 
 const initial: LoginState = {};
 
-export function LoginForm() {
+export function LoginForm({ emailPlaceholder = "jij@salon.nl" }: { emailPlaceholder?: string }) {
   const [state, action, pending] = useActionState(login, initial);
 
   return (
@@ -25,7 +25,7 @@ export function LoginForm() {
           autoComplete="email"
           required
           className="rounded-lg border border-outline-variant bg-surface-container-lowest px-sm py-sm text-body-md outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
-          placeholder="jij@salon.nl"
+          placeholder={emailPlaceholder}
         />
         {state.fieldErrors?.email && (
           <p className="text-label-sm text-error">{state.fieldErrors.email[0]}</p>

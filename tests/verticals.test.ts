@@ -12,6 +12,8 @@ import {
   listLiveVerticals,
   getVerticalConfig,
   verticalForHost,
+  verticalForLogin,
+  isUnclaimedHost,
   isVerticalId,
   resolveNav,
   NAV_CATALOG,
@@ -45,7 +47,7 @@ describe("vertical registry", () => {
   });
 
   it("only live verticals are public", () => {
-    expect(listLiveVerticals().map((v) => v.id).sort()).toEqual(["kapper", "loodgieter"]);
+    expect(listLiveVerticals().map((v) => v.id).sort()).toEqual(["hovenier", "kapper", "loodgieter"]);
   });
 });
 
@@ -203,7 +205,7 @@ describe("onboarding", () => {
   const none = { business: false, services: false, team: false, whatsapp: false, phone: false, firstJob: false };
 
   it("falls back to the default set and derives labels from the pack terms", () => {
-    const steps = resolveOnboarding(LOODGIETER_VERTICAL, { ...none, services: true });
+    const steps = resolveOnboarding({ ...LOODGIETER_VERTICAL, onboarding: undefined }, { ...none, services: true });
     expect(steps.map((s) => s.key)).toEqual(["business", "services", "team", "whatsapp", "phone"]);
     expect(steps.find((s) => s.key === "team")?.label).toMatch(new RegExp(`^${LOODGIETER_VERTICAL.terms.practitionerPlural}`, "i"));
     expect(steps.find((s) => s.key === "services")?.done).toBe(true);
@@ -297,11 +299,12 @@ describe("pack conformance (every vertical, current and future)", () => {
 });
 
 describe("hovenier", () => {
-  it("is a job vertical with its own green theme, and does not claim its host until live", () => {
+  it("is a live job vertical with its own green theme that claims its hosts", () => {
     expect(HOVENIER_VERTICAL.archetype).toBe("job");
     expect(HOVENIER_VERTICAL.theme?.primary).not.toBe(undefined);
-    expect(HOVENIER_VERTICAL.live).toBe(false);
-    expect(verticalForHost("hovenierassistent.nl").id).toBe("kapper");
+    expect(HOVENIER_VERTICAL.live).toBe(true);
+    expect(verticalForHost("hovenierassistent.nl").id).toBe("hovenier");
+    expect(verticalForHost("www.hovenierassistent.nl").id).toBe("hovenier");
   });
 
   it("treats stormschade as spoed and has no gas/water-leak categories", () => {
@@ -319,5 +322,110 @@ describe("hovenier", () => {
   it("only offers klusvelden for existing categories", () => {
     const cats = new Set(HOVENIER_VERTICAL.jobCategories.map((c) => c.key));
     for (const f of HOVENIER_VERTICAL.jobFields) for (const c of f.categories ?? []) expect(cats.has(c)).toBe(true);
+  });
+});
+
+describe("hovenier extensies", () => {
+  it("offers hovenier units (m³, aanhanger) and keeps the default set for others", async () => {
+    const { lineUnitsFor } = await import("@/lib/jobs/labels");
+    expect(lineUnitsFor(HOVENIER_VERTICAL)).toEqual(expect.arrayContaining(["m²", "m³", "aanhanger"]));
+    expect(lineUnitsFor(LOODGIETER_VERTICAL)).toEqual(["uur", "stuk", "m", "m²", "post", "dag"]);
+  });
+
+  it("uses tuin wording for assets and only enables seasonal contracts + photo timeline for hovenier", async () => {
+    const { assetTerms } = await import("@/lib/jobs/labels");
+    expect(assetTerms(HOVENIER_VERTICAL).passport).toBe("tuinpaspoort");
+    expect(assetTerms(LOODGIETER_VERTICAL).passport).toBe("installatiepaspoort");
+    expect(HOVENIER_VERTICAL.features.seasonalContracts).toBe(true);
+    expect(HOVENIER_VERTICAL.features.photoTimeline).toBe(true);
+    expect(LOODGIETER_VERTICAL.features.seasonalContracts).toBeFalsy();
+    expect(LOODGIETER_VERTICAL.features.photoTimeline).toBeFalsy();
+  });
+});
+
+describe("schilder", () => {
+  it("is a job vertical with its own blue theme, and does not claim its host until live", () => {
+    expect(SCHILDER_VERTICAL.archetype).toBe("job");
+    expect(SCHILDER_VERTICAL.theme?.primary).not.toBe(undefined);
+    expect(SCHILDER_VERTICAL.live).toBe(false);
+    expect(verticalForHost("schildersassistent.nl").id).toBe("kapper");
+  });
+
+  it("treats only spoedherstel as spoed and has no gas/water-leak or storm categories", () => {
+    const urgent = SCHILDER_VERTICAL.jobCategories.filter((c) => c.urgent).map((c) => c.key);
+    expect(urgent).toEqual(["spoedherstel"]);
+    const keys = SCHILDER_VERTICAL.jobCategories.map((c) => c.key);
+    expect(keys).not.toContain("lekkage");
+    expect(keys).not.toContain("storm");
+  });
+
+  it("has its own agent rules, pricing copy and onboarding without another trade's vocabulary", () => {
+    const copy = JSON.stringify(plansFor(SCHILDER_VERTICAL).map((p) => [p.name, p.tagline, p.features]));
+    expect(copy).not.toMatch(/monteur|installatiepaspoort|serienummer|cv-|ketel/i);
+    expect(copy).toMatch(/schilder/i);
+    expect(SCHILDER_VERTICAL.agent.prompt?.spoedRule).toMatch(/asbest|lood/i);
+    expect(SCHILDER_VERTICAL.onboarding?.length).toBeGreaterThan(0);
+  });
+
+  it("only offers klusvelden for existing categories", () => {
+    const cats = new Set(SCHILDER_VERTICAL.jobCategories.map((c) => c.key));
+    for (const f of SCHILDER_VERTICAL.jobFields) for (const c of f.categories ?? []) expect(cats.has(c)).toBe(true);
+  });
+
+  it("offers schilder units and object wording, and enables the photo timeline only", async () => {
+    const { lineUnitsFor, assetTerms } = await import("@/lib/jobs/labels");
+    expect(lineUnitsFor(SCHILDER_VERTICAL)).toEqual(expect.arrayContaining(["m²", "kamer", "rol"]));
+    expect(assetTerms(SCHILDER_VERTICAL).passport).toBe("onderhoudspaspoort");
+    expect(SCHILDER_VERTICAL.features.photoTimeline).toBe(true);
+    expect(SCHILDER_VERTICAL.features.seasonalContracts).toBeFalsy();
+  });
+
+  it("keeps the category keys that existing klussen may already use", () => {
+    const keys = SCHILDER_VERTICAL.jobCategories.map((c) => c.key);
+    expect(keys).toEqual(expect.arrayContaining(["binnen", "buiten", "houtrot", "stucwerk", "overig"]));
+  });
+});
+
+describe("loodgieter (live) — uitbreidingen zijn additief", () => {
+  it("has its own theme, onboarding and no seasonal or photo-timeline extras", () => {
+    expect(LOODGIETER_VERTICAL.theme?.primary).not.toBe(undefined);
+    expect(LOODGIETER_VERTICAL.onboarding?.length).toBeGreaterThan(0);
+    expect(LOODGIETER_VERTICAL.live).toBe(true);
+  });
+
+  it("keeps every category key that existing klussen may already use", () => {
+    const keys = LOODGIETER_VERTICAL.jobCategories.map((c) => c.key);
+    expect(keys).toEqual(
+      expect.arrayContaining(["lekkage", "gaslucht", "verstopping", "cv_storing", "cv_onderhoud", "cv_installatie", "sanitair", "badkamer", "overig"]),
+    );
+    expect(keys).toEqual(expect.arrayContaining(["riool", "boiler", "verwarming"]));
+  });
+
+  it("keeps lekkage and gaslucht as the only spoed categories", () => {
+    expect(LOODGIETER_VERTICAL.jobCategories.filter((c) => c.urgent).map((c) => c.key).sort()).toEqual(["gaslucht", "lekkage"]);
+  });
+
+  it("only offers klusvelden for existing categories", () => {
+    const cats = new Set(LOODGIETER_VERTICAL.jobCategories.map((c) => c.key));
+    for (const f of LOODGIETER_VERTICAL.jobFields) for (const c of f.categories ?? []) expect(cats.has(c)).toBe(true);
+  });
+});
+
+describe("verticalForLogin", () => {
+  it("laat op een unclaimed host ?vertical de branding kiezen (ook niet-live packs)", () => {
+    expect(verticalForLogin("localhost:8077", "hovenier").id).toBe("hovenier");
+    expect(verticalForLogin("localhost:8077", "schilder").id).toBe("schilder");
+  });
+  it("valt terug op kapper bij ontbrekende of onbekende waarde", () => {
+    expect(verticalForLogin("localhost:8077", undefined).id).toBe("kapper");
+    expect(verticalForLogin("localhost:8077", "onzin").id).toBe("kapper");
+  });
+  it("negeert ?vertical op een productiedomein: de host wint", () => {
+    expect(verticalForLogin("loodgietersassistent.nl", "kapper").id).toBe("loodgieter");
+    expect(verticalForLogin("www.kappersassistent.nl", "loodgieter").id).toBe("kapper");
+  });
+  it("toont de picker alleen op unclaimed hosts", () => {
+    expect(isUnclaimedHost("localhost:2190")).toBe(true);
+    expect(isUnclaimedHost("kappersassistent.nl")).toBe(false);
   });
 });

@@ -61,6 +61,25 @@ export function claimedVerticalForHost(host: string | null | undefined): Vertica
 }
 
 /**
+ * Which vertical's branding the login screens show. A live vertical's own
+ * domain always wins; on an unclaimed host (localhost, previews — and the
+ * not-yet-live packs such as hovenier/schilder) an explicit `?vertical=` picks
+ * the pack, so every assistent can be logged into and tested before its domain
+ * is wired up. Cosmetic only: the dashboard themes on the salon's own vertical.
+ */
+export function verticalForLogin(host: string | null | undefined, requested: string | null | undefined): VerticalPack {
+  const claimed = claimedVerticalForHost(host);
+  if (claimed) return claimed;
+  return isVerticalId(requested) ? VERTICAL_REGISTRY[requested]! : KAPPER_VERTICAL;
+}
+
+/** True when the host doesn't belong to a live vertical, so a vertical picker
+ * (dev/preview) makes sense. Never on a production trade domain. */
+export function isUnclaimedHost(host: string | null | undefined): boolean {
+  return claimedVerticalForHost(host) === null;
+}
+
+/**
  * Keeps every customer inside their own environment: a salon of vertical X
  * that reaches the app on the domain of vertical Y (a plumber on
  * kappersassistent.nl) must not see a dashboard there. Returns the vertical
