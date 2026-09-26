@@ -28,8 +28,8 @@ const JOB_PACKS = listVerticals().filter((v) => v.archetype === "job");
 const KAPPER_WORDS = /kapper|kapsalon|salon|stylist|hoofdhuid|patch-?test|balayage|knippen/i;
 
 describe("vertical registry", () => {
-  it("has kapper, loodgieter, schilder and hovenier", () => {
-    expect(listVerticals().map((v) => v.id).sort()).toEqual(["hovenier", "kapper", "loodgieter", "schilder"]);
+  it("has kapper, loodgieter, schilder, hovenier and kozijn", () => {
+    expect(listVerticals().map((v) => v.id).sort()).toEqual(["hovenier", "kapper", "kozijn", "loodgieter", "schilder"]);
   });
 
   it("falls back to kapper for unknown ids", () => {

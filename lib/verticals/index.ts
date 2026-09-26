@@ -1,11 +1,12 @@
 import { KAPPER_VERTICAL } from "./kapper";
 import { HOVENIER_VERTICAL } from "./hovenier";
+import { KOZIJN_VERTICAL } from "./kozijn";
 import { LOODGIETER_VERTICAL } from "./loodgieter";
 import { SCHILDER_VERTICAL } from "./schilder";
 import type { VerticalPack } from "./types";
 
 export * from "./types";
-export { HOVENIER_VERTICAL, KAPPER_VERTICAL, LOODGIETER_VERTICAL, SCHILDER_VERTICAL };
+export { HOVENIER_VERTICAL, KAPPER_VERTICAL, KOZIJN_VERTICAL, LOODGIETER_VERTICAL, SCHILDER_VERTICAL };
 export { NAV_CATALOG, resolveNav, type ResolvedNavItem } from "./nav";
 
 export const DEFAULT_VERTICAL_ID = KAPPER_VERTICAL.id;
@@ -15,6 +16,7 @@ const VERTICAL_REGISTRY: Record<string, VerticalPack> = {
   [LOODGIETER_VERTICAL.id]: LOODGIETER_VERTICAL,
   [SCHILDER_VERTICAL.id]: SCHILDER_VERTICAL,
   [HOVENIER_VERTICAL.id]: HOVENIER_VERTICAL,
+  [KOZIJN_VERTICAL.id]: KOZIJN_VERTICAL,
 };
 
 export function listVerticals(): VerticalPack[] {

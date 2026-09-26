@@ -3,7 +3,7 @@ import { describe, it, expect, vi } from "vitest";
 vi.mock("server-only", () => ({}));
 
 import { buildJobSystemPrompt, buildJobTools, agentPromptFor } from "@/lib/ai/job-receptionist";
-import { HOVENIER_VERTICAL, LOODGIETER_VERTICAL, SCHILDER_VERTICAL, listVerticals } from "@/lib/verticals";
+import { HOVENIER_VERTICAL, KOZIJN_VERTICAL, LOODGIETER_VERTICAL, SCHILDER_VERTICAL, listVerticals } from "@/lib/verticals";
 import type { SalonContext } from "@/lib/ai/receptionist";
 
 const salon = {
@@ -15,6 +15,13 @@ const salon = {
 
 const opts = { knowledgeText: "", servicesBlock: "DIENSTEN: []", staffJson: "[]", locationsJson: "[]" };
 const promptFor = (pack: typeof LOODGIETER_VERTICAL) => buildJobSystemPrompt(salon, pack, opts);
+
+/** A vak that declares no rules of its own — the generic wording must stay free of plumber hazards. */
+const BARE_PACK: typeof LOODGIETER_VERTICAL = {
+  ...SCHILDER_VERTICAL,
+  agent: { tools: SCHILDER_VERTICAL.agent.tools },
+  jobCategories: SCHILDER_VERTICAL.jobCategories.filter((c) => c.key === "overig"),
+};
 
 const JOB_PACKS = listVerticals().filter((v) => v.archetype === "job");
 
@@ -30,10 +37,18 @@ describe("job receptionist — vak rules live in the pack", () => {
   });
 
   it("does not leak plumber hazards into a vak that declares no rules of its own", () => {
-    const p = promptFor(SCHILDER_VERTICAL);
+    const p = promptFor(BARE_PACK);
     expect(p).not.toMatch(/gas|hoofdkraan|gootsteen|ketel|lekkage|0800-9009/i);
     expect(p).toContain("SPOED:");
     expect(p).toContain("escalate_to_staff");
+  });
+
+  it("gives the schilder asbest, lood and waterschade rules instead of gas and cv", () => {
+    const p = promptFor(SCHILDER_VERTICAL);
+    expect(p).toContain("asbest");
+    expect(p).toContain("loodhoudende verf");
+    expect(p).toContain("nooit een vaste prijs");
+    expect(p).not.toMatch(/gaslucht|hoofdkraan|gootsteen|ketel|0800-9009/i);
   });
 
   it("gives the hovenier storm and tree rules instead of gas and water", () => {
@@ -43,6 +58,13 @@ describe("job receptionist — vak rules live in the pack", () => {
     expect(p).not.toMatch(/gaslucht|hoofdkraan|gootsteen|ketel|0800-9009/i);
   });
 
+  it("gives the kozijn glas and inbraak rules and never a fixed price", () => {
+    const p = promptFor(KOZIJN_VERTICAL);
+    expect(p).toContain("inbraakschade");
+    expect(p).toContain("nooit een vaste prijs");
+    expect(p).not.toMatch(/gaslucht|hoofdkraan|gootsteen|ketel|0800-9009|stroomkabel/i);
+  });
+
   it("uses the pack's own spoed hint in the register_job tool schema", () => {
     const hint = (pack: typeof LOODGIETER_VERTICAL) => {
       const tools = buildJobTools(pack, []);
@@ -50,7 +72,8 @@ describe("job receptionist — vak rules live in the pack", () => {
       return (rj.input_schema as { properties: { urgency: { description: string } } }).properties.urgency.description;
     };
     expect(hint(LOODGIETER_VERTICAL)).toContain("water/gas");
-    expect(hint(SCHILDER_VERTICAL)).not.toMatch(/gas|water/i);
+    expect(hint(BARE_PACK)).not.toMatch(/gas|water/i);
+    expect(hint(SCHILDER_VERTICAL)).toContain("deadline");
   });
 
   it("every job pack resolves a complete rule set with a {treatment} photo rule", () => {
