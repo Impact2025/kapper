@@ -7,6 +7,7 @@ import {
   LOODGIETER_VERTICAL,
   SCHILDER_VERTICAL,
   HOVENIER_VERTICAL,
+  KOZIJN_VERTICAL,
   hostMismatch,
   listVerticals,
   listLiveVerticals,
@@ -408,6 +409,40 @@ describe("loodgieter (live) — uitbreidingen zijn additief", () => {
   it("only offers klusvelden for existing categories", () => {
     const cats = new Set(LOODGIETER_VERTICAL.jobCategories.map((c) => c.key));
     for (const f of LOODGIETER_VERTICAL.jobFields) for (const c of f.categories ?? []) expect(cats.has(c)).toBe(true);
+  });
+});
+
+describe("kozijn", () => {
+  it("is a not-yet-live job vertical with its own blue theme", () => {
+    expect(KOZIJN_VERTICAL.archetype).toBe("job");
+    expect(KOZIJN_VERTICAL.theme?.primary).not.toBe(undefined);
+    expect(KOZIJN_VERTICAL.live).toBe(false);
+  });
+
+  it("treats only inbraak-/glasschade as spoed", () => {
+    const urgent = KOZIJN_VERTICAL.jobCategories.filter((c) => c.urgent).map((c) => c.key);
+    expect(urgent).toEqual(["storm"]);
+    expect(KOZIJN_VERTICAL.jobCategories.map((c) => c.key)).not.toContain("lekkage");
+  });
+
+  it("has its own pricing copy without another trade's vocabulary", () => {
+    const copy = JSON.stringify(plansFor(KOZIJN_VERTICAL).map((p) => [p.name, p.tagline, p.features]));
+    expect(copy).not.toMatch(KAPPER_WORDS);
+    expect(copy).not.toMatch(/installatiepaspoort|serienummer|cv-|ketel/i);
+    expect(copy).toMatch(/kozijn/i);
+  });
+
+  it("only offers klusvelden for existing categories", () => {
+    const cats = new Set(KOZIJN_VERTICAL.jobCategories.map((c) => c.key));
+    for (const f of KOZIJN_VERTICAL.jobFields) for (const c of f.categories ?? []) expect(cats.has(c)).toBe(true);
+  });
+
+  it("offers its own kozijn units and kozijnpaspoort wording, without seasonal contracts", async () => {
+    const { lineUnitsFor, assetTerms } = await import("@/lib/jobs/labels");
+    expect(lineUnitsFor(KOZIJN_VERTICAL)).toEqual(["stuk", "set", "m", "m²", "uur", "post"]);
+    expect(assetTerms(KOZIJN_VERTICAL)).toEqual({ singular: "kozijn", plural: "kozijnen", passport: "kozijnpaspoort" });
+    expect(KOZIJN_VERTICAL.features.seasonalContracts).toBeFalsy();
+    expect(KOZIJN_VERTICAL.features.photoTimeline).toBe(true);
   });
 });
 

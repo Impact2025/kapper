@@ -100,6 +100,9 @@ export interface VerticalTerms {
   owner: string;
   /** "afspraak" / "afspraak" (a klus is planned via an afspraak). */
   appointment: string;
+  /** Vocabulary for the installatiepaspoort (job archetype); omitted = the
+   * default "installatie/installaties/installatiepaspoort" wording. */
+  asset?: { singular: string; plural: string; passport: string };
 }
 
 export interface LandingCopy {
@@ -137,6 +140,11 @@ export interface VerticalTheme {
   onPrimaryFixed: string;
   onPrimaryFixedVariant: string;
   inversePrimary: string;
+  /** Optional neutral-surface overrides; omitted = the default (sage) surfaces
+   * in app/globals.css. */
+  surface?: string;
+  surfaceContainerLow?: string;
+  surfaceContainer?: string;
 }
 
 export type OnboardingKey = "business" | "services" | "team" | "whatsapp" | "phone" | "firstJob";
@@ -232,6 +240,11 @@ export interface VerticalFeatures {
   doubleBooking: boolean;
   /** Loyalty points (Elite). */
   loyalty: boolean;
+  /** Onderhoudscontracten met een vast seizoensschema (job archetype);
+   * omitted = false. */
+  seasonalContracts?: boolean;
+  /** Foto-tijdlijn per adres/installatie (job archetype); omitted = false. */
+  photoTimeline?: boolean;
 }
 
 export interface VerticalPack {
@@ -261,6 +274,11 @@ export interface VerticalPack {
   integrations: string[];
   /** Extra klus fields (job archetype). */
   jobFields: JobField[];
+  /** Units offertelijnen mogen gebruiken (job archetype); omitted = the
+   * default set in lib/jobs/model.ts (LINE_UNITS). See lineUnitsFor(). */
+  lineUnits?: readonly string[];
+  /** Placeholder job title shown in the "nieuwe klus" form. */
+  jobTitleExample?: string;
   marketing: MarketingConfig;
   nav: NavEntry[];
   /** Onboarding checklist (job archetype), in order; omitted = the default set. */

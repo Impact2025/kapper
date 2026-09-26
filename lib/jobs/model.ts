@@ -304,6 +304,18 @@ export function advanceDue(nextDueAt: Date, intervalMonths: number, now: Date = 
   return next;
 }
 
+/** Human label for a contract's interval: "Maandelijks", "Elk kwartaal",
+ * "Jaarlijks", or "Elke N maanden/jaar" for anything else. */
+export function cadenceLabel(c: { intervalMonths: number }): string {
+  const m = c.intervalMonths;
+  if (m === 1) return "Maandelijks";
+  if (m === 3) return "Elk kwartaal";
+  if (m === 6) return "Halfjaarlijks";
+  if (m === 12) return "Jaarlijks";
+  if (m > 0 && m % 12 === 0) return `Elke ${m / 12} jaar`;
+  return `Elke ${m} maanden`;
+}
+
 /* ------------------------------ addresses ------------------------------ */
 const POSTAL_RE = /^(\d{4})\s?([A-Za-z]{2})$/;
 
