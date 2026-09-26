@@ -4,6 +4,9 @@ import { SiteHeader } from "@/components/marketing/site-header";
 import { SiteFooter } from "@/components/marketing/site-footer";
 import { SupportChatWidget } from "@/components/support/chat-widget";
 import { themeStyle } from "@/lib/verticals/theme";
+import { sisterSites } from "@/lib/seo/network";
+import { solutionsFor } from "@/lib/marketing/solutions";
+import { ldJson, organizationLd, websiteLd } from "@/lib/seo/jsonld";
 import { DEFAULT_VERTICAL_ID, getVerticalConfig, isVerticalId, listLiveVerticals, listVerticals } from "@/lib/verticals";
 
 /**
@@ -51,18 +54,13 @@ export default async function VerticalSiteLayout({
   if (!isVerticalId(vertical) || vertical === DEFAULT_VERTICAL_ID) notFound();
   const pack = getVerticalConfig(vertical);
 
-  const organization = {
-    "@context": "https://schema.org",
-    "@type": "Organization",
-    name: `${pack.brand.name}.nl`,
-    url: pack.brand.siteUrl,
-    description: pack.brand.description,
-    areaServed: "NL",
-  };
+  const brand = { name: `${pack.brand.name}.nl`, siteUrl: pack.brand.siteUrl, description: pack.brand.description };
 
   return (
-    <div style={themeStyle(pack.theme)} className="flex min-h-screen flex-col">
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(organization) }} />
+    <div style={themeStyle(pack.theme)} className="flex min-h-dvh flex-col bg-surface">
+      {[organizationLd(brand), websiteLd(brand)].map((d, i) => (
+        <script key={i} type="application/ld+json" dangerouslySetInnerHTML={{ __html: ldJson(d) }} />
+      ))}
       <SiteHeader
         brandName={pack.brand.name}
         logoIcon={pack.marketing.logoIcon}
@@ -70,8 +68,8 @@ export default async function VerticalSiteLayout({
         cta={pack.marketing.cta}
       />
       <main className="flex-grow">{children}</main>
-      <SiteFooter brandName={`${pack.brand.name}.nl`} logoIcon={pack.marketing.logoIcon} blurb={pack.marketing.footerBlurb} variant="job" />
-      <SupportChatWidget />
+      <SiteFooter brandName={`${pack.brand.name}.nl`} logoIcon={pack.marketing.logoIcon} blurb={pack.marketing.footerBlurb} variant="job" sisters={sisterSites(pack.id)} solutionLinks={solutionsFor(pack.id).map((s) => ({ href: `/oplossingen/${s.slug}`, label: s.badge }))} />
+      <SupportChatWidget brandName={pack.brand.name} verticalId={pack.id} />
     </div>
   );
 }

@@ -9,6 +9,10 @@ const PRIVACY_RE =
   /\b(inzage|recht op vergetelheid|gegevens (laten )?(verwijderen|wissen)|verwijder (al )?(mijn|onze) gegevens|datalek|data ?lek|avg[- ]verzoek)\b/i;
 const PAYMENT_RE =
   /\b(dubbel (afgeschreven|betaald|gefactureerd)|onterecht (afgeschreven|gefactureerd)|terugbetal\w*|terugstort\w*|chargeback|creditnota|geld terug|betwist\w*)\b/i;
+// Deliberately a keyword list on typed text, not emotion recognition: the AI
+// Act only counts that on biometric data (art. 3.39), and art. 5.1.f bans it
+// at work/school. Keep it that way — never infer mood from voice, tone or
+// staff conversations.
 const ANGRY_RE =
   /\b(oplichter\w*|schandalig|belachelijk|klote|waardeloos|rotzooi|advocaat|juridische stappen|aanklagen|ombudsman|consumentenbond|onacceptabel)\b/i;
 const HUMAN_RE =
@@ -59,5 +63,8 @@ export const MAX_USER_MESSAGES_PER_CHAT = 30;
 export const MAX_MESSAGE_LEN = 1000;
 
 /** Fixed first message — the AI-disclosure is code, not model-decided (AI Act Art. 50). */
-export const SUPPORT_GREETING =
-  "Hoi! Ik ben de virtuele AI-assistent van KapperAssistent. Ik beantwoord vragen op basis van ons hulpcentrum en zet je door naar een medewerker als ik er niet uitkom. Waar kan ik mee helpen?";
+export function supportGreeting(brandName = "KapperAssistent"): string {
+  return `Hoi! Ik ben de virtuele AI-assistent van ${brandName}. Ik beantwoord vragen op basis van ons hulpcentrum en zet je door naar een medewerker als ik er niet uitkom. Waar kan ik mee helpen?`;
+}
+
+export const SUPPORT_GREETING = supportGreeting();

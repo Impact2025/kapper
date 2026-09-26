@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Icon } from "@/components/ui/icon";
 import { renderMarkdown } from "@/lib/blog/markdown";
-import { SUPPORT_GREETING } from "@/lib/support/chat-guard";
+import { supportGreeting } from "@/lib/support/chat-guard";
 import { cn } from "@/lib/utils";
 
 interface ChatMessage {
@@ -25,7 +25,7 @@ interface StoredChat {
 const STORAGE_KEY = "ka-support-chat-v1";
 
 const STARTERS: Record<"prospect" | "salon", string[]> = {
-  prospect: ["Wat kost KapperAssistent?", "Hoe start ik met de proefperiode?", "Welke agenda-software wordt ondersteund?"],
+  prospect: ["Wat kost het?", "Hoe start ik met de proefperiode?", "Welke agenda-software wordt ondersteund?"],
   salon: ["Wat is mijn huidige plan?", "Mijn agenda-koppeling werkt niet", "Wat is de status van mijn tickets?"],
 };
 
@@ -86,7 +86,11 @@ interface TicketOffer {
   category: string;
 }
 
-export function SupportChatWidget() {
+export function SupportChatWidget({
+  aboveTabBar = false,
+  brandName = "KapperAssistent",
+  verticalId,
+}: { aboveTabBar?: boolean; brandName?: string; verticalId?: string } = {}) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const raw = useSyncExternalStore(subscribe, getSnapshot, () => null);
@@ -135,7 +139,7 @@ export function SupportChatWidget() {
       const res = await fetch("/api/support/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ sessionId: withUser.sessionId, message, pagePath: pathname }),
+        body: JSON.stringify({ sessionId: withUser.sessionId, message, pagePath: pathname, vertical: verticalId }),
       });
       const data = await res.json().catch(() => ({}));
       if (res.status === 403) {
@@ -190,7 +194,7 @@ export function SupportChatWidget() {
           type="button"
           onClick={() => setOpen(true)}
           aria-label="Open hulp en AI-assistent"
-          className="fixed bottom-md right-md z-[60] flex items-center gap-xs rounded-full bg-primary px-md py-sm text-label-md font-label-md text-on-primary shadow-lg transition-all hover:opacity-90 active:scale-95"
+          className={cn("fixed right-md z-[60] flex min-h-12 items-center gap-xs rounded-full bg-primary px-md py-sm text-label-md font-label-md text-on-primary shadow-lg transition-all hover:opacity-90 active:scale-95", aboveTabBar ? "bottom-[calc(5rem+env(safe-area-inset-bottom))] md:bottom-md" : "bottom-[calc(1.5rem+env(safe-area-inset-bottom))]")}
         >
           <Icon name="smart_toy" className="text-[22px]" />
           <span className="hidden sm:inline">Hulp nodig?</span>
@@ -200,29 +204,29 @@ export function SupportChatWidget() {
       {open && (
         <div
           role="dialog"
-          aria-label="AI-assistent van KapperAssistent"
-          className="fixed inset-x-0 bottom-0 z-[60] flex h-[min(640px,100dvh)] flex-col overflow-hidden rounded-t-2xl border border-outline-variant/50 bg-surface shadow-2xl sm:inset-x-auto sm:bottom-md sm:right-md sm:h-[min(640px,calc(100dvh-2rem))] sm:w-[400px] sm:rounded-2xl"
+          aria-label={`AI-assistent van ${brandName}`}
+          className="fixed inset-x-0 bottom-0 z-[60] flex h-[min(640px,100dvh)] pb-safe flex-col overflow-hidden rounded-t-2xl border border-outline-variant/50 bg-surface shadow-2xl sm:inset-x-auto sm:bottom-md sm:right-md sm:pb-0 sm:h-[min(640px,calc(100dvh-2rem))] sm:w-[400px] sm:rounded-2xl"
         >
           <header className="flex items-center justify-between gap-sm bg-primary px-md py-sm text-on-primary">
             <div className="flex items-center gap-sm">
               <Icon name="smart_toy" className="text-[24px]" />
               <div>
-                <div className="text-label-md font-label-md">KapperAssistent Support</div>
+                <div className="text-label-md font-label-md">{brandName} Support</div>
                 <div className="text-label-sm opacity-80">AI-assistent · antwoorden uit het hulpcentrum</div>
               </div>
             </div>
             <div className="flex items-center gap-xs">
-              <button type="button" onClick={reset} title="Nieuw gesprek" aria-label="Nieuw gesprek" className="rounded-full p-xs hover:bg-white/15">
+              <button type="button" onClick={reset} title="Nieuw gesprek" aria-label="Nieuw gesprek" className="tap-target flex items-center justify-center rounded-full hover:bg-white/15">
                 <Icon name="restart_alt" className="text-[20px]" />
               </button>
-              <button type="button" onClick={() => setOpen(false)} aria-label="Sluit chat" className="rounded-full p-xs hover:bg-white/15">
+              <button type="button" onClick={() => setOpen(false)} aria-label="Sluit chat" className="tap-target flex items-center justify-center rounded-full hover:bg-white/15">
                 <Icon name="close" className="text-[20px]" />
               </button>
             </div>
           </header>
 
           <div ref={listRef} className="flex-1 space-y-sm overflow-y-auto px-md py-md" aria-live="polite">
-            <Bubble role="assistant">{SUPPORT_GREETING}</Bubble>
+            <Bubble role="assistant">{supportGreeting(brandName)}</Bubble>
 
             {chat.messages.length === 0 && (
               <div className="flex flex-wrap gap-xs">
@@ -338,7 +342,7 @@ export function SupportChatWidget() {
                 type="submit"
                 disabled={busy || !input.trim()}
                 aria-label="Verstuur"
-                className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-on-primary disabled:opacity-50"
+                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary text-on-primary disabled:opacity-50"
               >
                 <Icon name="send" className="text-[20px]" />
               </button>

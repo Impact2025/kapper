@@ -1,6 +1,7 @@
 import "server-only";
 import type Anthropic from "@anthropic-ai/sdk";
 import { getAnthropic } from "@/lib/ai/anthropic";
+import { runWithAiContext } from "@/lib/ai/usage-context";
 import { env } from "@/lib/env";
 import { captureError } from "@/lib/observability";
 import { getSalonWithSubscription } from "@/lib/salon/queries";
@@ -28,6 +29,8 @@ export interface SupportChatContext {
   audience: "prospect" | "salon";
   /** Only set for a logged-in salon owner — this alone unlocks the account tools. */
   salonId?: string | null;
+  /** Merknaam van de vertical (bv. "HovenierAssistent"); standaard KapperAssistent. */
+  brandName?: string;
 }
 
 export interface SupportChatResult {
@@ -98,7 +101,10 @@ export function buildSupportSystemPrompt(ctx: SupportChatContext, hits: SearchHi
     ? buildContext(hits)
     : "(Geen relevante artikelen gevonden voor deze vraag.)";
 
-  return `Je bent de support-assistent van KapperAssistent.nl, een AI-receptioniste voor kapsalons. Je antwoordt in kort, vriendelijk, professioneel Nederlands, maximaal ~120 woorden. Spreek de gebruiker altijd aan met "je/jij/jouw", nooit met "u".
+  const brand = ctx.brandName && ctx.brandName !== "KapperAssistent"
+    ? `${ctx.brandName}.nl, een AI-receptionist en klus-CRM voor vakbedrijven (het hulpcentrum kan voorbeelden voor kapsalons bevatten; noem die niet als de gebruiker niet over een kapsalon spreekt)`
+    : "KapperAssistent.nl, een AI-receptioniste voor kapsalons";
+  return `Je bent de support-assistent van ${brand}. Je antwoordt in kort, vriendelijk, professioneel Nederlands, maximaal ~120 woorden. Spreek de gebruiker altijd aan met "je/jij/jouw", nooit met "u".
 
 ${audience}
 
@@ -181,6 +187,10 @@ export async function answerSupportQuestion(
   historyIn: SupportChatMessage[],
   ctx: SupportChatContext,
 ): Promise<SupportChatResult> {
+  return runWithAiContext({ salonId: ctx.salonId ?? null, feature: "support_chat" }, () => answerQuestion(historyIn, ctx));
+}
+
+async function answerQuestion(historyIn: SupportChatMessage[], ctx: SupportChatContext): Promise<SupportChatResult> {
   const history = historyIn.slice(-MAX_HISTORY);
   const lastUser = [...history].reverse().find((m) => m.role === "user")?.content ?? "";
 

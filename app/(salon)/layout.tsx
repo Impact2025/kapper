@@ -35,18 +35,18 @@ export default async function SalonLayout({ children }: { children: React.ReactN
   if (wrongHost) redirect(`${siteUrlFor(wrongHost.id)}/login`);
 
   return (
-    <div style={themeStyle(pack.theme)} className="flex min-h-screen flex-col bg-surface-container-lowest md:flex-row">
+    <div style={themeStyle(pack.theme)} className="flex min-h-dvh flex-col bg-surface-container-lowest md:flex-row">
       <SalonSidebar
         user={{ name: user.name, email: user.email }}
         salon={{ name: salon?.name ?? `Mijn ${pack.terms.establishment}`, plan: salon?.plan ?? "essential" }}
         nav={resolveNav(pack.nav)}
       />
-      <main className="flex-1 px-margin-mobile py-md md:px-lg md:py-lg">
+      <main className="min-w-0 flex-1 px-margin-mobile pb-[calc(6rem+env(safe-area-inset-bottom))] pt-md md:px-lg md:py-lg">
         <IncidentBanner />
         <PageHelp />
         {children}
       </main>
-      <SupportChatWidget />
+      <SupportChatWidget aboveTabBar brandName={pack.brand.name} verticalId={pack.id} />
     </div>
   );
 }

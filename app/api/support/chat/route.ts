@@ -3,6 +3,7 @@ import { and, asc, eq, sql } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { helpSearchMisses, supportChatMessages, supportChats } from "@/lib/db/schema";
 import { env } from "@/lib/env";
+import { getVerticalConfig, isVerticalId } from "@/lib/verticals";
 import { answerSupportQuestion } from "@/lib/support/chat";
 import { getSupportActor } from "@/lib/support/actor";
 import { MAX_MESSAGE_LEN, MAX_USER_MESSAGES_PER_CHAT, shouldOfferTicketAfterMisses } from "@/lib/support/chat-guard";
@@ -33,7 +34,7 @@ export async function POST(req: Request) {
     );
   }
 
-  let body: { sessionId?: string; message?: string; pagePath?: string };
+  let body: { sessionId?: string; message?: string; pagePath?: string; vertical?: string };
   try {
     body = await req.json();
   } catch {
@@ -86,7 +87,8 @@ export async function POST(req: Request) {
       .where(eq(supportChatMessages.chatId, chat.id))
       .orderBy(asc(supportChatMessages.createdAt));
 
-    const result = await answerSupportQuestion(rows, { audience: actor.audience, salonId: actor.salon?.id ?? null });
+    const brandName = isVerticalId(String(body.vertical)) ? getVerticalConfig(String(body.vertical)).brand.name : undefined;
+    const result = await answerSupportQuestion(rows, { audience: actor.audience, salonId: actor.salon?.id ?? null, brandName });
 
     const misses = result.miss ? chat.consecutiveMisses + 1 : 0;
     const suggestTicket = result.suggestTicket || shouldOfferTicketAfterMisses(misses);
