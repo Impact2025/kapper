@@ -64,6 +64,6 @@ export default async function proxy(req: NextRequest) {
 
 export const config = {
   // Every page route except Next internals, API routes and files with an
-  // extension — plus the two extension-bearing files that are per-site.
-  matcher: ["/((?!_next/|api/|.*\\..*).*)", "/sitemap.xml", "/robots.txt"],
+  // extension — plus the extension-bearing files that are per-site.
+  matcher: ["/((?!_next/|api/|.*\\..*).*)", "/sitemap.xml", "/robots.txt", "/llms.txt"],
 };

@@ -1,6 +1,8 @@
 import "server-only";
 import Anthropic from "@anthropic-ai/sdk";
 import { getAnthropic } from "@/lib/ai/anthropic";
+import { runWithAiContext } from "@/lib/ai/usage-context";
+import { withDisclosure } from "@/lib/ai/disclosure";
 import { findAvailableSlots, type AvailableSlot } from "@/lib/salon/availability";
 import {
   findAppointmentsByPhone,
@@ -664,6 +666,9 @@ async function runTool(
         spoed: job.urgent,
         adres: job.addressLine,
         ...(job.addressWarning ? { let_op: job.addressWarning } : {}),
+        ...(job.outsideServiceArea
+          ? { buiten_werkgebied: "Dit adres ligt buiten het werkgebied: zeg eerlijk dat de vakman beoordeelt of hij kan komen en beloof niets." }
+          : {}),
         note: job.urgent
           ? "Spoedklus vastgelegd en de vakman is direct gewaarschuwd."
           : "Klus vastgelegd; de vakman neemt contact op om in te plannen.",
@@ -702,24 +707,24 @@ export async function executeReceptionistTool(
   return { resultText, bookedAppointment: state.bookedAppointment, escalated: state.escalated };
 }
 
-/** Artikel 50 EU AI Act: onmiskenbare AI-identificatie bij het allereerste
- * bericht van een nieuwe conversatie. Deterministisch toegevoegd in code
- * (niet aan het model overgelaten) zodat dit gegarandeerd is. */
-function aiDisclosure(salonName: string): string {
-  return `Je spreekt met de virtuele AI-assistent van ${salonName}.`;
-}
-
-function withDisclosure(reply: string, isNewConversation: boolean, salonName: string): string {
-  if (!isNewConversation) return reply;
-  return `${aiDisclosure(salonName)} ${reply}`;
-}
-
 export async function getReceptionistReply(
   salon: SalonContext,
   history: ConversationMessage[],
   customerPhone: string,
   conversationId?: string | null,
   isNewConversation = false,
+): Promise<ReceptionistResponse> {
+  return runWithAiContext({ salonId: salon.id, feature: "receptionist" }, () =>
+    receptionistReply(salon, history, customerPhone, conversationId, isNewConversation),
+  );
+}
+
+async function receptionistReply(
+  salon: SalonContext,
+  history: ConversationMessage[],
+  customerPhone: string,
+  conversationId: string | null | undefined,
+  isNewConversation: boolean,
 ): Promise<ReceptionistResponse> {
   const anthropic = getAnthropic();
   if (!anthropic) {

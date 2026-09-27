@@ -27,6 +27,7 @@ export const NAV_CATALOG: Record<NavKey, NavCatalogItem> = {
   noshow: { href: "/dashboard/no-show", label: "No-show beleid", icon: "event_busy" },
   integrations: { href: "/dashboard/integraties", label: "Integraties", icon: "cable" },
   subscription: { href: "/dashboard/abonnement", label: "Abonnement", icon: "credit_card" },
+  guide: { href: "/dashboard/handleiding", label: "Handleiding", icon: "menu_book" },
   support: { href: "/dashboard/support", label: "Support", icon: "help" },
 };
 
@@ -60,6 +61,7 @@ const NAV_GROUP: Partial<Record<NavKey, NavGroup>> = {
   noshow: "business",
   integrations: "business",
   subscription: "business",
+  guide: "business",
   support: "business",
 };
 

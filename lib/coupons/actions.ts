@@ -5,7 +5,8 @@ import { eq } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { coupons } from "@/lib/db/schema";
-import { getCurrentUser } from "@/lib/auth/dal";
+import { requireRole } from "@/lib/auth/dal";
+import { auditAdmin } from "@/lib/admin/audit";
 import { lookupCoupon } from "@/lib/coupons/service";
 
 export interface CouponActionState {
@@ -29,7 +30,7 @@ export async function createCoupon(
   _prev: CouponActionState | undefined,
   formData: FormData,
 ): Promise<CouponActionState> {
-  await getCurrentUser();
+  const admin = await requireRole("admin");
   const parsed = createSchema.safeParse({
     code: formData.get("code"),
     type: formData.get("type"),
@@ -58,13 +59,15 @@ export async function createCoupon(
     maxRedemptions: d.maxRedemptions ? Number(d.maxRedemptions) : null,
     expiresAt: d.expiresAt ? new Date(d.expiresAt) : null,
   });
+  await auditAdmin(admin, "coupon.create", { type: "coupon", id: code }, { type: d.type, value: d.value });
 
   revalidatePath("/admin/coupons");
   return { ok: true };
 }
 
 export async function toggleCoupon(id: string, active: boolean): Promise<void> {
-  await getCurrentUser();
+  const admin = await requireRole("admin");
   await db.update(coupons).set({ active }).where(eq(coupons.id, id));
+  await auditAdmin(admin, active ? "coupon.activate" : "coupon.deactivate", { type: "coupon", id });
   revalidatePath("/admin/coupons");
 }

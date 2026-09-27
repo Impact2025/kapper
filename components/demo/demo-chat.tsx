@@ -99,7 +99,7 @@ export function DemoChat({
   }
 
   return (
-    <div className="mx-auto flex min-h-screen max-w-2xl flex-col px-margin-mobile py-lg md:px-0">
+    <div className="mx-auto flex min-h-dvh max-w-2xl flex-col px-margin-mobile py-lg md:px-0">
       <div className="mb-md flex items-center gap-sm">
         <Link href="/" className="text-label-sm text-on-surface-variant hover:text-primary">
           ← KapperAssistent.nl

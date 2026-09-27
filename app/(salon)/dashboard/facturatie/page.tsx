@@ -57,16 +57,16 @@ export default async function FacturatiePage({ searchParams }: { searchParams: P
       )}
 
       <div className="mb-lg grid grid-cols-2 gap-md xl:grid-cols-4">
-        <StatCard label="Offertes open" value={`${stats.quotesAwaiting}`} icon="request_quote" hint={formatMoney(stats.quotesAwaitingCents)} />
-        <StatCard label="Openstaand" value={formatMoney(stats.invoicesOpenCents)} icon="hourglass_top" hint={`${stats.invoicesOpenCount} facturen`} />
+        <StatCard label="Offertes open" value={`${stats.quotesAwaiting}`} icon="request_quote" tip="Verstuurde offertes waar de klant nog niet op heeft gereageerd. Bel of app na een paar dagen even na." hint={formatMoney(stats.quotesAwaitingCents)} />
+        <StatCard label="Openstaand" value={formatMoney(stats.invoicesOpenCents)} icon="hourglass_top" tip="Totaal van verstuurde facturen die nog niet zijn betaald." hint={`${stats.invoicesOpenCount} facturen`} />
         <StatCard
           label="Achterstallig"
           value={formatMoney(stats.invoicesOverdueCents)}
-          icon="warning"
+          icon="warning" tip="Facturen waarvan de betaaltermijn is verstreken. Betalingsherinneringen gaan automatisch, maar bel gerust zelf bij grote bedragen."
           hint={`${stats.invoicesOverdueCount} facturen`}
           tint={stats.invoicesOverdueCount ? "secondary" : "plain"}
         />
-        <StatCard label="Betaald deze maand" value={formatMoney(stats.paidThisMonthCents)} icon="payments" />
+        <StatCard label="Betaald deze maand" value={formatMoney(stats.paidThisMonthCents)} icon="payments" tip="Wat er deze kalendermaand daadwerkelijk is binnengekomen." />
       </div>
 
       <LinkTabs

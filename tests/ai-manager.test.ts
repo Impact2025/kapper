@@ -45,6 +45,21 @@ describe("runAiManager — Artikel 9 compliance guard + agent routing", () => {
     );
   });
 
+  it("still opens with the Artikel 50 AI disclosure when the guard answers a brand-new conversation", async () => {
+    const result = await runAiManager({
+      salonId: "salon-1",
+      salon,
+      history: [{ role: "user", content: "Ik ben zwanger, kan ik mijn haar verven?" }],
+      customerPhone: "+31611112222",
+      conversationId: "conv-1",
+      isNewConversation: true,
+      channel: "whatsapp",
+    });
+
+    expect(result.reply).toMatch(/^Je spreekt met de virtuele AI-assistent van Kapsalon Test\./);
+    expect(result.reply).toMatch(/gezondheids|huidinformatie/i);
+  });
+
   it("routes an ordinary WhatsApp message straight to the receptionist agent", async () => {
     getReceptionistReplyMock.mockResolvedValue({ reply: "Welke dag komt u uit?" });
 

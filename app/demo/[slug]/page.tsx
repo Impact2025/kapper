@@ -14,7 +14,7 @@ export default async function PublicDemoPage({ params }: { params: Promise<{ slu
   if (!salon) notFound();
 
   return (
-    <div className="min-h-screen bg-surface-container-lowest">
+    <div className="min-h-dvh bg-surface-container-lowest">
       <DemoChat slug={slug} salonName={salon.name} salonCity={salon.city} />
     </div>
   );

@@ -10,7 +10,9 @@ import {
   primaryKey,
   index,
   uniqueIndex,
+  check,
 } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
 import { salons, customers, staff, appointments, conversations } from "./schema";
 
 /*
@@ -112,6 +114,11 @@ export const serviceContracts = pgTable(
     priceCents: integer("price_cents").notNull().default(0), // per beurt, excl. btw
     vatRatePercent: integer("vat_rate_percent").notNull().default(21),
     intervalMonths: integer("interval_months").notNull().default(12),
+    // Seizoenscontract (hovenier): cadence in weeks (wins over months) and an
+    // optional season window, months 1–12 inclusive, may wrap the year.
+    intervalWeeks: integer("interval_weeks"),
+    seasonStartMonth: integer("season_start_month"),
+    seasonEndMonth: integer("season_end_month"),
     startsOn: timestamp("starts_on", { withTimezone: true }).notNull(),
     nextDueAt: timestamp("next_due_at", { withTimezone: true }).notNull(),
     // active | paused | ended
@@ -127,6 +134,13 @@ export const serviceContracts = pgTable(
   (t) => [
     index("service_contracts_customer_idx").on(t.customerId),
     index("service_contracts_salon_due_idx").on(t.salonId, t.status, t.nextDueAt),
+    // Mirrors the contract form validation, so a direct insert cannot store a
+    // cadence/season that snapToSeason/cadenceLabel would misread.
+    check("service_contracts_interval_weeks_chk", sql`${t.intervalWeeks} IS NULL OR ${t.intervalWeeks} BETWEEN 1 AND 52`),
+    check(
+      "service_contracts_season_chk",
+      sql`(${t.seasonStartMonth} IS NULL AND ${t.seasonEndMonth} IS NULL) OR (${t.seasonStartMonth} BETWEEN 1 AND 12 AND ${t.seasonEndMonth} BETWEEN 1 AND 12)`,
+    ),
   ],
 );
 

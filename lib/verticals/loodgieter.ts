@@ -1,5 +1,11 @@
 import type { VerticalPack } from "./types";
 
+/**
+ * Loodgieter — eerste en enige live job-vertical. Let op: alles hieronder staat
+ * in productie. Uitbreidingen zijn additief (nieuwe categorieën, velden, objecten
+ * en catalogus); bestaande sleutels, de spoedregels en de AI-prompt zijn door
+ * tests vastgelegd en veranderen hier niet.
+ */
 export const LOODGIETER_VERTICAL: VerticalPack = {
   id: "loodgieter",
   label: "Loodgieter",
@@ -31,6 +37,19 @@ export const LOODGIETER_VERTICAL: VerticalPack = {
       "Het klus-CRM met AI-receptionist voor loodgietersbedrijven: telefoon en WhatsApp 24/7, klusadres en spoed direct vastgelegd, werkbon, offerte en factuur in één plek.",
     hosts: ["loodgietersassistent.nl", "www.loodgietersassistent.nl"],
     dashboardTitle: "Mijn LoodgietersAssistent",
+  },
+  // Diep petrol: water en techniek, duidelijk anders dan de sage van de kapper
+  // en het blauw van de schilder; contrast getoetst (wit op primary ≥ 7:1).
+  theme: {
+    primary: "#0f5c6e",
+    onPrimary: "#ffffff",
+    primaryContainer: "#7fb6c4",
+    onPrimaryContainer: "#032a33",
+    primaryFixed: "#c4ebf5",
+    primaryFixedDim: "#a3ced9",
+    onPrimaryFixed: "#021f26",
+    onPrimaryFixedVariant: "#0a4453",
+    inversePrimary: "#a3ced9",
   },
   features: {
     jobs: true,
@@ -90,7 +109,25 @@ export const LOODGIETER_VERTICAL: VerticalPack = {
       options: ["CV-ketel", "Hybride", "Warmtepomp", "Boiler", "Geiser", "Anders"],
       categories: ["cv_storing", "cv_onderhoud", "cv_installatie"],
     },
-    { key: "aantalRadiatoren", label: "Aantal radiatoren", type: "number", categories: ["cv_installatie"] },
+    { key: "aantalRadiatoren", label: "Aantal radiatoren", type: "number", categories: ["cv_installatie", "verwarming"] },
+    { key: "toestelMerk", label: "Merk toestel", type: "text", placeholder: "bv. Remeha, Vaillant, Intergas", categories: ["cv_storing", "cv_onderhoud", "cv_installatie", "boiler"] },
+    { key: "toestelBouwjaar", label: "Bouwjaar toestel", type: "number", placeholder: "2012", hint: "Bepaalt of onderdelen nog leverbaar zijn en of vervangen slimmer is.", categories: ["cv_storing", "cv_onderhoud", "cv_installatie", "boiler"] },
+    {
+      key: "lekkageLocatie",
+      label: "Waar is het lek?",
+      type: "select",
+      options: ["Onbekend", "Plafond", "Muur", "Vloer", "Onder aanrecht of wastafel", "Bij de cv-ketel", "Buiten of in de kruipruimte"],
+      categories: ["lekkage"],
+    },
+    {
+      key: "verstoppingLocatie",
+      label: "Waar is de verstopping?",
+      type: "select",
+      options: ["Onbekend", "Gootsteen", "Wastafel of douche", "Toilet", "Buitenriool of put", "Meerdere afvoeren"],
+      hint: "Meerdere afvoeren tegelijk wijst vaak op een probleem in het hoofdriool.",
+      categories: ["verstopping", "riool"],
+    },
+    { key: "badkamerOppervlak", label: "Oppervlak badkamer", type: "number", unit: "m²", placeholder: "6", categories: ["badkamer"] },
   ],
   marketing: {
     navLinks: [
@@ -167,6 +204,14 @@ export const LOODGIETER_VERTICAL: VerticalPack = {
           a: "Facturen bevatten de wettelijk verplichte gegevens (KvK, btw-nummer, factuurnummer, btw per tarief). Het btw-tarief kies je per regel — 21%, 9% of 0% — omdat het verlaagde tarief per klus kan verschillen.",
         },
         {
+          q: "Wat is een installatiepaspoort?",
+          a: "Per adres leg je merk, type, serienummer, garantie en het volgende onderhoud van elke ketel, boiler of warmtepomp vast. Zo weet je bij een storing meteen wat er hangt, en komt elk onderhoud op tijd terug.",
+        },
+        {
+          q: "Kan een klant meerdere adressen hebben?",
+          a: "Ja. Klanten met meerdere adressen, toegangsinfo, contactpersoon ter plaatse en de volledige klushistorie worden ondersteund.",
+        },
+        {
           q: "Zit er een looptijd of overage op de AI?",
           a: "Nee. Je betaalt een vast bedrag per maand, opzegbaar per maand, zonder kosten per gesprek of per minuut.",
         },
@@ -192,13 +237,21 @@ export const LOODGIETER_VERTICAL: VerticalPack = {
     { key: "integrations" },
     { key: "subscription" },
   ],
+  onboarding: [
+    { key: "services", label: "Diensten en tarieven (start met de voorbeeldcatalogus)" },
+    { key: "business" },
+    { key: "team", label: "Monteurs toegevoegd" },
+    { key: "phone", label: "Telefonische receptie actief (zodat geen spoedoproep verloren gaat)" },
+    { key: "whatsapp" },
+    { key: "firstJob" },
+  ],
   jobCategories: [
     {
       key: "lekkage",
       label: "Lekkage",
       urgent: true,
       estimatedMinutes: 90,
-      keywords: ["lek", "lekkage", "druppelt", "waterschade", "natte plek", "water door het plafond", "leiding gesprongen"],
+      keywords: ["lek", "lekkage", "druppelt", "waterschade", "natte plek", "water door het plafond", "leiding gesprongen", "bevroren leiding", "vorstschade", "water uit de muur"],
       checklist: [
         "Hoofdkraan afgesloten / water uit",
         "Lekbron gelokaliseerd",
@@ -227,7 +280,7 @@ export const LOODGIETER_VERTICAL: VerticalPack = {
       label: "Verstopping / ontstopping",
       urgent: false,
       estimatedMinutes: 60,
-      keywords: ["verstopt", "ontstoppen", "afvoer", "riool", "gootsteen loopt niet door", "toilet verstopt", "stinkt"],
+      keywords: ["verstopt", "ontstoppen", "afvoer", "gootsteen loopt niet door", "toilet verstopt", "stinkt"],
       checklist: [
         "Locatie verstopping bepaald",
         "Ontstopt (spiraal/hogedruk)",
@@ -280,6 +333,49 @@ export const LOODGIETER_VERTICAL: VerticalPack = {
       ],
     },
     {
+      key: "riool",
+      label: "Riool / camera-inspectie",
+      urgent: false,
+      estimatedMinutes: 120,
+      keywords: ["riool", "rioolcamera", "camera inspectie", "rioolreparatie", "wortels in riool", "put verstopt", "stankoverlast", "riool stinkt"],
+      checklist: [
+        "Klacht en locatie besproken met klant",
+        "Riool ontstopt of gespoeld",
+        "Camera-inspectie gedaan en beelden bewaard",
+        "Oorzaak vastgesteld (wortels, verzakking, vet)",
+        "Vervolgadvies en offerte voor herstel besproken",
+      ],
+    },
+    {
+      key: "boiler",
+      label: "Boiler / geiser",
+      urgent: false,
+      estimatedMinutes: 150,
+      keywords: ["boiler", "geiser", "warmwatertoestel", "boiler lekt", "boiler vervangen", "geiser vervangen", "warm water op"],
+      checklist: [
+        "Type toestel en aansluitingen bekeken",
+        "Water afgesloten en toestel afgetapt",
+        "Nieuw toestel geplaatst en aangesloten",
+        "Veiligheidsgroep en afvoer gecontroleerd",
+        "Getest en klant geïnstrueerd",
+        "Installatiepaspoort bijgewerkt",
+      ],
+    },
+    {
+      key: "verwarming",
+      label: "Radiatoren / vloerverwarming",
+      urgent: false,
+      estimatedMinutes: 180,
+      keywords: ["radiator", "radiatoren", "vloerverwarming", "ontluchten", "koude radiator", "radiator lekt", "thermostaat", "inregelen"],
+      checklist: [
+        "Symptoom vastgesteld (koud, lucht, lek)",
+        "Installatie ontlucht en waterdruk gecontroleerd",
+        "Radiator, kraan of verdeler hersteld of vervangen",
+        "Installatie ingeregeld en getest",
+        "Klant geïnstrueerd",
+      ],
+    },
+    {
       key: "sanitair",
       label: "Sanitair / kraan / toilet",
       urgent: false,
@@ -321,6 +417,9 @@ export const LOODGIETER_VERTICAL: VerticalPack = {
     { key: "boiler", label: "Boiler / warmwatertoestel", icon: "water_heater", serviceIntervalMonths: 24 },
     { key: "geiser", label: "Geiser", icon: "local_fire_department", serviceIntervalMonths: 12 },
     { key: "vloerverwarming", label: "Vloerverwarming", icon: "layers", serviceIntervalMonths: null },
+    { key: "radiatoren", label: "Radiatoren", icon: "thermostat", serviceIntervalMonths: null },
+    { key: "waterleiding", label: "Waterleiding en kranen", icon: "water_drop", serviceIntervalMonths: null },
+    { key: "pomp", label: "Pomp / drukverhoging", icon: "water_pump", serviceIntervalMonths: 12 },
     { key: "sanitair", label: "Sanitair", icon: "bathtub", serviceIntervalMonths: null },
     { key: "riolering", label: "Riolering / afvoer", icon: "plumbing", serviceIntervalMonths: null },
     { key: "overig", label: "Overig", icon: "build", serviceIntervalMonths: null },
@@ -332,6 +431,13 @@ export const LOODGIETER_VERTICAL: VerticalPack = {
     { name: "Lekkage opsporen en verhelpen", category: "lekkage", durationMinutes: 90, priceCents: 12500, vatRatePercent: 21, description: "Lekkage lokaliseren en herstellen (excl. materiaal)." },
     { name: "CV-onderhoud", category: "cv_onderhoud", durationMinutes: 60, priceCents: 8900, vatRatePercent: 21, description: "Jaarlijks onderhoud aan de cv-ketel." },
     { name: "CV-storing", category: "cv_storing", durationMinutes: 75, priceCents: 9500, vatRatePercent: 21, description: "Storing diagnosticeren en verhelpen (excl. onderdelen)." },
+    { name: "Camera-inspectie riool", category: "riool", durationMinutes: 90, priceCents: 14500, vatRatePercent: 21, description: "Riool inspecteren met camera, incl. beelden voor de klant." },
+    { name: "Ontstopping hoofdriool / buitenput", category: "riool", durationMinutes: 90, priceCents: 17500, vatRatePercent: 21, description: "Ontstoppen met hogedruk of spiraal." },
+    { name: "Radiator ontluchten en waterdruk bijvullen", category: "verwarming", durationMinutes: 45, priceCents: 7500, vatRatePercent: 21, description: "Installatie ontluchten en waterdruk op peil brengen." },
+    { name: "Mengkraan vervangen", category: "sanitair", durationMinutes: 60, priceCents: 9500, vatRatePercent: 21, description: "Kraan demonteren en vervangen (excl. kraan)." },
+    { name: "Toilet of stortbak vervangen", category: "sanitair", durationMinutes: 120, priceCents: 15000, vatRatePercent: 21, description: "Toilet of stortbak vervangen (excl. materiaal)." },
+    { name: "Boiler plaatsen", category: "boiler", durationMinutes: 150, priceCents: 22500, vatRatePercent: 21, description: "Boiler of geiser plaatsen en aansluiten (excl. toestel)." },
+    { name: "Loodgieter per uur", category: "overig", durationMinutes: 60, priceCents: 7500, vatRatePercent: 21, description: "Uurtarief loodgieter (excl. materiaal)." },
     { name: "Spoedtarief buiten kantoortijd", category: "lekkage", durationMinutes: 60, priceCents: 15500, vatRatePercent: 21, description: "Spoedklus in avond, nacht of weekend." },
   ],
   messages: {
@@ -361,6 +467,8 @@ Vermijd overdrijving en holle marketingtaal. Schrijf in het Nederlands.`,
       "Onderhoudscontracten voor cv-ketels: zo bouw je terugkerende omzet op",
       "Werkbonnen op je telefoon in plaats van papier",
       "Lokaal gevonden worden als loodgieter in jouw regio",
+      "Een storingsdienst buiten kantoortijd zonder zelf op te nemen",
+      "Camera-inspectie riool: van klacht naar herstelofferte",
     ],
     blogMetaTitle: "Blog — Tips voor loodgieters en installatiebedrijven",
     blogMetaDescription:

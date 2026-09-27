@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { requireRole } from "@/lib/auth/dal";
+import { auditAdmin } from "@/lib/admin/audit";
 import { assignTicket, setTicketPriority, setTicketStatus } from "@/lib/support/tickets";
 import { TICKET_PRIORITIES, TICKET_STATUSES, type TicketPriority, type TicketStatus } from "@/lib/support/ticket-model";
 
@@ -16,6 +17,7 @@ export async function setStatusAction(ticketId: string, formData: FormData): Pro
   const status = String(formData.get("status") ?? "");
   if (!(TICKET_STATUSES as readonly string[]).includes(status)) return;
   await setTicketStatus(ticketId, status as TicketStatus, admin.name ?? "Support");
+  await auditAdmin(admin, "ticket.status", { type: "ticket", id: ticketId }, { status });
   refresh(ticketId);
 }
 
@@ -23,6 +25,7 @@ export async function assignAction(ticketId: string, formData: FormData): Promis
   const admin = await requireRole("admin");
   const to = String(formData.get("to") ?? "");
   await assignTicket(ticketId, to === "me" ? admin.id : null);
+  await auditAdmin(admin, "ticket.assign", { type: "ticket", id: ticketId }, { to: to === "me" ? admin.email : null });
   refresh(ticketId);
 }
 

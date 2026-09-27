@@ -5,7 +5,8 @@ import { eq } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { leads, crmActivities, emailMessages } from "@/lib/db/schema";
-import { getCurrentUser } from "@/lib/auth/dal";
+import { requireRole } from "@/lib/auth/dal";
+import { auditAdmin } from "@/lib/admin/audit";
 import { sendEmail } from "@/lib/mail/resend";
 import { simpleEmail } from "@/lib/mail/templates";
 import { env } from "@/lib/env";
@@ -25,7 +26,7 @@ export async function updateLeadStage(
   _prev: ActionResult | undefined,
   formData: FormData,
 ): Promise<ActionResult> {
-  const user = await getCurrentUser();
+  const user = await requireRole("admin");
   const parsed = stageSchema.safeParse({
     leadId: formData.get("leadId"),
     stage: formData.get("stage"),
@@ -49,6 +50,7 @@ export async function updateLeadStage(
     body: `Fase gewijzigd van ${LEAD_STAGE_LABELS[current.stage as LeadStage]} naar ${LEAD_STAGE_LABELS[stage]}.`,
     meta: { from: current.stage, to: stage },
   });
+  await auditAdmin(user, "lead.stage", { type: "lead", id: leadId }, { from: current.stage, to: stage });
 
   revalidatePath(`/admin/crm/${leadId}`);
   revalidatePath("/admin/crm");
@@ -64,7 +66,7 @@ export async function addNote(
   _prev: ActionResult | undefined,
   formData: FormData,
 ): Promise<ActionResult> {
-  const user = await getCurrentUser();
+  const user = await requireRole("admin");
   const parsed = noteSchema.safeParse({
     leadId: formData.get("leadId"),
     body: formData.get("body"),
@@ -95,7 +97,7 @@ export async function sendLeadEmail(
   _prev: ActionResult | undefined,
   formData: FormData,
 ): Promise<ActionResult> {
-  const user = await getCurrentUser();
+  const user = await requireRole("admin");
   const parsed = emailSchema.safeParse({
     leadId: formData.get("leadId"),
     to: formData.get("to"),
@@ -127,6 +129,7 @@ export async function sendLeadEmail(
     body: `E-mail verstuurd: "${subject}"`,
     meta: { to, resendId },
   });
+  await auditAdmin(user, "lead.email", { type: "lead", id: leadId }, { subject });
 
   revalidatePath(`/admin/crm/${leadId}`);
   return resendId

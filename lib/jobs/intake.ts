@@ -9,7 +9,8 @@ import { siteUrlFor } from "@/lib/verticals/site-url";
 import { sendEmail } from "@/lib/mail/resend";
 import { notifyCustomer } from "@/lib/jobs/notify";
 import { upsertJobCustomer, createAddress } from "@/lib/jobs/crm";
-import { addJobPhoto, categoryFor, createJob } from "@/lib/jobs/lifecycle";
+import { addJobPhoto, categoryFor, createJob, logJobEvent } from "@/lib/jobs/lifecycle";
+import { isInServiceArea, parseServiceArea } from "@/lib/jobs/service-area";
 import { formatAddressLine, normalizePostalCode, type JobPriority, type JobSource } from "@/lib/jobs/model";
 import { captureError } from "@/lib/observability";
 import { trackEvent } from "@/lib/analytics/track";
@@ -39,6 +40,8 @@ export interface JobRequestResult {
   /** Set when the postcode couldn't be validated — the address is kept as
    * free text on the klus instead of a saved address row. */
   addressWarning?: string;
+  /** True when a werkgebied is set and the klusadres falls outside it. */
+  outsideServiceArea?: boolean;
 }
 
 /**
@@ -125,6 +128,18 @@ export async function registerJobRequest(input: JobRequestInput): Promise<JobReq
     assignedStaffId: input.appointment?.staffId ?? null,
   });
 
+  // Werkgebied: never refuse the klus (the vakman decides), but flag it on the
+  // tijdlijn and tell the AI so it doesn't promise a visit.
+  const outsideServiceArea = isInServiceArea(parseServiceArea(salon.settings), input.address?.postalCode) === false;
+  if (outsideServiceArea) {
+    await logJobEvent({
+      salonId: input.salonId,
+      jobId: job.id,
+      kind: "note",
+      message: "Klusadres ligt buiten je werkgebied — beoordeel zelf of je hier komt.",
+    });
+  }
+
   if (input.photoUrl) {
     await addJobPhoto({ salonId: input.salonId, jobId: job.id, blobUrl: input.photoUrl, kind: "issue", caption: "Foto van de klant" });
   }
@@ -146,6 +161,7 @@ export async function registerJobRequest(input: JobRequestInput): Promise<JobReq
     addressLine: addressLine ?? job.addressLine,
     customerId: customer.id,
     ...(addressWarning ? { addressWarning } : {}),
+    ...(outsideServiceArea ? { outsideServiceArea } : {}),
   };
 }
 

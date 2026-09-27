@@ -97,6 +97,9 @@ export async function POST(req: Request) {
     history: history.map((h) => ({ role: h.role, content: h.content })),
     customerPhone: demoPhone,
     conversationId,
+    // Artikel 50: the widget shows its own welcome line, but the disclosure
+    // must not depend on the UI — the first API reply carries it too.
+    isNewConversation: !history.some((h) => h.role === "assistant"),
     channel: "whatsapp",
   });
 

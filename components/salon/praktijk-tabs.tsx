@@ -139,7 +139,7 @@ function LocatiesTab({ data }: { data: PraktijkData }) {
           <div className="grid grid-cols-1 gap-sm sm:grid-cols-2">
             <div>
               <label className={labelCls}>Naam</label>
-              <input name="name" required placeholder="Huidzorg Clinics Den Bosch" className={inputCls} />
+              <input name="name" required placeholder="Vestiging Noord" className={inputCls} />
             </div>
             <div>
               <label className={labelCls}>Stad</label>
@@ -148,7 +148,7 @@ function LocatiesTab({ data }: { data: PraktijkData }) {
           </div>
           <div>
             <label className={labelCls}>Adres</label>
-            <input name="address" placeholder="Hinthamerstraat 12" className={inputCls} />
+            <input name="address" placeholder="Voorbeeldstraat 12" className={inputCls} />
           </div>
           <div className="grid grid-cols-2 gap-sm sm:grid-cols-3">
             <div>

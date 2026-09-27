@@ -53,10 +53,10 @@ export async function getKnowledgePostById(id: string) {
 
 export async function listPublishedKnowledgeSlugs(
   vertical: string = DEFAULT_VERTICAL_ID,
-): Promise<{ slug: string; publishedAt: Date | null }[]> {
+): Promise<{ slug: string; publishedAt: Date | null; updatedAt: Date; category: string | null }[]> {
   if (!env.DATABASE_URL) return [];
   return db
-    .select({ slug: knowledgePosts.slug, publishedAt: knowledgePosts.publishedAt })
+    .select({ slug: knowledgePosts.slug, publishedAt: knowledgePosts.publishedAt, updatedAt: knowledgePosts.updatedAt, category: knowledgePosts.category })
     .from(knowledgePosts)
     .where(and(eq(knowledgePosts.status, "published"), eq(knowledgePosts.vertical, vertical)))
     .orderBy(desc(knowledgePosts.publishedAt));
@@ -80,4 +80,31 @@ export async function knowledgeSlugTaken(slug: string, exceptId?: string): Promi
     .where(exceptId ? and(eq(knowledgePosts.slug, slug), ne(knowledgePosts.id, exceptId)) : eq(knowledgePosts.slug, slug))
     .limit(1);
   return rows.length > 0;
+}
+
+/** Published kennisbank posts of one site, newest first; optionally one category. */
+export async function listPublishedKnowledgePosts(vertical: string = DEFAULT_VERTICAL_ID, category?: string) {
+  if (!env.DATABASE_URL) return [];
+  return db
+    .select({
+      slug: knowledgePosts.slug,
+      title: knowledgePosts.title,
+      excerpt: knowledgePosts.excerpt,
+      bodyMdx: knowledgePosts.bodyMdx,
+      bodyIsHtml: knowledgePosts.bodyIsHtml,
+      publishedAt: knowledgePosts.publishedAt,
+      keywords: knowledgePosts.keywords,
+      coverImage: knowledgePosts.coverImage,
+      coverImageAlt: knowledgePosts.coverImageAlt,
+      category: knowledgePosts.category,
+    })
+    .from(knowledgePosts)
+    .where(
+      and(
+        eq(knowledgePosts.status, "published"),
+        eq(knowledgePosts.vertical, vertical),
+        category ? eq(knowledgePosts.category, category) : undefined,
+      ),
+    )
+    .orderBy(desc(knowledgePosts.publishedAt));
 }

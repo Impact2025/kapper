@@ -7,7 +7,7 @@ import type { VerticalPack } from "@/lib/verticals";
 import { nextNumber } from "@/lib/jobs/numbering";
 import {
   addMonths,
-  advanceDue,
+  advanceContractDue,
   blocksOverlap,
   buildChecklist,
   canTransition,
@@ -188,7 +188,7 @@ async function onJobCompleted(job: JobRow, now: Date) {
   if (job.contractId) {
     const [contract] = await db.select().from(serviceContracts).where(eq(serviceContracts.id, job.contractId)).limit(1);
     if (contract) {
-      const nextDueAt = advanceDue(contract.nextDueAt, contract.intervalMonths, now);
+      const nextDueAt = advanceContractDue(contract.nextDueAt, contract, now);
       await db.update(serviceContracts).set({ nextDueAt }).where(eq(serviceContracts.id, contract.id));
       if (contract.assetId) {
         await db

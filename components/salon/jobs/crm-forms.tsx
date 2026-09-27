@@ -10,7 +10,7 @@ import {
 } from "@/lib/jobs/actions";
 import { ActionForm } from "@/components/salon/jobs/action-form";
 import { Field, btnOutline, inputCls } from "@/components/salon/jobs/ui";
-import { CUSTOMER_TYPES, CUSTOMER_TYPE_LABEL, VAT_RATES } from "@/lib/jobs/model";
+import { CUSTOMER_TYPES, CUSTOMER_TYPE_LABEL, MONTH_NAMES_SHORT, VAT_RATES } from "@/lib/jobs/model";
 import { Icon } from "@/components/ui/icon";
 
 /** A collapsible "+ add" section so the customer page stays scannable. */
@@ -139,13 +139,16 @@ export function AssetForm({
   customerId,
   kinds,
   addresses,
+  noun = "installatie",
 }: {
   customerId: string;
   kinds: { key: string; label: string }[];
   addresses: { id: string; line: string }[];
+  /** The vak's word for an asset, lowercase ("installatie", "tuinonderdeel"). */
+  noun?: string;
 }) {
   return (
-    <ActionForm action={addAssetAction} submitLabel="Installatie toevoegen" submitIcon="add" resetOnSuccess>
+    <ActionForm action={addAssetAction} submitLabel={`${noun.charAt(0).toUpperCase()}${noun.slice(1)} toevoegen`} submitIcon="add" resetOnSuccess>
       <input type="hidden" name="customerId" value={customerId} />
       <div className="grid grid-cols-1 gap-sm sm:grid-cols-3">
         <Field label="Soort">
@@ -200,12 +203,17 @@ export function ContractForm({
   assets,
   addresses,
   defaultVat,
+  seasonal = false,
+  assetNoun = "installatie",
 }: {
   customerId: string;
   categories: { key: string; label: string }[];
   assets: { id: string; label: string }[];
   addresses: { id: string; line: string }[];
   defaultVat: number;
+  /** Weekly cadence + season window (hovenier). */
+  seasonal?: boolean;
+  assetNoun?: string;
 }) {
   return (
     <ActionForm action={createContractAction} submitLabel="Contract aanmaken" submitIcon="event_repeat" resetOnSuccess>
@@ -223,9 +231,43 @@ export function ContractForm({
             ))}
           </select>
         </Field>
-        <Field label="Elke … maanden">
-          <input name="intervalMonths" type="number" min={1} max={120} defaultValue={12} className={inputCls} />
-        </Field>
+        {seasonal ? (
+          <>
+            <Field label="Elke …">
+              <div className="flex gap-xs">
+                <input name="intervalCount" type="number" min={1} max={120} defaultValue={2} className={inputCls} />
+                <select name="intervalUnit" defaultValue="weeks" className={inputCls}>
+                  <option value="weeks">weken</option>
+                  <option value="months">maanden</option>
+                </select>
+              </div>
+            </Field>
+            <Field label="Seizoen van">
+              <select name="seasonStartMonth" defaultValue="" className={inputCls}>
+                <option value="">Hele jaar</option>
+                {MONTH_NAMES_SHORT.map((m, i) => (
+                  <option key={m} value={i + 1}>
+                    {m}
+                  </option>
+                ))}
+              </select>
+            </Field>
+            <Field label="Seizoen tot en met">
+              <select name="seasonEndMonth" defaultValue="" className={inputCls}>
+                <option value="">Hele jaar</option>
+                {MONTH_NAMES_SHORT.map((m, i) => (
+                  <option key={m} value={i + 1}>
+                    {m}
+                  </option>
+                ))}
+              </select>
+            </Field>
+          </>
+        ) : (
+          <Field label="Elke … maanden">
+            <input name="intervalMonths" type="number" min={1} max={120} defaultValue={12} className={inputCls} />
+          </Field>
+        )}
         <Field label="Eerste beurt op">
           <input name="firstDueAt" type="date" required className={inputCls} />
         </Field>
@@ -241,7 +283,7 @@ export function ContractForm({
             ))}
           </select>
         </Field>
-        <Field label="Installatie">
+        <Field label={`${assetNoun.charAt(0).toUpperCase()}${assetNoun.slice(1)}`}>
           <select name="assetId" defaultValue="" className={inputCls}>
             <option value="">— Geen —</option>
             {assets.map((a) => (

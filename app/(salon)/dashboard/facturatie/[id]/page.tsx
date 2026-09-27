@@ -21,6 +21,7 @@ import { getJobRow } from "@/lib/jobs/queries";
 import { Badge, Card } from "@/components/salon/dash-ui";
 import { Icon } from "@/components/ui/icon";
 import { ActionForm } from "@/components/salon/jobs/action-form";
+import { lineUnitsFor } from "@/lib/jobs/labels";
 import { DocumentEditor, type CatalogItem, type EditorLine } from "@/components/salon/jobs/document-editor";
 import { DocumentSheet } from "@/components/jobs/document-sheet";
 import { TextLink, btnDanger, btnOutline, btnPrimary, fmtDateTime, inputCls } from "@/components/salon/jobs/ui";
@@ -150,6 +151,7 @@ export default async function DocumentPage({ params }: { params: Promise<{ id: s
             footerText={doc.footerText ?? (kind === "invoice" ? business.invoiceFooter : "")}
             catalog={catalog}
             defaultVat={ctx.pack.vatRates.treatment}
+            units={lineUnitsFor(ctx.pack)}
             canSend={ctx.can.quotes}
           />
           <div className="mt-md border-t border-outline-variant/30 pt-md">

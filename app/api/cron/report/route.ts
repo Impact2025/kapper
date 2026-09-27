@@ -34,7 +34,18 @@ async function run(req: Request) {
       { label: "Nieuwe salons", value: String(payload.newSalons) },
       { label: "Actieve MRR", value: formatEur(payload.activeMrr) },
       { label: "Open pipeline", value: formatEur(payload.pipelineValue) },
+      ...(payload.platform
+        ? [
+            { label: "AI-kosten 30d", value: formatEur(payload.platform.aiCostEur30d) },
+            { label: "AI-marge", value: payload.platform.aiMarginPct == null ? "—" : `${payload.platform.aiMarginPct}%` },
+            {
+              label: "Klanten gezond / aandacht / risico",
+              value: `${payload.platform.health.gezond} / ${payload.platform.health.aandacht} / ${payload.platform.health.risico}`,
+            },
+          ]
+        : []),
     ],
+    alerts: payload.platform?.anomalies.map((a) => `${a.name}: ${a.message}`),
   });
 
   await sendEmail({

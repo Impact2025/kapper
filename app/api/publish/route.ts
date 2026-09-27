@@ -8,6 +8,7 @@ import { siteUrlFor } from "@/lib/verticals/site-url";
 import { revalidateContent } from "@/lib/verticals/revalidate";
 import { stripHtml } from "@/lib/blog/markdown";
 import { slugify } from "@/lib/utils";
+import { parsePublishedAt } from "@/lib/blog/published-at";
 
 /**
  * Ingest endpoint for AgentOS' content pipeline (backend/domains/publish/
@@ -43,6 +44,8 @@ interface PublishPayload {
   excerpt?: string;
   tags?: string[];
   vertical?: string;
+  /** Optional YYYY-MM-DD or ISO timestamp; not in the future. */
+  publishedAt?: string;
 }
 
 export async function POST(request: Request) {
@@ -54,6 +57,9 @@ export async function POST(request: Request) {
   if (!body?.title || !body?.content) {
     return NextResponse.json({ error: "title and content are required" }, { status: 400 });
   }
+
+  const published = parsePublishedAt(body.publishedAt);
+  if (!published.ok) return NextResponse.json({ error: published.error }, { status: 400 });
 
   const requested = body.vertical || new URL(request.url).searchParams.get("vertical");
   const vertical = isVerticalId(requested) ? requested : DEFAULT_VERTICAL_ID;
@@ -90,7 +96,7 @@ export async function POST(request: Request) {
     .limit(1);
 
   const [existing] = await db
-    .select({ id: blogPosts.id, vertical: blogPosts.vertical })
+    .select({ id: blogPosts.id, vertical: blogPosts.vertical, title: blogPosts.title, bodyMdx: blogPosts.bodyMdx, updatedAt: blogPosts.updatedAt })
     .from(blogPosts)
     .where(eq(blogPosts.slug, slug))
     .limit(1);
@@ -114,6 +120,10 @@ export async function POST(request: Request) {
         keywords,
         jsonLd,
         seoScore,
+        ...(published.date ? { publishedAt: published.date } : {}),
+        // A re-publish with unchanged title + body keeps its lastmod; a real
+        // edit falls through to $onUpdate (now). Never backdate on update.
+        ...(existing.title === body.title && existing.bodyMdx === body.content ? { updatedAt: existing.updatedAt } : {}),
       })
       .where(eq(blogPosts.id, existing.id));
   } else {
@@ -131,7 +141,8 @@ export async function POST(request: Request) {
       jsonLd,
       seoScore,
       authorId: author?.id,
-      publishedAt: new Date(),
+      publishedAt: published.date ?? new Date(),
+      ...(published.date ? { updatedAt: published.date } : {}),
     });
   }
 

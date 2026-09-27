@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { EB_Garamond, Hanken_Grotesk } from "next/font/google";
 import "./globals.css";
 
@@ -16,6 +16,17 @@ const hanken = Hanken_Grotesk({
   display: "swap",
 });
 
+// Mobiel: safe-area (notch/home-indicator) beschikbaar maken via viewport-fit=cover,
+// en het toetsenbord het layout-viewport laten verkleinen (Android Chrome) zodat
+// vaste chat-/formulierbalken niet achter het toetsenbord verdwijnen.
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+  interactiveWidget: "resizes-content",
+  themeColor: "#fbf9f8",
+};
+
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://www.kappersassistent.nl";
 
 export const metadata: Metadata = {
@@ -26,13 +37,6 @@ export const metadata: Metadata = {
   },
   description:
     "De AI-gedreven operationele cockpit voor de moderne kapsalon. Je AI-assistent neemt op via WhatsApp en telefoon, direct gekoppeld aan je agenda. Nooit meer gemiste boekingen.",
-  keywords: [
-    "kapper AI assistent",
-    "kapsalon telefoon AI",
-    "salon afspraken AI",
-    "no-show reductie kapper",
-    "kapsalon software",
-  ],
   openGraph: {
     type: "website",
     locale: "nl_NL",
@@ -48,6 +52,9 @@ export const metadata: Metadata = {
     description:
       "De AI-gedreven operationele cockpit voor de moderne kapsalon.",
   },
+  applicationName: "KapperAssistent",
+  formatDetection: { telephone: false },
+  appleWebApp: { capable: true, title: "KapperAssistent", statusBarStyle: "default" },
   robots: {
     index: true,
     follow: true,
@@ -71,10 +78,7 @@ export default function RootLayout({
       className={`${garamond.variable} ${hanken.variable} light h-full`}
     >
       <head>
-        <link
-          href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap"
-          rel="stylesheet"
-        />
+        <link rel="preload" href="/fonts/material-symbols-subset.woff2?v=2" as="font" type="font/woff2" crossOrigin="anonymous" />
       </head>
       <body className="min-h-full flex flex-col font-body-md text-body-md">
         {children}

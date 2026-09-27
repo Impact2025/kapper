@@ -304,6 +304,77 @@ export function advanceDue(nextDueAt: Date, intervalMonths: number, now: Date = 
   return next;
 }
 
+/* ------------------------- seizoenscontracten ------------------------- */
+/** Cadence + season of a contract. `intervalWeeks` (when set) wins over
+ * `intervalMonths`; a season limits beurten to a window of months (1–12,
+ * inclusive, may wrap the year: 11 → 2 is nov–feb). Both season ends null =
+ * hele jaar. Used by hoveniers (mrt–okt, om de 2 weken). */
+export interface ContractCadence {
+  intervalMonths: number;
+  intervalWeeks?: number | null;
+  seasonStartMonth?: number | null;
+  seasonEndMonth?: number | null;
+}
+
+export const MONTH_NAMES_SHORT = ["jan", "feb", "mrt", "apr", "mei", "jun", "jul", "aug", "sep", "okt", "nov", "dec"] as const;
+
+function hasSeason(c: ContractCadence): c is ContractCadence & { seasonStartMonth: number; seasonEndMonth: number } {
+  return c.seasonStartMonth != null && c.seasonEndMonth != null;
+}
+
+/** month is 1–12. */
+export function inSeason(c: ContractCadence, month: number): boolean {
+  if (!hasSeason(c)) return true;
+  const { seasonStartMonth: a, seasonEndMonth: b } = c;
+  return a <= b ? month >= a && month <= b : month >= a || month <= b;
+}
+
+/** Moves a date that falls outside the season to the first day of the next
+ * season (same time of day); dates already in season are returned as is. */
+export function snapToSeason(d: Date, c: ContractCadence): Date {
+  if (!hasSeason(c) || inSeason(c, d.getUTCMonth() + 1)) return d;
+  let year = d.getUTCFullYear();
+  let start = new Date(Date.UTC(year, c.seasonStartMonth - 1, 1, d.getUTCHours(), d.getUTCMinutes()));
+  if (start.getTime() <= d.getTime()) {
+    year += 1;
+    start = new Date(Date.UTC(year, c.seasonStartMonth - 1, 1, d.getUTCHours(), d.getUTCMinutes()));
+  }
+  return start;
+}
+
+function stepOnce(d: Date, c: ContractCadence): Date {
+  return c.intervalWeeks ? addDays(d, c.intervalWeeks * 7) : addMonths(d, c.intervalMonths);
+}
+
+/** Next beurt after `nextDueAt` for a contract with cadence + season: steps by
+ * weeks/months, skips missed cycles (no backlog after a pause) and never lands
+ * outside the season — it jumps to the start of the next one instead. */
+export function advanceContractDue(nextDueAt: Date, c: ContractCadence, now: Date = new Date()): Date {
+  let next = stepOnce(nextDueAt, c);
+  let guard = 0;
+  while (next.getTime() < now.getTime() && guard++ < 600) next = stepOnce(next, c);
+  return snapToSeason(next, c);
+}
+
+/** Gemiddeld aantal beurten per jaar — feeds the "verwachte jaaromzet" figure.
+ * For a season the weeks/months of that season are counted, not the whole year.
+ * An interval of a year or longer gives a fraction (24 mnd → 0,5), so callers
+ * must round the summed revenue, not each contract. */
+export function visitsPerYear(c: ContractCadence): number {
+  if (!c.intervalWeeks && c.intervalMonths >= 12) return 12 / c.intervalMonths;
+  if (!hasSeason(c)) return c.intervalWeeks ? 52 / c.intervalWeeks : 12 / c.intervalMonths;
+  const seasonMonths =
+    c.seasonEndMonth >= c.seasonStartMonth ? c.seasonEndMonth - c.seasonStartMonth + 1 : 12 - c.seasonStartMonth + 1 + c.seasonEndMonth;
+  if (c.intervalWeeks) return Math.max(1, Math.round((seasonMonths * 52) / 12 / c.intervalWeeks));
+  return Math.max(1, Math.round(seasonMonths / c.intervalMonths));
+}
+
+/** "Elke 2 weken · mrt–okt" / "Elke 12 mnd". */
+export function cadenceLabel(c: ContractCadence): string {
+  const every = c.intervalWeeks ? `Elke ${c.intervalWeeks === 1 ? "week" : `${c.intervalWeeks} weken`}` : `Elke ${c.intervalMonths} mnd`;
+  return hasSeason(c) ? `${every} · ${MONTH_NAMES_SHORT[c.seasonStartMonth - 1]}–${MONTH_NAMES_SHORT[c.seasonEndMonth - 1]}` : every;
+}
+
 /* ------------------------------ addresses ------------------------------ */
 const POSTAL_RE = /^(\d{4})\s?([A-Za-z]{2})$/;
 

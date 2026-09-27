@@ -65,6 +65,7 @@ export async function generateBlogPost(
   }
 
   const raw = await complete({
+    feature: "blog",
     model: env.OPENMODEL_MODEL,
     maxTokens: 3000,
     system: pack.content.blogSystemPrompt,

@@ -1,0 +1,77 @@
+[
+ {
+  "title": "Eigen thema en huisstijl HovenierAssistent",
+  "phase": "Fundament",
+  "status": "done"
+ },
+ {
+  "title": "Onboarding per vak",
+  "phase": "Fundament",
+  "status": "done"
+ },
+ {
+  "title": "Prijs-copy per vak",
+  "phase": "Fundament",
+  "status": "done"
+ },
+ {
+  "title": "Spoed- en stormregels voor de AI-receptie",
+  "phase": "Fundament",
+  "status": "done"
+ },
+ {
+  "title": "Klusvelden voor hoveniers",
+  "phase": "Fundament",
+  "status": "done"
+ },
+ {
+  "title": "Landingspagina",
+  "phase": "Fundament",
+  "status": "done"
+ },
+ {
+  "title": "Seizoenscontracten",
+  "phase": "Uitbreiding",
+  "status": "todo"
+ },
+ {
+  "title": "Offerte-eenheden (m² en m³)",
+  "phase": "Uitbreiding",
+  "status": "todo"
+ },
+ {
+  "title": "Voor/na-fotodossier",
+  "phase": "Uitbreiding",
+  "status": "todo"
+ },
+ {
+  "title": "Weerbericht koppelen (na akkoord op nieuwe koppeling)",
+  "phase": "Uitbreiding",
+  "status": "todo"
+ },
+ {
+  "title": "Werkgebied-check",
+  "phase": "Uitbreiding",
+  "status": "todo"
+ },
+ {
+  "title": "Domein hovenierassistent.nl in Vercel",
+  "phase": "Lancering",
+  "status": "todo"
+ },
+ {
+  "title": "E-maildomein in Resend",
+  "phase": "Lancering",
+  "status": "todo"
+ },
+ {
+  "title": "Vertical op live zetten",
+  "phase": "Lancering",
+  "status": "todo"
+ },
+ {
+  "title": "Pilot met een echte hovenier",
+  "phase": "Lancering",
+  "status": "todo"
+ }
+]

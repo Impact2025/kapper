@@ -26,12 +26,14 @@ export function NewJobForm({
   staff,
   categories,
   noun,
+  titleExample = "Lekkende kraan keuken",
   initialCustomerId,
 }: {
   customers: FormCustomer[];
   staff: { id: string; name: string }[];
   categories: FormCategory[];
   noun: string;
+  titleExample?: string;
   initialCustomerId?: string;
 }) {
   const [mode, setMode] = useState<"existing" | "new">(initialCustomerId || customers.length ? "existing" : "new");
@@ -199,7 +201,7 @@ export function NewJobForm({
             </select>
           </Field>
           <Field label="Titel *" className="sm:col-span-2">
-            <input name="title" className={inputCls} placeholder="bv. Lekkende kraan keuken" />
+            <input name="title" className={inputCls} placeholder={`bv. ${titleExample}`} />
           </Field>
           <Field label="Omschrijving" className="sm:col-span-2">
             <textarea name="description" rows={3} className={inputCls} />

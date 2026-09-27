@@ -8,6 +8,7 @@ import { SupportChatWidget } from "@/components/support/chat-widget";
 import { IncidentBanner } from "@/components/salon/incident-banner";
 import { PageHelp } from "@/components/salon/page-help";
 import { getVerticalConfig, hostMismatch, resolveNav } from "@/lib/verticals";
+import { guideFor } from "@/lib/help/guide";
 import { themeStyle } from "@/lib/verticals/theme";
 import { siteUrlFor } from "@/lib/verticals/site-url";
 
@@ -39,7 +40,7 @@ export default async function SalonLayout({ children }: { children: React.ReactN
       <SalonSidebar
         user={{ name: user.name, email: user.email }}
         salon={{ name: salon?.name ?? `Mijn ${pack.terms.establishment}`, plan: salon?.plan ?? "essential" }}
-        nav={resolveNav(pack.nav)}
+        nav={resolveNav(pack.nav).map((n) => ({ ...n, tip: guideFor(pack.id, n.key)?.short }))}
       />
       <main className="min-w-0 flex-1 px-margin-mobile pb-[calc(6rem+env(safe-area-inset-bottom))] pt-md md:px-lg md:py-lg">
         <IncidentBanner />

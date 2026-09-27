@@ -41,7 +41,7 @@ export default async function ResetPasswordPage({
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-surface-container-low px-margin-mobile py-xl">
+    <main className="flex min-h-dvh items-center justify-center bg-surface-container-low px-margin-mobile py-xl">
       <div className="w-full max-w-[28rem]">
         <div className="mb-lg text-center">
           <Link href="/" className="font-headline-md text-headline-md font-bold text-primary">

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { env } from "@/lib/env";
 import { getResend } from "@/lib/mail/resend";
 import { processInboundEmail } from "@/lib/support/inbound";
+import { markDeliveryProblem } from "@/lib/newsletter/subscribers";
 
 export const runtime = "nodejs";
 export const maxDuration = 30;
@@ -10,7 +11,8 @@ export const maxDuration = 30;
  * Resend inbound-mail webhook (event `email.received`). Signature-verified with
  * RESEND_WEBHOOK_SECRET; fails closed when the secret is not configured.
  * Setup: Resend → Webhooks → endpoint `<site>/api/webhooks/resend-inbound`,
- * event email.received; route the support address to Resend inbound.
+ * events email.received (support inbox) plus email.bounced and
+ * email.complained (newsletter list hygiene); route the support address to Resend inbound.
  */
 export async function POST(req: Request) {
   const resend = getResend();
@@ -32,6 +34,12 @@ export async function POST(req: Request) {
     });
   } catch {
     return NextResponse.json({ error: "Ongeldige handtekening." }, { status: 401 });
+  }
+
+  // Newsletter deliverability: stop mailing addresses that bounce or report spam.
+  if (event.type === "email.bounced" || event.type === "email.complained") {
+    await markDeliveryProblem(event.data.email_id, event.type === "email.bounced" ? "bounced" : "complained");
+    return NextResponse.json({ ok: true });
   }
 
   if (event.type !== "email.received") return NextResponse.json({ ok: true, ignored: event.type });

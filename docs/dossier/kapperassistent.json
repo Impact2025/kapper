@@ -1,0 +1,97 @@
+[
+ {
+  "title": "Klantentabel en AI-manager (één ingang voor WhatsApp/telefoon)",
+  "phase": "Fase 0 · Fundament",
+  "status": "done"
+ },
+ {
+  "title": "Behandelkaarten en gezondheidsgegevens (AVG art. 9)",
+  "phase": "Fase 1 · Klantdossier",
+  "status": "done"
+ },
+ {
+  "title": "Klantoverzicht en dagoverzicht in het dashboard",
+  "phase": "Fase 1 · Klantdossier",
+  "status": "done"
+ },
+ {
+  "title": "Aanbetalingen en three-strikes-beleid",
+  "phase": "Fase 2 · No-show",
+  "status": "done"
+ },
+ {
+  "title": "Kassa met btw-splitsing en dagafsluiting",
+  "phase": "Fase 3 · Kassa",
+  "status": "done"
+ },
+ {
+  "title": "Foto's herkennen door de AI",
+  "phase": "Fase 4 · AI-receptie",
+  "status": "done"
+ },
+ {
+  "title": "Escalaties naar de kapper zelf",
+  "phase": "Fase 4 · AI-receptie",
+  "status": "done"
+ },
+ {
+  "title": "WhatsApp-berichten bundelen (6 sec)",
+  "phase": "Fase 4 · AI-receptie",
+  "status": "done"
+ },
+ {
+  "title": "SMS-terugval na gemist telefoongesprek",
+  "phase": "Fase 4 · AI-receptie",
+  "status": "done"
+ },
+ {
+  "title": "Automatisch reviews vragen",
+  "phase": "Fase 5 · Binden van klanten",
+  "status": "done"
+ },
+ {
+  "title": "Klanten terughalen (ReConnect)",
+  "phase": "Fase 5 · Binden van klanten",
+  "status": "done"
+ },
+ {
+  "title": "Loyaliteitspunten (Elite)",
+  "phase": "Fase 5 · Binden van klanten",
+  "status": "done"
+ },
+ {
+  "title": "Recht op vergetelheid (AVG art. 17)",
+  "phase": "Fase 6 · Compliance",
+  "status": "done"
+ },
+ {
+  "title": "AI-melding bij telefoongesprekken (AI Act art. 50)",
+  "phase": "Fase 6 · Compliance",
+  "status": "done"
+ },
+ {
+  "title": "Basis geschikt voor andere vakgebieden",
+  "phase": "Fase 7 · Meerdere vakken",
+  "status": "done"
+ },
+ {
+  "title": "Slimme dubbele boeking bij inwerktijd (Pro)",
+  "phase": "Dubbel boeken",
+  "status": "done"
+ },
+ {
+  "title": "Voice-latency en doorverbinden testen tegen live Vapi",
+  "phase": "Voice-AI",
+  "status": "in_progress"
+ },
+ {
+  "title": "Prijzen en claims controleren tegen de code (per kwartaal)",
+  "phase": "Lancering",
+  "status": "todo"
+ },
+ {
+  "title": "Eerste betalende kapper live",
+  "phase": "Lancering",
+  "status": "todo"
+ }
+]

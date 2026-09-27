@@ -15,17 +15,17 @@ export async function JobReportView({ ctx, days = 30 }: { ctx: JobContext; days?
       <PageHeader title="Rapportage" subtitle={`Wat de AI en je team hebben opgeleverd — afgelopen ${days} dagen.`} />
 
       <div className="grid grid-cols-2 gap-md xl:grid-cols-4">
-        <StatCard label="Nieuwe aanvragen" value={String(report.created)} icon="inbox" hint={`${report.viaAi} via de AI (${report.aiSharePercent}%)`} />
-        <StatCard label="Afgerond" value={String(report.completed)} icon="task_alt" hint={report.avgLeadTimeHours !== null ? `gem. ${report.avgLeadTimeHours} uur van aanvraag tot klaar` : undefined} />
-        <StatCard label="Spoedklussen" value={String(report.urgent)} icon="emergency" />
+        <StatCard label="Nieuwe aanvragen" value={String(report.created)} icon="inbox" tip="Klussen die in deze periode zijn aangemaakt, door jou of door de AI-receptie." hint={`${report.viaAi} via de AI (${report.aiSharePercent}%)`} />
+        <StatCard label="Afgerond" value={String(report.completed)} icon="task_alt" tip="Klussen die je in deze periode hebt afgerond." hint={report.avgLeadTimeHours !== null ? `gem. ${report.avgLeadTimeHours} uur van aanvraag tot klaar` : undefined} />
+        <StatCard label="Spoedklussen" value={String(report.urgent)} icon="emergency" tip="Aantal klussen met spoed, zoals stormschade." />
         <StatCard
           label="Offertes geaccepteerd"
           value={report.quoteAcceptancePercent === null ? "—" : `${report.quoteAcceptancePercent}%`}
-          icon="request_quote"
+          icon="request_quote" tip="Welk deel van je verstuurde offertes de klant online heeft geaccepteerd."
           hint={`${report.quotesAccepted} van ${report.quotesSent}`}
         />
-        <StatCard label="Gefactureerd (excl. btw)" value={formatMoney(report.invoicedCents)} icon="receipt_long" />
-        <StatCard label="Betaald (excl. btw)" value={formatMoney(report.paidCents)} icon="payments" />
+        <StatCard label="Gefactureerd (excl. btw)" value={formatMoney(report.invoicedCents)} icon="receipt_long" tip="Totaal van verstuurde facturen, zonder btw." />
+        <StatCard label="Betaald (excl. btw)" value={formatMoney(report.paidCents)} icon="payments" tip="Totaal van betaalde facturen, zonder btw." />
       </div>
 
       <div className="grid grid-cols-1 gap-md lg:grid-cols-3">

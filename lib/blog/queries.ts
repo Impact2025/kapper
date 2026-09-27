@@ -56,10 +56,10 @@ export async function getPublishedPost(slug: string, vertical: string = DEFAULT_
 
 export async function listPublishedSlugs(
   vertical: string = DEFAULT_VERTICAL_ID,
-): Promise<{ slug: string; publishedAt: Date | null }[]> {
+): Promise<{ slug: string; publishedAt: Date | null; updatedAt: Date }[]> {
   if (!env.DATABASE_URL) return [];
   return db
-    .select({ slug: blogPosts.slug, publishedAt: blogPosts.publishedAt })
+    .select({ slug: blogPosts.slug, publishedAt: blogPosts.publishedAt, updatedAt: blogPosts.updatedAt })
     .from(blogPosts)
     .where(and(eq(blogPosts.status, "published"), eq(blogPosts.vertical, vertical)))
     .orderBy(desc(blogPosts.publishedAt));

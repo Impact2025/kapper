@@ -13,6 +13,7 @@ const SITE_PREFIXES = [
   "/prijzen",
   "/blog",
   "/kennisbank",
+  "/oplossingen",
   "/contact",
   "/help",
   "/faq",
@@ -25,7 +26,7 @@ const SITE_PREFIXES = [
 
 /** Kapper-only marketing pages: on a trade's domain they must 404 rather
  * than show the kapper site under the wrong brand. */
-const KAPPER_ONLY_PREFIXES = ["/diensten", "/over-ons", "/scan"];
+const KAPPER_ONLY_PREFIXES = ["/diensten", "/over-ons", "/scan", "/integraties"];
 
 const matches = (pathname: string, prefix: string) => pathname === prefix || pathname.startsWith(`${prefix}/`);
 
@@ -38,7 +39,7 @@ export function verticalRewrite(pathname: string, pack: VerticalPack): RewriteRe
   const base = `/sites/${pack.id}`;
 
   if (pathname === "/") return { pathname: base };
-  if (["/sitemap.xml", "/robots.txt", "/opengraph-image", "/twitter-image"].includes(pathname)) {
+  if (["/sitemap.xml", "/robots.txt", "/llms.txt", "/opengraph-image", "/twitter-image"].includes(pathname)) {
     return { pathname: `${base}${pathname}` };
   }
   if (KAPPER_ONLY_PREFIXES.some((p) => matches(pathname, p))) return { pathname: `${base}/__not-found` };

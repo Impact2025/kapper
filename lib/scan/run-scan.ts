@@ -124,6 +124,7 @@ export async function runScan(input: ScanInput): Promise<ScanResult> {
 
   let summary = fallbackSummary;
   const ai = await complete({
+    feature: "scan",
     model: env.OPENMODEL_MODEL,
     maxTokens: 350,
     system:

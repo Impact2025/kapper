@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { Icon } from "@/components/ui/icon";
+import { WAI } from "@/lib/seo/wai";
 
 const cols = [
   {
@@ -9,6 +10,9 @@ const cols = [
       { href: "/#hoe-het-werkt", label: "Hoe het werkt" },
       { href: "/prijzen", label: "Prijzen" },
       { href: "/scan", label: "Gratis AI-scan" },
+      { href: "/integraties/phorest", label: "Koppeling Phorest" },
+      { href: "/integraties/acuity", label: "Koppeling Acuity" },
+      { href: "/kennisbank", label: "Kennisbank" },
       { href: "/blog", label: "Blog" },
     ],
   },
@@ -63,13 +67,20 @@ export function SiteFooter({
   logoIcon = null,
   blurb = "De AI-gedreven operationele cockpit voor de moderne kapsalon. Meer boekingen, minder no-shows, meer rust.",
   variant = "kapper",
+  solutionLinks = [],
+  sisters = [],
 }: {
   brandName?: string;
   logoIcon?: string | null;
   blurb?: string;
   variant?: "kapper" | "job";
+  /** Oplossingspagina's of this site, listed under Product. */
+  solutionLinks?: { href: string; label: string }[];
+  /** Other live Assistent sites, shown as one small line at the very bottom. */
+  sisters?: { name: string; url: string }[];
 } = {}) {
-  const columns = variant === "job" ? [...jobProductCols, ...cols.slice(2)] : cols;
+  const base = variant === "job" ? [...jobProductCols, ...cols.slice(2)] : cols;
+  const columns = base.map((c, i) => (i === 0 ? { ...c, links: [...c.links, ...solutionLinks] } : c));
   return (
     <footer className="bg-surface-container-highest w-full">
       <div className="max-w-container-max mx-auto px-margin-mobile md:px-xl py-lg">
@@ -119,6 +130,21 @@ export function SiteFooter({
         </div>
         <p className="font-label-sm text-label-sm text-on-surface-variant text-center">
           © {new Date().getFullYear()} {brandName} — Alle rechten voorbehouden.
+        </p>
+        <p className="mt-xs font-label-sm text-label-sm text-on-surface-variant/80 text-center">
+          Een initiatief van Vincent van Munster ·{" "}
+          <a href={WAI.url} className="underline hover:text-secondary">WeAreImpact</a>
+          {sisters.length > 0 && (
+            <>
+              {" "}· Ook:{" "}
+              {sisters.map((s, i) => (
+                <span key={s.url}>
+                  {i > 0 && ", "}
+                  <a href={s.url} className="underline hover:text-secondary">{s.name}</a>
+                </span>
+              ))}
+            </>
+          )}
         </p>
       </div>
     </footer>

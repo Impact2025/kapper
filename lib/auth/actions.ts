@@ -67,6 +67,7 @@ export async function login(
     .select({
       id: users.id,
       role: users.role,
+      salonId: users.salonId,
       passwordHash: users.passwordHash,
     })
     .from(users)
@@ -82,6 +83,9 @@ export async function login(
   }
 
   await createSession({ userId: user.id, role: user.role });
+  // Cockpit activity signal — best-effort, never blocks the login.
+  await db.update(users).set({ lastLoginAt: new Date() }).where(eq(users.id, user.id)).catch(() => {});
+  await trackEvent({ type: "login", salonId: user.salonId, props: { role: user.role } });
   redirect(user.role === "owner" ? "/dashboard" : "/admin");
 }
 

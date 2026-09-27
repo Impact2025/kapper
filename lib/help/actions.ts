@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { requireRole } from "@/lib/auth/dal";
+import { auditAdmin } from "@/lib/admin/audit";
 import { HELP_CATEGORIES } from "@/lib/help/articles";
 import { SLUG_RE } from "@/lib/help/merge";
 import { resetArticle, saveArticle } from "@/lib/help/store";
@@ -70,13 +71,15 @@ export async function saveArticleAction(_prev: SaveArticleState, formData: FormD
     },
     admin.id,
   );
+  await auditAdmin(admin, "article.save", { type: "article", id: d.slug }, { hidden: d.hidden });
   refresh(d.slug);
   redirect("/admin/support/artikelen?opgeslagen=1");
 }
 
 export async function resetArticleAction(slug: string): Promise<void> {
-  await requireRole("admin");
+  const admin = await requireRole("admin");
   await resetArticle(slug);
+  await auditAdmin(admin, "article.reset", { type: "article", id: slug });
   refresh(slug);
   redirect("/admin/support/artikelen");
 }

@@ -47,6 +47,7 @@ export function DocumentEditor({
   footerText,
   catalog,
   defaultVat,
+  units = [...LINE_UNITS],
   canSend,
 }: {
   documentId: string;
@@ -57,6 +58,8 @@ export function DocumentEditor({
   footerText: string;
   catalog: CatalogItem[];
   defaultVat: number;
+  /** Eenheden voor dit vak (see lineUnitsFor). */
+  units?: string[];
   canSend: boolean;
 }) {
   const [lines, setLines] = useState<EditorLine[]>(initialLines.length ? initialLines : [blank(defaultVat)]);
@@ -113,7 +116,7 @@ export function DocumentEditor({
             <input value={l.description} onChange={(e) => update(i, { description: e.target.value })} placeholder="Omschrijving" className={`${inputCls} col-span-2 lg:col-span-1`} aria-label="Omschrijving" />
             <input value={l.quantity} onChange={(e) => update(i, { quantity: e.target.value })} inputMode="decimal" className={inputCls} aria-label="Aantal" />
             <select value={l.unit} onChange={(e) => update(i, { unit: e.target.value })} className={inputCls} aria-label="Eenheid">
-              {LINE_UNITS.map((u) => (
+              {(units.includes(l.unit) ? units : [...units, l.unit]).map((u) => (
                 <option key={u} value={u}>
                   {u}
                 </option>

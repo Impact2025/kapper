@@ -160,6 +160,13 @@ export interface VapiAssistantPayload {
      * is still well above what a few-sentence Dutch reply needs. */
     maxTokens: number;
   };
+  /** AVG dataminimalisatie: Vapi records call audio by default, but we only
+   * ever read the transcript (webhooks/vapi end-of-call-report). A voice
+   * recording is extra personal data — and raw material for voice/emotion
+   * analysis we must never do (AI Act art. 5.1.f) — so it stays off. */
+  artifactPlan: {
+    recordingEnabled: false;
+  };
   server?: {
     url: string;
     headers?: Record<string, string>;
@@ -225,6 +232,9 @@ export function buildVapiAssistantPayload(salon: SalonContext, toolsWebhookUrl: 
       ],
       tools: toVapiTools(salon),
       maxTokens: 200,
+    },
+    artifactPlan: {
+      recordingEnabled: false,
     },
     server: {
       url: toolsWebhookUrl,

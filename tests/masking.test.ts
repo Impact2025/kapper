@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
-import { MaskingSession } from "@/lib/ai/masking";
+import { MaskingSession, knownNamesFor, withKnownPiiNames } from "@/lib/ai/masking";
 import { withPiiMasking } from "@/lib/ai/anthropic";
 
 describe("MaskingSession — Protecto-methode PII tokenizer", () => {
@@ -31,6 +31,17 @@ describe("MaskingSession — Protecto-methode PII tokenizer", () => {
     expect(masked).not.toContain("anna@example.com");
     expect(masked).toContain("[TELEFOON_1]");
     expect(masked).toContain("[EMAIL_1]");
+  });
+
+  it("masks every term the Artikel 9 guard reacts to — one shared list, incl. two-word 'patch test'", () => {
+    const session = new MaskingSession();
+    const text = "Na mijn chemotherapie en alopecia wil ik eerst een patch test.";
+    const masked = session.mask(text);
+
+    for (const term of ["chemotherapie", "alopecia", "patch test"]) {
+      expect(masked).not.toContain(term);
+    }
+    expect(session.unmask(masked)).toBe(text);
   });
 
   it("gives the same entity the same token when it repeats, and different entities different tokens", () => {
@@ -99,6 +110,84 @@ describe("withPiiMasking — anthropic.ts gateway integration", () => {
       type: "text",
       text: "Genoteerd Anna Jansen, we bellen 0612345678 terug over de verfallergie.",
     });
+  });
+});
+
+describe("withPiiMasking — tool-use (boeken met echte gegevens)", () => {
+  it("re-identifies tool_use input, so a booking never gets a literal [KLANT_NAAM_1] token", async () => {
+    const create = vi.fn().mockResolvedValue({
+      content: [
+        {
+          type: "tool_use",
+          id: "tu-1",
+          name: "book_appointment",
+          input: { slot_id: "s-1", customer_name: "[KLANT_NAAM_1]", customer_phone: "[TELEFOON_1]", extra: ["[TELEFOON_1]"] },
+        },
+      ],
+    });
+    const wrapped = withPiiMasking({ messages: { create } } as unknown as import("@anthropic-ai/sdk").default);
+
+    const response = await wrapped.messages.create({
+      model: "test-model",
+      max_tokens: 100,
+      messages: [{ role: "user", content: "Ik ben Anna Jansen, mijn nummer is 0612345678. Boek maar." }],
+    } as never);
+
+    expect(response.content[0]).toMatchObject({
+      type: "tool_use",
+      input: { slot_id: "s-1", customer_name: "Anna Jansen", customer_phone: "0612345678", extra: ["0612345678"] },
+    });
+  });
+
+  it("masks the re-identified tool_use input and tool_result blocks again on the next tool-loop round", async () => {
+    const create = vi.fn().mockResolvedValue({ content: [{ type: "text", text: "ok" }] });
+    const wrapped = withPiiMasking({ messages: { create } } as unknown as import("@anthropic-ai/sdk").default);
+
+    await wrapped.messages.create({
+      model: "test-model",
+      max_tokens: 100,
+      messages: [
+        { role: "user", content: "Ik ben Anna Jansen, 0612345678." },
+        {
+          role: "assistant",
+          content: [{ type: "tool_use", id: "tu-1", name: "book_appointment", input: { customer_name: "Anna Jansen", customer_phone: "0612345678" } }],
+        },
+        {
+          role: "user",
+          content: [{ type: "tool_result", tool_use_id: "tu-1", content: [{ type: "text", text: "Geboekt voor Anna Jansen" }] }],
+        },
+      ],
+    } as never);
+
+    const sent = JSON.stringify(create.mock.calls[0]![0]);
+    expect(sent).not.toContain("Anna Jansen");
+    expect(sent).not.toContain("0612345678");
+    // Same entity → same token across text, tool_use and tool_result.
+    expect(sent.match(/\[KLANT_NAAM_1\]/g)).toHaveLength(3);
+  });
+
+  it("masks a known contact name inside withKnownPiiNames, even without a self-introduction", async () => {
+    const create = vi.fn().mockResolvedValue({ content: [{ type: "text", text: "Hoi [KLANT_NAAM_1]!" }] });
+    const wrapped = withPiiMasking({ messages: { create } } as unknown as import("@anthropic-ai/sdk").default);
+
+    const response = await withKnownPiiNames(knownNamesFor("Anna Jansen"), () =>
+      wrapped.messages.create({
+        model: "test-model",
+        max_tokens: 100,
+        messages: [{ role: "user", content: "Anna hier, kan ik morgen komen?" }],
+      } as never),
+    );
+
+    const sent = JSON.stringify(create.mock.calls[0]![0]);
+    expect(sent).not.toContain("Anna");
+    expect(response.content[0]).toMatchObject({ type: "text", text: "Hoi Anna!" });
+  });
+
+  it("knownNamesFor skips contact names that would tokenize ordinary words", () => {
+    expect(knownNamesFor("Anna Jansen")).toEqual(["Anna Jansen", "Anna"]);
+    expect(knownNamesFor("Jo de Vries")).toEqual(["Jo de Vries"]);
+    expect(knownNamesFor("+31612345678")).toEqual([]);
+    expect(knownNamesFor(null)).toEqual([]);
   });
 });
 

@@ -1,0 +1,87 @@
+[
+ {
+  "title": "Search Console per domein aanmaken en sitemaps indienen",
+  "phase": "0 · Meten",
+  "status": "todo"
+ },
+ {
+  "title": "Aantal gepubliceerde artikelen per vak uit de database tellen",
+  "phase": "0 · Meten",
+  "status": "todo"
+ },
+ {
+  "title": "Zoekvolumes per vak ophalen (tool of Search Console)",
+  "phase": "0 · Meten",
+  "status": "todo"
+ },
+ {
+  "title": "Domein schilderassistent.nl live",
+  "phase": "1 · Bereikbaar",
+  "status": "todo"
+ },
+ {
+  "title": "Domein hovenierassistent.nl live",
+  "phase": "1 · Bereikbaar",
+  "status": "todo"
+ },
+ {
+  "title": "Domein kozijnassistent.nl live",
+  "phase": "1 · Bereikbaar",
+  "status": "todo"
+ },
+ {
+  "title": "Landing per vak scherper op hoofdzoekwoord",
+  "phase": "2 · Landingspagina's",
+  "status": "todo"
+ },
+ {
+  "title": "Portfoliopagina AI-assistenten voor vakmensen op weareimpact.nl",
+  "phase": "2 · Landingspagina's",
+  "status": "todo"
+ },
+ {
+  "title": "Kozijn: 8 kennisartikelen",
+  "phase": "3 · Content",
+  "status": "todo"
+ },
+ {
+  "title": "Schilder: van 3 naar 8 kennisartikelen",
+  "phase": "3 · Content",
+  "status": "todo"
+ },
+ {
+  "title": "Loodgieter: blog starten",
+  "phase": "3 · Content",
+  "status": "todo"
+ },
+ {
+  "title": "Kapper: integratie- en vergelijkingspagina's",
+  "phase": "3 · Content",
+  "status": "todo"
+ },
+ {
+  "title": "Gratis tool: no-showkosten-calculator",
+  "phase": "3 · Content",
+  "status": "todo"
+ },
+ {
+  "title": "Gratis tool: uurtarief-calculator",
+  "phase": "3 · Content",
+  "status": "todo"
+ },
+ {
+  "title": "Trendritme: wekelijks nieuwe regels, tools en concurrenten oppikken en binnen 48 uur publiceren",
+  "phase": "4 · Snelheid (trends)",
+  "status": "todo"
+ },
+ {
+  "title": "Kansenlijst uit Search Console (positie 5 tot 20, CTR onder 1%) maandelijks verwerken",
+  "phase": "4 · Snelheid (trends)",
+  "status": "todo"
+ },
+ {
+  "title": "Schema en Core Web Vitals doorlichten op alle landings",
+  "phase": "5 · Techniek",
+  "status": "todo"
+ }
+]

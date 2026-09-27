@@ -3,19 +3,11 @@ import { inArray } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { customerAddresses } from "@/lib/db/schema-jobs";
 import type { JobContext } from "@/lib/jobs/access";
-import { getCustomer360, searchJobCustomers } from "@/lib/jobs/crm";
-import { assetKindLabeler, categoryLabeler } from "@/lib/jobs/labels";
-import {
-  CUSTOMER_TYPE_LABEL,
-  DOCUMENT_KIND_LABEL,
-  INVOICE_STATUS_LABEL,
-  QUOTE_STATUS_LABEL,
-  customerDisplayName,
-  formatAddressLine,
-  formatMoney,
-  type CustomerType,
-  type DocumentKind,
-} from "@/lib/jobs/model";
+import { getCustomer360, listCustomerPhotos, searchJobCustomers } from "@/lib/jobs/crm";
+import { groupPhotosByJob } from "@/lib/jobs/photos";
+import Image from "next/image";
+import { assetKindLabeler, assetTerms, capitalize, categoryLabeler } from "@/lib/jobs/labels";
+import { CUSTOMER_TYPE_LABEL, DOCUMENT_KIND_LABEL, INVOICE_STATUS_LABEL, QUOTE_STATUS_LABEL, customerDisplayName, formatAddressLine, formatMoney, type CustomerType, type DocumentKind, cadenceLabel } from "@/lib/jobs/model";
 import { PageHeader, Card, StatCard, Badge, EmptyState, AdminLink } from "@/components/salon/dash-ui";
 import { Icon } from "@/components/ui/icon";
 import { PriorityBadge, StatusBadge, TextLink, btnOutline, fmtDate, fmtDateTime, inputCls } from "@/components/salon/jobs/ui";
@@ -40,7 +32,7 @@ export async function JobCustomersView({ ctx, q }: { ctx: JobContext; q: string 
 
   return (
     <div>
-      <PageHeader title="Klanten" subtitle="Alle klanten met hun adressen, installaties en klushistorie." />
+      <PageHeader title="Klanten" subtitle={`Alle klanten met hun adressen, ${assetTerms(ctx.pack).plural} en klushistorie.`} />
       <Card className="mb-lg">
         <form method="get" className="flex flex-wrap gap-sm">
           <input type="search" name="q" defaultValue={q} placeholder="Zoek op naam, bedrijf, telefoon, e-mail of adres…" className={`${inputCls} max-w-[32rem]`} />
@@ -90,14 +82,21 @@ export async function JobCustomersView({ ctx, q }: { ctx: JobContext; q: string 
   );
 }
 
+const PHOTO_KIND_LABEL: Record<string, string> = { before: "Voor", during: "Tijdens", after: "Na", issue: "Probleem" };
+
 /* ============================ 360° klant ============================ */
 export async function JobCustomerDetailView({ ctx, customerId }: { ctx: JobContext; customerId: string }) {
-  const data = await getCustomer360(ctx.salonId, customerId);
+  const [data, photoRows] = await Promise.all([
+    getCustomer360(ctx.salonId, customerId),
+    ctx.pack.features.photoTimeline ? listCustomerPhotos(ctx.salonId, customerId) : Promise.resolve([]),
+  ]);
   if (!data) notFound();
+  const photoGroups = groupPhotosByJob(photoRows);
   const { customer, addresses, assets, contracts, jobs, documents, lifetimePaidCents, openCents } = data;
 
   const catLabel = categoryLabeler(ctx.pack);
   const assetLabel = assetKindLabeler(ctx.pack);
+  const terms = { asset: assetTerms(ctx.pack) };
   const addressLines = addresses.map((a) => ({ id: a.id, line: formatAddressLine(a) }));
   const assetOptions = assets.map((a) => ({ id: a.id, label: [assetLabel(a.kind), a.brand, a.model].filter(Boolean).join(" ") }));
   const phone = customer.phone;
@@ -139,10 +138,10 @@ export async function JobCustomerDetailView({ ctx, customerId }: { ctx: JobConte
       </div>
 
       <div className="grid grid-cols-2 gap-md xl:grid-cols-4">
-        <StatCard label="Klussen" value={String(jobs.length)} icon="construction" />
-        <StatCard label="Totaal betaald" value={formatMoney(lifetimePaidCents)} icon="payments" />
-        <StatCard label="Openstaand" value={formatMoney(openCents)} icon="hourglass_top" tint={openCents ? "secondary" : "plain"} />
-        <StatCard label="Adressen" value={String(addresses.length)} icon="home_pin" />
+        <StatCard label="Klussen" value={String(jobs.length)} icon="construction" tip="Alle klussen voor deze klant, van aanvraag tot afgerond." />
+        <StatCard label="Totaal betaald" value={formatMoney(lifetimePaidCents)} icon="payments" tip="Alles wat deze klant ooit heeft betaald." />
+        <StatCard label="Openstaand" value={formatMoney(openCents)} icon="hourglass_top" tip="Nog te betalen facturen van deze klant." tint={openCents ? "secondary" : "plain"} />
+        <StatCard label="Adressen" value={String(addresses.length)} icon="home_pin" tip="Tuinadressen van deze klant. Per adres bouw je een tuinpaspoort op." />
       </div>
 
       <div className="grid grid-cols-1 gap-lg lg:grid-cols-3">
@@ -156,12 +155,12 @@ export async function JobCustomerDetailView({ ctx, customerId }: { ctx: JobConte
               <div className="divide-y divide-outline-variant/30">
                 {jobs.map((j) => (
                   <Link key={j.id} href={`/dashboard/klussen/${j.id}`} className="flex flex-wrap items-center gap-sm py-xs hover:bg-primary/5">
-                    <span className="w-24 text-label-md font-label-md">{j.number}</span>
-                    <span className="min-w-0 flex-1 truncate text-body-md">{j.title}</span>
+                    <span className="text-label-md font-label-md sm:w-24">{j.number}</span>
+                    <span className="min-w-0 basis-full text-body-md sm:flex-1 sm:basis-auto sm:truncate">{j.title}</span>
                     <span className="text-label-sm text-on-surface-variant">{catLabel(j.category)}</span>
                     <PriorityBadge priority={j.priority} />
                     <StatusBadge status={j.status} />
-                    <span className="w-28 text-right text-label-sm text-on-surface-variant">{fmtDate(j.scheduledStart ?? j.createdAt)}</span>
+                    <span className="text-label-sm text-on-surface-variant sm:w-28 sm:text-right">{fmtDate(j.scheduledStart ?? j.createdAt)}</span>
                   </Link>
                 ))}
               </div>
@@ -175,8 +174,8 @@ export async function JobCustomerDetailView({ ctx, customerId }: { ctx: JobConte
               <div className="divide-y divide-outline-variant/30">
                 {documents.map((d) => (
                   <Link key={d.id} href={`/dashboard/facturatie/${d.id}`} className="flex flex-wrap items-center gap-sm py-xs hover:bg-primary/5">
-                    <span className="w-28 text-label-md font-label-md">{DOCUMENT_KIND_LABEL[d.kind as DocumentKind]}</span>
-                    <span className="min-w-0 flex-1 text-body-md">{d.number.startsWith("CONCEPT") ? "Concept" : d.number}</span>
+                    <span className="text-label-md font-label-md sm:w-28">{DOCUMENT_KIND_LABEL[d.kind as DocumentKind]}</span>
+                    <span className="min-w-0 flex-1 whitespace-nowrap text-body-md">{d.number.startsWith("CONCEPT") ? "Concept" : d.number}</span>
                     <span className="text-label-md">{formatMoney(d.totalCents)}</span>
                     <Badge tone={d.status === "paid" || d.status === "accepted" ? "success" : d.status === "sent" && d.dueAt && d.dueAt < now ? "error" : "neutral"}>
                       {d.kind === "quote"
@@ -189,18 +188,49 @@ export async function JobCustomerDetailView({ ctx, customerId }: { ctx: JobConte
             </Card>
           )}
 
+          {/* Fotodossier: voor/na per klus */}
+          {ctx.pack.features.photoTimeline && photoGroups.length > 0 && (
+            <Card>
+              <h2 className="dash-h2 mb-sm text-headline-md">Fotodossier</h2>
+              <div className="flex flex-col gap-md">
+                {photoGroups.map((g) => (
+                  <div key={g.jobId}>
+                    <Link href={`/dashboard/klussen/${g.jobId}`} className="text-body-md text-primary hover:underline">
+                      {g.jobNumber} · {g.jobTitle}
+                    </Link>
+                    <div className="text-label-sm text-on-surface-variant">
+                      {g.addressLine ? `${g.addressLine} · ` : ""}
+                      {fmtDate(g.latestAt)}
+                      {g.hasBeforeAfter ? " · voor/na" : ""}
+                    </div>
+                    <div className="mt-xs grid grid-cols-3 gap-xs sm:grid-cols-4">
+                      {g.photos.map((p) => (
+                        <a key={p.id} href={p.blobUrl} target="_blank" rel="noreferrer" className="relative block overflow-hidden rounded-lg">
+                          <Image src={p.blobUrl} alt={p.caption ?? p.kind} width={160} height={160} className="aspect-square w-full object-cover" />
+                          <span className="absolute left-xs top-xs rounded-full bg-black/60 px-xs py-[1px] text-label-sm text-white">
+                            {PHOTO_KIND_LABEL[p.kind] ?? p.kind}
+                          </span>
+                        </a>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </Card>
+          )}
+
           {/* Installaties */}
           {ctx.pack.features.assets && (
             <Card>
-              <h2 className="dash-h2 mb-sm text-headline-md">Installaties</h2>
+              <h2 className="dash-h2 mb-sm text-headline-md">{capitalize(terms.asset.plural)}</h2>
               {!ctx.can.assets ? (
                 <p className="text-body-md text-on-surface-variant">
-                  Het installatiepaspoort is onderdeel van Pro. <Link className="text-primary hover:underline" href="/dashboard/abonnement">Upgrade</Link>
+                  Het {terms.asset.passport} is onderdeel van Pro. <Link className="text-primary hover:underline" href="/dashboard/abonnement">Upgrade</Link>
                 </p>
               ) : (
                 <>
                   {assets.length === 0 ? (
-                    <p className="text-body-md text-on-surface-variant">Nog geen installaties vastgelegd.</p>
+                    <p className="text-body-md text-on-surface-variant">Nog geen {terms.asset.plural} vastgelegd.</p>
                   ) : (
                     <div className="flex flex-col gap-xs">
                       {assets.map((a) => {
@@ -218,14 +248,14 @@ export async function JobCustomerDetailView({ ctx, customerId }: { ctx: JobConte
                               </div>
                             </div>
                             {overdue && <Badge tone="warning">Onderhoud nodig</Badge>}
-                            <InlineActionButton action={deleteAssetAction} fields={{ assetId: a.id, customerId: customer.id }} label="Verwijder" icon="delete" confirm="Deze installatie verwijderen?" />
+                            <InlineActionButton action={deleteAssetAction} fields={{ assetId: a.id, customerId: customer.id }} label="Verwijder" icon="delete" confirm={`Deze ${terms.asset.singular} verwijderen?`} />
                           </div>
                         );
                       })}
                     </div>
                   )}
-                  <Disclosure label="Installatie toevoegen" icon="add">
-                    <AssetForm customerId={customer.id} kinds={ctx.pack.assetKinds.map((k) => ({ key: k.key, label: k.label }))} addresses={addressLines} />
+                  <Disclosure label={`${capitalize(terms.asset.singular)} toevoegen`} icon="add">
+                    <AssetForm noun={terms.asset.singular} customerId={customer.id} kinds={ctx.pack.assetKinds.map((k) => ({ key: k.key, label: k.label }))} addresses={addressLines} />
                   </Disclosure>
                 </>
               )}
@@ -251,7 +281,7 @@ export async function JobCustomerDetailView({ ctx, customerId }: { ctx: JobConte
                           <div className="min-w-0 flex-1">
                             <div className="text-body-md text-on-surface">{c.name}</div>
                             <div className="text-label-sm text-on-surface-variant">
-                              Elke {c.intervalMonths} mnd · {formatMoney(c.priceCents)} · volgende beurt {fmtDate(c.nextDueAt)}
+                              {cadenceLabel(c)} · {formatMoney(c.priceCents)} · volgende beurt {fmtDate(c.nextDueAt)}
                             </div>
                           </div>
                           <Badge tone={c.status === "active" ? "success" : "neutral"}>{c.status === "active" ? "Actief" : c.status === "paused" ? "Gepauzeerd" : "Beëindigd"}</Badge>
@@ -267,6 +297,8 @@ export async function JobCustomerDetailView({ ctx, customerId }: { ctx: JobConte
                       assets={assetOptions}
                       addresses={addressLines}
                       defaultVat={ctx.pack.vatRates.treatment}
+                      seasonal={ctx.pack.features.seasonalContracts === true}
+                      assetNoun={terms.asset.singular}
                     />
                   </Disclosure>
                 </>

@@ -4,10 +4,9 @@ import type { VerticalPack } from "./types";
  * Hovenier — tweede job-vertical met een eigen gezicht: groen thema, eigen
  * spoedregels (stormschade i.p.v. gas/water), eigen klusvelden en prijs-copy.
  *
- * `live: false` tot hovenierassistent.nl op Vercel/Resend is aangesloten:
- * zolang het pack niet live is claimt het geen host (proxy.ts), en is de
- * site alleen bereikbaar via /sites/hovenier in dev. Zet `live: true` om te
- * lanceren.
+ * `live: true` sinds hovenierassistent.nl op Vercel is aangesloten: een live
+ * pack claimt zijn hosts (proxy.ts). Bij `live: false` valt de host terug op
+ * de kapper-site en is /sites/hovenier alleen in dev bereikbaar.
  *
  * Alles in de landing- en prijs-copy hieronder is functionaliteit die nu echt
  * bestaat (klus-CRM, planbord, werkbon, offerte/factuur, objecten per adres,
@@ -19,7 +18,7 @@ export const HOVENIER_VERTICAL: VerticalPack = {
   id: "hovenier",
   label: "Hovenier",
   archetype: "job",
-  live: false,
+  live: true,
   // Tuinaanleg en -onderhoud zijn diensten tegen 21%. Het verlaagde tarief van
   // 9% geldt voor de *levering* van planten, en kan voorwaardelijk gelden voor
   // arbeid aan woningen ouder dan 2 jaar — nooit een blanket default. De
@@ -34,7 +33,10 @@ export const HOVENIER_VERTICAL: VerticalPack = {
     establishment: "bedrijf",
     owner: "vakman",
     appointment: "afspraak",
+    asset: { singular: "tuinonderdeel", plural: "tuinonderdelen", passport: "tuinpaspoort" },
   },
+  // Tuinwerk wordt in m², m³ grond/zand en aanhangers groenafval geoffreerd.
+  lineUnits: ["uur", "dag", "stuk", "m", "m²", "m³", "aanhanger", "post"],
   hasHealthDataGuard: false,
   brand: {
     name: "HovenierAssistent",
@@ -58,12 +60,18 @@ export const HOVENIER_VERTICAL: VerticalPack = {
     onPrimaryFixed: "#06210f",
     onPrimaryFixedVariant: "#1f5029",
     inversePrimary: "#accfb2",
+    // Warm sand instead of office white: aarde, hout en buitenlucht.
+    surface: "#f6f1e6",
+    surfaceContainerLow: "#efe8d8",
+    surfaceContainer: "#e8dfca",
   },
   features: {
     jobs: true,
     quotes: true,
     assets: true,
     contracts: true,
+    seasonalContracts: true,
+    photoTimeline: true,
     treatmentCards: false,
     healthRecords: false,
     webshop: false,
@@ -135,6 +143,7 @@ export const HOVENIER_VERTICAL: VerticalPack = {
     },
   },
   integrations: ["whatsapp", "phone", "moneybird", "eboekhouden", "exact_online", "google_calendar"],
+  jobTitleExample: "Haag snoeien achtertuin",
   jobFields: [
     {
       key: "oppervlak",
@@ -199,7 +208,8 @@ export const HOVENIER_VERTICAL: VerticalPack = {
     landing: {
       badge: "Voor hoveniers en groenbedrijven",
       headline: "Meer tijd in de tuin, minder achter je bureau.",
-      sub: "Terwijl jij met de bosmaaier of kettingzaag aan het werk bent, rinkelt de telefoon. HovenierAssistent neemt 24/7 op via telefoon en WhatsApp, legt tuinadres en klus vast en zet alles klaar in je klus-CRM: van aanvraag tot betaalde factuur.",
+      sub: "Terwijl jij met de bosmaaier werkt, neemt HovenierAssistent 24/7 de telefoon en WhatsApp op, legt tuinadres en klus vast en zet alles klaar in je klus-CRM.",
+      heroImage: { src: "/hovenier-hero.png", alt: "Smartphone op werkhandschoenen naast een machine in een tuin" },
       chat: {
         title: "WhatsApp — HovenierAssistent",
         messages: [
@@ -281,6 +291,7 @@ export const HOVENIER_VERTICAL: VerticalPack = {
     { key: "noshow", label: "Annulering & voorrijkosten" },
     { key: "integrations" },
     { key: "subscription" },
+    { key: "guide" },
   ],
   onboarding: [
     { key: "services", label: "Diensten en tarieven (start met de voorbeeldcatalogus)" },

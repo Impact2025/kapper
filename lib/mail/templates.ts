@@ -135,16 +135,24 @@ export function weeklyDigestEmail({
   return shell(`Weekoverzicht ${salonName}`, inner);
 }
 
+/** Escape user-controlled text (e.g. salon names) before it goes into email HTML. */
+function escapeHtml(v: string): string {
+  return v.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
+}
+
 export function adminReportEmail({
   period,
   periodKey,
   summary,
   rows,
+  alerts = [],
 }: {
   period: string;
   periodKey: string;
   summary: string;
   rows: { label: string; value: string }[];
+  /** Afwijkingen (plain text — escaped here). */
+  alerts?: string[];
 }): string {
   const table = rows
     .map(
@@ -155,7 +163,15 @@ export function adminReportEmail({
   const inner = `
     <p style="font-size:16px;line-height:1.6;margin:0 0 16px;">${summary}</p>
     <table style="width:100%;border-collapse:collapse;font-size:14px;">${table}</table>
-    <div style="margin-top:24px;">${button(`${publicEnv.NEXT_PUBLIC_SITE_URL}/admin/reports`, "Open dashboard")}</div>
+    ${
+      alerts.length
+        ? `<div style="background:#fdf1ec;border-radius:12px;padding:16px;margin-top:20px;">
+      <div style="font-weight:600;margin-bottom:8px;">Afwijkingen</div>
+      <ul style="margin:0;padding-left:18px;font-size:14px;line-height:1.6;">${alerts.map((a) => `<li>${escapeHtml(a)}</li>`).join("")}</ul>
+    </div>`
+        : ""
+    }
+    <div style="margin-top:24px;">${button(`${publicEnv.NEXT_PUBLIC_SITE_URL}/admin`, "Open cockpit")}</div>
   `;
   const title = `${period === "monthly" ? "Maandrapport" : "Dagrapport"} — ${periodKey}`;
   return shell(title, inner);

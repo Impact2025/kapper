@@ -75,6 +75,12 @@ describe("buildVapiAssistantPayload", () => {
     expect(payload.model.messages[0]!.content).toMatch(/virtuele AI-assistent/);
   });
 
+  it("AVG dataminimalisatie: turns off Vapi's default call-audio recording (only the transcript is used)", () => {
+    const payload = buildVapiAssistantPayload(salon, "https://x/api/webhooks/vapi");
+
+    expect(payload.artifactPlan).toEqual({ recordingEnabled: false });
+  });
+
   it("configures Deepgram Flux (STT) and Cartesia Sonic 3.5 (TTS) per the official Vapi schema", () => {
     const payload = buildVapiAssistantPayload(salon, "https://x/api/webhooks/vapi");
 

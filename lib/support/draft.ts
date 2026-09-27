@@ -1,5 +1,6 @@
 import "server-only";
 import { getAnthropic } from "@/lib/ai/anthropic";
+import { runWithAiContext } from "@/lib/ai/usage-context";
 import { env } from "@/lib/env";
 import { captureError } from "@/lib/observability";
 import { searchHelp } from "@/lib/help/search";
@@ -18,6 +19,10 @@ export interface DraftResult {
  * Onzekerheden worden gemarkeerd met [CONTROLEER: …].
  */
 export async function draftAgentReply(ticket: TicketRow, messages: TicketMessageRow[]): Promise<DraftResult | null> {
+  return runWithAiContext({ salonId: ticket.salonId, feature: "support_draft" }, () => draftReply(ticket, messages));
+}
+
+async function draftReply(ticket: TicketRow, messages: TicketMessageRow[]): Promise<DraftResult | null> {
   const anthropic = getAnthropic();
   if (!anthropic) return null;
 

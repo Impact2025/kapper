@@ -63,7 +63,7 @@ export async function requireJobOwner(): Promise<JobContext> {
 }
 
 export const UPGRADE_QUOTES = "Offertes en facturen zijn onderdeel van het Pro-abonnement. Upgrade via Abonnement.";
-export const UPGRADE_ASSETS = "Het installatiepaspoort is onderdeel van het Pro-abonnement. Upgrade via Abonnement.";
+export const upgradeAssetsMessage = (passport: string) => `Het ${passport} is onderdeel van het Pro-abonnement. Upgrade via Abonnement.`;
 export const UPGRADE_CONTRACTS = "Onderhoudscontracten zijn onderdeel van het Pro-abonnement. Upgrade via Abonnement.";
 
 /**

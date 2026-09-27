@@ -5,6 +5,7 @@ import { salons, conversations, messages, appointments, agentRuns } from "@/lib/
 import { executeReceptionistTool } from "@/lib/ai/receptionist";
 import { loadSalonContext } from "@/lib/salon/receptionist-context";
 import { trackEvent } from "@/lib/analytics/track";
+import { recordAiUsage } from "@/lib/ai/usage-store";
 import { env } from "@/lib/env";
 import { captureError } from "@/lib/observability";
 import { sendBookingFallbackSms } from "@/lib/sms/twilio";
@@ -43,6 +44,8 @@ interface VapiPayload {
       messages?: VapiMessage[];
     };
     durationSeconds?: number;
+    /** Total call cost in USD (end-of-call-report). */
+    cost?: number;
   };
   // Vapi also sends flat structure for some events
   type?: string;
@@ -269,6 +272,19 @@ export async function POST(req: Request) {
     props: { durationSeconds, vapiCallId, customerPhone },
     dedupeKey: `call:${vapiCallId}`,
   });
+
+  // Cockpit metering: only the end-of-call-report carries Vapi's cost, and
+  // it's sent once per call — "call-ended" would double-count the minutes.
+  if (event === "end-of-call-report") {
+    await recordAiUsage({
+      salonId: salonId || null,
+      feature: "voice",
+      kind: "voice",
+      model: "vapi",
+      voiceSeconds: durationSeconds,
+      providerCostUsd: typeof body.message?.cost === "number" ? body.message.cost : null,
+    });
+  }
 
   // Bookings now happen live via the tool-calls handler above (real
   // tool-use against our own DB, same as WhatsApp) — this transcript-regex

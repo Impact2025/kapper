@@ -7,6 +7,7 @@ import {
   integer,
   boolean,
   timestamp,
+  date,
   jsonb,
   primaryKey,
   index,
@@ -89,6 +90,8 @@ export const users = pgTable("users", {
   // per-salon login (the owner); a future per-stylist login can default it
   // false and let the owner grant it per person.
   canAccessHealthRecords: boolean("can_access_health_records").default(true).notNull(),
+  // Platform-cockpit: basis voor "actief gebruik" en de gezondheidsscore.
+  lastLoginAt: timestamp("last_login_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull().$onUpdate(() => new Date()),
 });
@@ -220,6 +223,7 @@ export const blogPosts = pgTable(
     authorId: uuid("author_id").references(() => users.id, { onDelete: "set null" }),
     publishedAt: timestamp("published_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull().$onUpdate(() => new Date()),
   },
   (t) => [index("blog_status_idx").on(t.status), index("blog_vertical_idx").on(t.vertical, t.status)],
 );
@@ -250,6 +254,7 @@ export const knowledgePosts = pgTable(
     authorId: uuid("author_id").references(() => users.id, { onDelete: "set null" }),
     publishedAt: timestamp("published_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull().$onUpdate(() => new Date()),
   },
   (t) => [
     index("knowledge_status_idx").on(t.status),
@@ -929,4 +934,188 @@ export const statusIncidents = pgTable(
     createdBy: uuid("created_by").references(() => users.id, { onDelete: "set null" }),
   },
   (t) => [index("status_incidents_started_idx").on(t.startedAt)],
+);
+
+/* ============================ Platform-cockpit (meten) ============================ */
+
+// One row per model call through the AI gateway (lib/ai/anthropic.ts) and per
+// finished voice call (Vapi end-of-call). Tokens are the ground truth; cost is
+// priced at write time (lib/ai/pricing.ts) so later price changes don't
+// rewrite history. costMicroEur is null when no rate is configured for the model.
+export const aiUsage = pgTable(
+  "ai_usage",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    salonId: uuid("salon_id").references(() => salons.id, { onDelete: "set null" }),
+    feature: text("feature").notNull(), // receptionist | support_chat | blog | voice | ...
+    kind: text("kind").notNull().default("llm"), // llm | voice
+    model: text("model").notNull(),
+    inputTokens: integer("input_tokens").default(0).notNull(),
+    outputTokens: integer("output_tokens").default(0).notNull(),
+    cacheReadTokens: integer("cache_read_tokens").default(0).notNull(),
+    cacheWriteTokens: integer("cache_write_tokens").default(0).notNull(),
+    voiceSeconds: integer("voice_seconds").default(0).notNull(),
+    costMicroEur: integer("cost_micro_eur"), // millionths of a euro
+    latencyMs: integer("latency_ms"),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [
+    index("ai_usage_salon_created_idx").on(t.salonId, t.createdAt),
+    index("ai_usage_created_idx").on(t.createdAt),
+  ],
+);
+
+// Who in /admin did what — mutations and read-only "meekijken" alike.
+export const adminAuditLog = pgTable(
+  "admin_audit_log",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    actorId: uuid("actor_id").references(() => users.id, { onDelete: "set null" }),
+    actorEmail: text("actor_email").notNull(),
+    action: text("action").notNull(), // e.g. coupon.create, lead.stage, ticket.status
+    targetType: text("target_type"),
+    targetId: text("target_id"),
+    meta: jsonb("meta").$type<Record<string, unknown>>().default({}).notNull(),
+    ip: text("ip"),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [
+    index("admin_audit_created_idx").on(t.createdAt),
+    index("admin_audit_target_idx").on(t.targetType, t.targetId),
+  ],
+);
+
+// Nightly per-salon rollup (lib/admin/daily-stats.ts, /api/cron/salon-stats).
+// Keeps cockpit charts and health scores cheap and historical instead of
+// scanning raw events/ai_usage on every page view. `day` is an Europe/Amsterdam date.
+export const salonDailyStats = pgTable(
+  "salon_daily_stats",
+  {
+    salonId: uuid("salon_id")
+      .notNull()
+      .references(() => salons.id, { onDelete: "cascade" }),
+    day: date("day").notNull(),
+    conversations: integer("conversations").default(0).notNull(),
+    callsHandled: integer("calls_handled").default(0).notNull(),
+    voiceSeconds: integer("voice_seconds").default(0).notNull(),
+    bookings: integer("bookings").default(0).notNull(),
+    escalations: integer("escalations").default(0).notNull(),
+    aiCalls: integer("ai_calls").default(0).notNull(),
+    aiInputTokens: integer("ai_input_tokens").default(0).notNull(),
+    aiOutputTokens: integer("ai_output_tokens").default(0).notNull(),
+    aiCostMicroEur: integer("ai_cost_micro_eur").default(0).notNull(),
+    ticketsOpened: integer("tickets_opened").default(0).notNull(),
+    logins: integer("logins").default(0).notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull().$onUpdate(() => new Date()),
+  },
+  (t) => [primaryKey({ columns: [t.salonId, t.day] }), index("salon_daily_stats_day_idx").on(t.day)],
+);
+
+// Nightly copy of every salon's MRR/plan/status (written by /api/cron/salon-stats).
+// salons.mrr only knows "now"; this history is what new/expansion/churn and
+// net revenue retention are computed from (lib/admin/mrr.ts).
+export const mrrSnapshots = pgTable(
+  "mrr_snapshots",
+  {
+    salonId: uuid("salon_id")
+      .notNull()
+      .references(() => salons.id, { onDelete: "cascade" }),
+    day: date("day").notNull(),
+    mrrCents: integer("mrr_cents").notNull(),
+    plan: planEnum("plan").notNull(),
+    status: salonStatusEnum("status").notNull(),
+  },
+  (t) => [primaryKey({ columns: [t.salonId, t.day] }), index("mrr_snapshots_day_idx").on(t.day)],
+);
+
+// Internal account-management notes on a customer (only visible in /admin).
+export const salonNotes = pgTable(
+  "salon_notes",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    salonId: uuid("salon_id")
+      .notNull()
+      .references(() => salons.id, { onDelete: "cascade" }),
+    authorId: uuid("author_id").references(() => users.id, { onDelete: "set null" }),
+    authorName: text("author_name"),
+    body: text("body").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [index("salon_notes_salon_idx").on(t.salonId, t.createdAt)],
+);
+
+/* ============================ Nieuwsbrief (Fase C) ============================ */
+// Marketing mail to the platform's own B2B audience (prospects + customers),
+// never to a salon's end-customers. Consent is recorded per subscriber: double
+// opt-in via the public form, or soft opt-in (Telecommunicatiewet 11.7) for
+// existing customers — always with a one-click unsubscribe.
+export const newsletterSubscribers = pgTable(
+  "newsletter_subscribers",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    email: text("email").notNull().unique(), // lowercased
+    name: text("name"),
+    status: text("status").notNull().default("pending"), // pending | subscribed | unsubscribed | bounced | complained
+    source: text("source").notNull().default("formulier"), // formulier | klant | handmatig | import
+    vertical: text("vertical"),
+    salonId: uuid("salon_id").references(() => salons.id, { onDelete: "set null" }),
+    tags: jsonb("tags").$type<string[]>().default([]).notNull(),
+    // Proof of consent (AVG art. 7 lid 1): when, how and from where.
+    consentAt: timestamp("consent_at", { withTimezone: true }),
+    consentSource: text("consent_source"),
+    consentIp: text("consent_ip"),
+    // Unguessable token for confirm/unsubscribe links — no login needed.
+    token: text("token").notNull().unique(),
+    unsubscribedAt: timestamp("unsubscribed_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull().$onUpdate(() => new Date()),
+  },
+  (t) => [index("newsletter_subscribers_status_idx").on(t.status)],
+);
+
+export const newsletterCampaigns = pgTable("newsletter_campaigns", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  name: text("name").notNull(),
+  subject: text("subject").notNull().default(""),
+  // Optional A/B: half the audience gets subjectB; stats split per variant.
+  subjectB: text("subject_b"),
+  previewText: text("preview_text"),
+  vertical: text("vertical").notNull().default("kapper"), // brand chrome (lib/newsletter/render.ts)
+  blocks: jsonb("blocks").$type<unknown[]>().default([]).notNull(),
+  segment: jsonb("segment").$type<Record<string, unknown>>().default({}).notNull(),
+  status: text("status").notNull().default("draft"), // draft | scheduled | sending | sent
+  scheduledAt: timestamp("scheduled_at", { withTimezone: true }),
+  sentAt: timestamp("sent_at", { withTimezone: true }),
+  createdBy: uuid("created_by").references(() => users.id, { onDelete: "set null" }),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull().$onUpdate(() => new Date()),
+});
+
+// One row per recipient per campaign: the send queue and the tracking record.
+export const newsletterSends = pgTable(
+  "newsletter_sends",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    campaignId: uuid("campaign_id")
+      .notNull()
+      .references(() => newsletterCampaigns.id, { onDelete: "cascade" }),
+    subscriberId: uuid("subscriber_id")
+      .notNull()
+      .references(() => newsletterSubscribers.id, { onDelete: "cascade" }),
+    variant: text("variant").notNull().default("A"),
+    status: text("status").notNull().default("queued"), // queued | sent | failed | bounced | complained
+    resendId: text("resend_id"),
+    error: text("error"),
+    sentAt: timestamp("sent_at", { withTimezone: true }),
+    openedAt: timestamp("opened_at", { withTimezone: true }),
+    clickedAt: timestamp("clicked_at", { withTimezone: true }),
+    clicks: jsonb("clicks").$type<Record<string, number>>().default({}).notNull(), // url → count
+    unsubscribedAt: timestamp("unsubscribed_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [
+    uniqueIndex("newsletter_sends_campaign_sub_idx").on(t.campaignId, t.subscriberId),
+    index("newsletter_sends_status_idx").on(t.campaignId, t.status),
+    index("newsletter_sends_resend_idx").on(t.resendId),
+  ],
 );

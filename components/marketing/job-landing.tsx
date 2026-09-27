@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { Icon } from "@/components/ui/icon";
 import { ButtonLink } from "@/components/ui/button";
 import { PricingCards } from "@/components/marketing/pricing-cards";
@@ -46,23 +47,23 @@ export function JobLanding({ pack }: { pack: VerticalPack }) {
       <section className="relative overflow-hidden pt-xl pb-lg md:pb-xl">
         <div className="mx-auto grid max-w-container-max grid-cols-1 items-center gap-lg px-margin-mobile md:px-xl lg:grid-cols-2">
           <div className="z-10">
-            <span className="mb-md inline-block rounded-full bg-primary-fixed px-sm py-xs font-label-sm text-label-sm uppercase tracking-wider text-on-primary-fixed-variant">
+            <span className="mb-md inline-block rounded-full border border-primary/30 bg-primary-fixed px-sm py-xs font-label-sm text-label-sm font-semibold uppercase tracking-wider text-on-primary-fixed">
               {landing.badge}
             </span>
             <h1 className="mkt-h1 mb-md text-display-lg leading-[1.1] text-on-surface md:text-[56px]">{landing.headline}</h1>
-            <p className="mb-xl max-w-[34rem] font-body-lg text-body-lg text-on-surface-variant">{landing.sub}</p>
+            <p className="mb-xl max-w-[30rem] font-body-lg text-body-lg text-on-surface-variant">{landing.sub}</p>
             <div className="flex flex-col gap-md sm:flex-row">
               <ButtonLink href="/contact" size="lg" className="rounded-lg">
                 Vraag een demo aan
               </ButtonLink>
-              <ButtonLink href="#prijzen" variant="outline" size="lg" className="rounded-lg border-secondary text-secondary">
+              <ButtonLink href="#prijzen" variant="outline" size="lg" className="rounded-lg">
                 Bekijk prijzen
               </ButtonLink>
             </div>
             <p className="mt-sm font-label-sm text-label-sm text-on-surface-variant">Geen creditcard nodig · Binnen 48 uur werkend · Maandelijks opzegbaar</p>
             <div className="mt-lg grid max-w-[36rem] grid-cols-3 gap-sm">
               {landing.stats.map((s) => (
-                <div key={s.value} className="flex flex-col items-start gap-xs">
+                <div key={s.value} className="flex flex-col items-start gap-xs rounded-xl border border-outline-variant/40 bg-white/70 p-sm">
                   <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary-fixed">
                     <Icon name={s.icon} className="text-[18px] text-primary" />
                   </div>
@@ -73,7 +74,36 @@ export function JobLanding({ pack }: { pack: VerticalPack }) {
             </div>
           </div>
 
-          <div className="relative z-10 rounded-xl border border-outline-variant/40 bg-surface-container-lowest p-lg soft-shadow">
+          {landing.heroImage ? (
+            <div className="relative z-10 mx-auto w-full max-w-[36rem] pb-lg sm:pt-lg">
+              <div className="relative aspect-[4/3] overflow-hidden rounded-3xl soft-shadow">
+                <Image src={landing.heroImage.src} alt={landing.heroImage.alt} fill priority sizes="(max-width: 1024px) 100vw, 36rem" className="object-cover" />
+              </div>
+              {/* The chat as a phone: a working app in the real world, not a floating white card. */}
+              <div className="relative -mt-16 ml-auto mr-md w-[14.5rem] rounded-[2rem] border-[6px] border-stone-900 bg-surface-container-lowest p-sm shadow-2xl sm:absolute sm:right-0 sm:top-0 sm:mt-0 sm:mr-0 lg:-right-6">
+                <div className="mx-auto mb-sm h-1.5 w-16 rounded-full bg-stone-900/80" aria-hidden="true" />
+                <div className="mb-md flex items-center gap-sm">
+                  <Icon name="chat" className="text-[22px] text-primary" />
+                  <span className="font-label-md text-label-md text-on-surface">{landing.chat.title}</span>
+                </div>
+                <div className="flex flex-col gap-xs text-label-md">
+                  {landing.chat.messages.map((m, i) => (
+                    <div
+                      key={i}
+                      className={
+                        m.from === "customer"
+                          ? "max-w-[90%] self-start rounded-xl bg-surface-container px-sm py-xs text-on-surface"
+                          : "max-w-[90%] self-end rounded-xl bg-primary px-sm py-xs text-on-primary"
+                      }
+                    >
+                      {m.text}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="relative z-10 rounded-xl border border-outline-variant/40 bg-surface-container-lowest p-lg soft-shadow">
             <div className="mb-md flex items-center gap-sm">
               <Icon name="chat" className="text-[22px] text-primary" />
               <span className="font-label-md text-label-md text-on-surface">{landing.chat.title}</span>
@@ -92,7 +122,8 @@ export function JobLanding({ pack }: { pack: VerticalPack }) {
                 </div>
               ))}
             </div>
-          </div>
+            </div>
+          )}
         </div>
       </section>
 

@@ -8,7 +8,7 @@ import { createJob } from "@/lib/jobs/lifecycle";
 import { notifyCustomer } from "@/lib/jobs/notify";
 import { brandFor, shell } from "@/lib/mail/templates";
 import { captureError } from "@/lib/observability";
-import { addDays, contractNeedsGeneration, formatAddressLine } from "@/lib/jobs/model";
+import { addDays, cadenceLabel, contractNeedsGeneration, formatAddressLine } from "@/lib/jobs/model";
 import { jobCapabilities } from "@/lib/jobs/access";
 
 const NL_DATE = new Intl.DateTimeFormat("nl-NL", { timeZone: "Europe/Amsterdam", day: "numeric", month: "long", year: "numeric" });
@@ -91,7 +91,7 @@ export async function generateDueContractJobs(now: Date = new Date()): Promise<C
         assetId: contract.assetId,
         contractId: contract.id,
         title: `${contract.name} — ${dueLabel}`,
-        description: `Onderhoudsbeurt volgens contract "${contract.name}" (elke ${contract.intervalMonths} maanden).`,
+        description: `Onderhoudsbeurt volgens contract "${contract.name}" (${cadenceLabel(contract).toLowerCase()}).`,
         category: contract.jobCategory,
         priority: "normal",
         source: "contract",

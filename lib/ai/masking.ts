@@ -5,16 +5,36 @@
  * instance per call) — never persisted, so nothing to encrypt at rest.
  */
 
+import { AsyncLocalStorage } from "node:async_hooks";
+
 const EMAIL_RE = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g;
 
 /** E.164 (+31...), 0031..., and NL national (06.../0...) mobile & landline formats. */
 const PHONE_RE = /(?:\+31|0031|0)[\s-]?[1-9](?:[\s-]?\d){7,8}\b/g;
 
 /** Article 9 GDPR special-category terms this domain actually sees:
- * health/allergy/pregnancy. Wrapped in \p{L}* on both sides so compound
- * words like "verfallergie" or "allergieën" are masked whole, not partially. */
-const HEALTH_STEMS = ["allergie", "allergisch", "ammoniak", "psoriasis", "eczeem", "zwanger"];
-const HEALTH_RE = new RegExp(`\\p{L}*(?:${HEALTH_STEMS.join("|")})\\p{L}*`, "giu");
+ * health/allergy/pregnancy. The single list behind both this masking and
+ * the WhatsApp Artikel 9 guard (lib/ai/manager.ts ARTICLE9_RE), so a term
+ * the guard reacts to is never sent to the model unmasked. Wrapped in
+ * \p{L}* on both sides so compound words like "verfallergie" or
+ * "allergieën" are matched whole, not partially. */
+const HEALTH_STEMS = [
+  "allergie",
+  "allergisch",
+  "ammoniak",
+  "psoriasis",
+  "eczeem",
+  "alopecia",
+  "zwanger",
+  "hoofdhuidaandoening",
+  "huidaandoening",
+  "chemotherapie",
+  "diagnose",
+];
+// "patch test"/"patch-test" as two tokens needs its own alternative — the
+// \p{L}* stem-wrapping trick above only works for single words.
+export const HEALTH_PATTERN = `\\p{L}*(?:${HEALTH_STEMS.join("|")})\\p{L}*|patch[\\s-]?test`;
+const HEALTH_RE = new RegExp(HEALTH_PATTERN, "giu");
 
 /** Catches a customer introducing themselves inline, e.g. "ik ben Anna Jansen" / "mijn naam is Anna" /
  * a phone greeting "Met Anna Jansen". The intro phrase is matched case-insensitively by spelling out
@@ -98,4 +118,29 @@ export class MaskingSession {
   getMapping(): PiiMapping {
     return { ...this.mapping };
   }
+}
+
+/** Customer names already known from outside the message text (e.g. the
+ * WATI contact name), scoped to one async call chain so every LLM call
+ * inside it — including each round of a tool loop — tokenizes them without
+ * callers having to thread them through the SDK. Read by withPiiMasking. */
+const knownPiiNames = new AsyncLocalStorage<string[]>();
+
+export function withKnownPiiNames<T>(names: string[], fn: () => Promise<T>): Promise<T> {
+  return knownPiiNames.run(names, fn);
+}
+
+export function getKnownPiiNames(): string[] {
+  return knownPiiNames.getStore() ?? [];
+}
+
+/** The full contact name plus its first word, so a bare "Anna" is masked
+ * too when WATI knows "Anna Jansen". Anything without letters (a number
+ * saved as the contact name) or a one/two-letter fragment is skipped — it
+ * would tokenize ordinary words. */
+export function knownNamesFor(customerName: string | null | undefined): string[] {
+  const full = customerName?.trim() ?? "";
+  if (!/\p{L}{2}/u.test(full)) return [];
+  const first = full.split(/\s+/)[0]!;
+  return first !== full && first.length >= 3 ? [full, first] : [full];
 }

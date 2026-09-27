@@ -100,19 +100,19 @@ export default async function AiReceptiePage() {
         <StatCard
           label="Afgehandeld (30d)"
           value={String(metrics.callsHandled + metrics.whatsappMessages)}
-          icon="support_agent"
+          icon="support_agent" tip="Gesprekken en berichten die de AI de afgelopen 30 dagen zelfstandig heeft afgehandeld."
           hint="gesprekken & berichten"
         />
         <StatCard
           label="Boekingen via AI (30d)"
           value={String(metrics.bookingsMade)}
-          icon="event_available"
+          icon="event_available" tip="Afspraken of klussen die de AI zelf heeft vastgelegd."
           hint="direct geboekt"
         />
         <StatCard
           label="No-shows voorkomen (30d)"
           value={String(metrics.noShowsPrevented)}
-          icon="event_busy"
+          icon="event_busy" tip="Afzeggingen of no-shows die zijn voorkomen dankzij herinneringen."
           hint="via herinneringen"
         />
       </div>

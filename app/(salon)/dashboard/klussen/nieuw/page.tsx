@@ -45,6 +45,7 @@ export default async function NieuweKlusPage({ searchParams }: { searchParams: P
           staff={staff}
           categories={ctx.pack.jobCategories.map((c) => ({ key: c.key, label: c.label, urgent: c.urgent, estimatedMinutes: c.estimatedMinutes }))}
           noun={capitalize(ctx.pack.terms.treatment).toLowerCase()}
+          titleExample={ctx.pack.jobTitleExample}
           initialCustomerId={customerId}
         />
       </Card>

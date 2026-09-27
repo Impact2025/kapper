@@ -6,7 +6,8 @@ import { eq } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { blogPosts } from "@/lib/db/schema";
-import { getCurrentUser } from "@/lib/auth/dal";
+import { requireRole } from "@/lib/auth/dal";
+import { auditAdmin } from "@/lib/admin/audit";
 import { generateBlogPost } from "@/lib/blog/generate";
 import { computeSeo } from "@/lib/blog/seo";
 import { slugTaken } from "@/lib/blog/queries";
@@ -25,7 +26,7 @@ export async function generateDraft(
   _prev: PostActionState | undefined,
   formData: FormData,
 ): Promise<PostActionState> {
-  const author = await getCurrentUser();
+  const author = await requireRole("admin");
   const topic = String(formData.get("topic") ?? "").trim();
   if (topic.length < 4) return { error: "Geef een onderwerp van minimaal 4 tekens op." };
 
@@ -72,7 +73,7 @@ export async function generateDraft(
 
 /** Create an empty draft and jump straight into the full editor. */
 export async function createBlankDraft(formData?: FormData): Promise<never> {
-  const author = await getCurrentUser();
+  const author = await requireRole("admin");
   const verticalRaw = String(formData?.get("vertical") ?? "");
   const vertical = isVerticalId(verticalRaw) ? verticalRaw : DEFAULT_VERTICAL_ID;
 
@@ -118,7 +119,7 @@ export async function savePost(
   _prev: PostActionState | undefined,
   formData: FormData,
 ): Promise<PostActionState> {
-  await getCurrentUser();
+  await requireRole("admin");
   const parsed = saveSchema.safeParse({
     id: formData.get("id"),
     title: formData.get("title"),
@@ -199,7 +200,7 @@ export async function savePost(
 }
 
 export async function setPostStatus(id: string, status: "draft" | "published"): Promise<void> {
-  await getCurrentUser();
+  const admin = await requireRole("admin");
   const [row] = await db
     .update(blogPosts)
     .set({
@@ -211,11 +212,13 @@ export async function setPostStatus(id: string, status: "draft" | "published"): 
   revalidatePath("/admin/blog");
   revalidatePath(`/admin/blog/${id}`);
   if (row) revalidateContent(row.vertical, "blog", row.slug);
+  await auditAdmin(admin, status === "published" ? "post.publish" : "post.unpublish", { type: "post", id });
 }
 
 export async function deletePost(id: string): Promise<void> {
-  await getCurrentUser();
+  const admin = await requireRole("admin");
   await db.delete(blogPosts).where(eq(blogPosts.id, id));
+  await auditAdmin(admin, "post.delete", { type: "post", id });
   revalidatePath("/admin/blog");
   redirect("/admin/blog");
 }

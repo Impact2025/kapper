@@ -7,35 +7,18 @@ import {
   type ConversationMessage,
   type ReceptionistResponse,
 } from "@/lib/ai/receptionist";
+import { withDisclosure } from "@/lib/ai/disclosure";
+import { HEALTH_PATTERN, knownNamesFor, withKnownPiiNames } from "@/lib/ai/masking";
 import { captureError } from "@/lib/observability";
 import { getVerticalConfig } from "@/lib/salon/vertical";
 
 /**
  * Artikel 9 AVG signal words — a WhatsApp message mentioning these must not
  * get a medical assessment from the AI (kapperassistent-totaaloplossing
- * Fase 1 builds the full dossier this backs). Reuses the same health-term
- * stems the PII-masking gateway already tokenizes (lib/ai/masking.ts), plus
- * a few dossier-specific additions.
+ * Fase 1 builds the full dossier this backs). Same term list the PII-masking
+ * gateway tokenizes (lib/ai/masking.ts), so the two can't drift apart.
  */
-const ARTICLE9_SIGNAL_STEMS = [
-  "allergie",
-  "allergisch",
-  "ammoniak",
-  "psoriasis",
-  "eczeem",
-  "alopecia",
-  "zwanger",
-  "hoofdhuidaandoening",
-  "huidaandoening",
-  "chemotherapie",
-  "diagnose",
-];
-// "patch test"/"patch-test" as two tokens needs its own alternative — the
-// \p{L}* stem-wrapping trick above only works for single words.
-export const ARTICLE9_RE = new RegExp(
-  `\\p{L}*(?:${ARTICLE9_SIGNAL_STEMS.join("|")})\\p{L}*|patch[\\s-]?test`,
-  "iu",
-);
+export const ARTICLE9_RE = new RegExp(HEALTH_PATTERN, "iu");
 
 export const ARTICLE9_GUARD_REPLY =
   "Dit gaat over gezondheids- of huidinformatie — dat beoordeel ik als AI-assistent niet via WhatsApp. Een medewerker neemt dit persoonlijk met je door, telefonisch of bij een intake in de salon.";
@@ -56,6 +39,9 @@ export interface ManagerRunInput {
   customerPhone: string;
   conversationId?: string | null;
   isNewConversation?: boolean;
+  /** Contact name the channel already knows (WATI senderName) — masked
+   * before any LLM call even when the customer never introduces themselves. */
+  customerName?: string | null;
   channel: ManagerChannel;
 }
 
@@ -114,18 +100,22 @@ export async function runAiManager(input: ManagerRunInput): Promise<Receptionist
         escalated: true,
       });
       return {
-        reply: ARTICLE9_GUARD_REPLY,
+        // The guard skips the model, so it must add the Artikel 50 AI
+        // disclosure itself when this is the conversation's first reply.
+        reply: withDisclosure(ARTICLE9_GUARD_REPLY, input.isNewConversation ?? false, input.salon.name),
         escalated: { reason: "Artikel 9 AVG: gezondheids-/huidinformatie via WhatsApp" },
       };
     }
   }
 
-  const response = await getReceptionistReply(
-    input.salon,
-    input.history,
-    input.customerPhone,
-    input.conversationId,
-    input.isNewConversation,
+  const response = await withKnownPiiNames(knownNamesFor(input.customerName), () =>
+    getReceptionistReply(
+      input.salon,
+      input.history,
+      input.customerPhone,
+      input.conversationId,
+      input.isNewConversation,
+    ),
   );
 
   await logAgentRun({

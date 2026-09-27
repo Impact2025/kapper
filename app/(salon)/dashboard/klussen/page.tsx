@@ -6,6 +6,7 @@ import { CLOSED_JOB_STATUSES, OPEN_JOB_STATUSES, compareJobsForBoard, customerDi
 import { PageHeader, Card, StatCard, EmptyState, AdminLink } from "@/components/salon/dash-ui";
 import { Icon } from "@/components/ui/icon";
 import { LinkTabs, PriorityBadge, StatusBadge, fmtDateTime, inputCls, btnOutline } from "@/components/salon/jobs/ui";
+import { GUIDE_TIPS } from "@/lib/help/guide";
 import { capitalize, categoryLabeler } from "@/lib/jobs/labels";
 
 export const metadata: Metadata = { title: "Klussen" };
@@ -56,10 +57,10 @@ export default async function KlussenPage({
       />
 
       <div className="mb-lg grid grid-cols-2 gap-md xl:grid-cols-4">
-        <StatCard label="Spoed open" value={String(stats.urgentOpen)} icon="emergency" tint={stats.urgentOpen ? "secondary" : "plain"} />
-        <StatCard label="Te plannen" value={String(stats.toSchedule)} icon="event_upcoming" />
-        <StatCard label="Vandaag" value={String(stats.scheduledToday)} icon="today" />
-        <StatCard label="Bezig" value={String(stats.inProgress)} icon="handyman" />
+        <StatCard label="Spoed open" value={String(stats.urgentOpen)} icon="emergency" tip={GUIDE_TIPS.urgentOpen} tint={stats.urgentOpen ? "secondary" : "plain"} />
+        <StatCard label="Te plannen" value={String(stats.toSchedule)} icon="event_upcoming" tip={GUIDE_TIPS.toSchedule} />
+        <StatCard label="Vandaag" value={String(stats.scheduledToday)} icon="today" tip={GUIDE_TIPS.scheduledToday} />
+        <StatCard label="Bezig" value={String(stats.inProgress)} icon="handyman" tip={GUIDE_TIPS.inProgress} />
       </div>
 
       {urgent.length > 0 && tab !== "done" && (
@@ -76,7 +77,7 @@ export default async function KlussenPage({
                 className="flex flex-wrap items-center gap-sm rounded-lg bg-surface-container-lowest px-sm py-xs hover:bg-surface"
               >
                 <span className="text-label-md font-label-md text-secondary">{j.number}</span>
-                <span className="min-w-0 flex-1 truncate text-body-md text-on-surface">{j.title}</span>
+                <span className="min-w-0 basis-full text-body-md text-on-surface sm:flex-1 sm:basis-auto sm:truncate">{j.title}</span>
                 <span className="text-label-sm text-on-surface-variant">{j.addressLine ?? "adres onbekend"}</span>
                 <StatusBadge status={j.status} />
               </Link>

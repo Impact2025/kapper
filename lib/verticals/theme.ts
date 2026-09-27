@@ -15,13 +15,17 @@ const VAR_BY_KEY: Record<keyof VerticalTheme, string> = {
   onPrimaryFixed: "--color-on-primary-fixed",
   onPrimaryFixedVariant: "--color-on-primary-fixed-variant",
   inversePrimary: "--color-inverse-primary",
+  surface: "--color-surface",
+  surfaceContainerLow: "--color-surface-container-low",
+  surfaceContainer: "--color-surface-container",
 };
 
 export function themeStyle(theme: VerticalTheme | undefined): CSSProperties | undefined {
   if (!theme) return undefined;
   const style: Record<string, string> = {};
   for (const key of Object.keys(VAR_BY_KEY) as (keyof VerticalTheme)[]) {
-    style[VAR_BY_KEY[key]] = theme[key];
+    const value = theme[key];
+    if (value) style[VAR_BY_KEY[key]] = value;
   }
   return style as CSSProperties;
 }

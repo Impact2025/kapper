@@ -183,6 +183,48 @@
       "when": 1790232245695,
       "tag": "0025_job_details",
       "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1790253937502,
+      "tag": "0026_seasonal_contracts",
+      "breakpoints": true
+    },
+    {
+      "idx": 27,
+      "version": "7",
+      "when": 1790334122100,
+      "tag": "0027_post_updated_at",
+      "breakpoints": true
+    },
+    {
+      "idx": 28,
+      "version": "7",
+      "when": 1790351400606,
+      "tag": "0028_contract_season_checks",
+      "breakpoints": true
+    },
+    {
+      "idx": 29,
+      "version": "7",
+      "when": 1790402494582,
+      "tag": "0029_platform_cockpit",
+      "breakpoints": true
+    },
+    {
+      "idx": 30,
+      "version": "7",
+      "when": 1790404208351,
+      "tag": "0030_customer_360",
+      "breakpoints": true
+    },
+    {
+      "idx": 31,
+      "version": "7",
+      "when": 1790414728337,
+      "tag": "0031_newsletter",
+      "breakpoints": true
     }
   ]
 }

@@ -14,7 +14,7 @@ export default async function PublicInvoicePage({ params }: { params: Promise<{ 
   const { doc, lines, business } = found;
 
   return (
-    <main className="min-h-screen bg-surface-container-low px-margin-mobile py-xl print:bg-white print:p-0">
+    <main className="min-h-dvh bg-surface-container-low px-margin-mobile py-xl print:bg-white print:p-0">
       <div className="mx-auto flex w-full max-w-[52rem] flex-col gap-md">
         <div className="flex items-center justify-between print:hidden">
           <span className="text-label-md text-on-surface-variant">{business.companyName}</span>

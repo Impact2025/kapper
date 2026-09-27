@@ -1,6 +1,7 @@
 import "server-only";
 import Anthropic from "@anthropic-ai/sdk";
 import { getAnthropic } from "@/lib/ai/anthropic";
+import { runWithAiContext } from "@/lib/ai/usage-context";
 import { listProducts, getLowStockProducts, getSalesVelocity } from "@/lib/webwinkel/queries";
 import { env } from "@/lib/env";
 import { captureError } from "@/lib/observability";
@@ -120,6 +121,14 @@ function textOf(response: Anthropic.Message): string {
 }
 
 export async function getInventoryAgentReply(
+  salonId: string,
+  salonName: string,
+  history: InventoryChatMessage[],
+): Promise<string> {
+  return runWithAiContext({ salonId, feature: "inventory" }, () => inventoryAgentReply(salonId, salonName, history));
+}
+
+async function inventoryAgentReply(
   salonId: string,
   salonName: string,
   history: InventoryChatMessage[],

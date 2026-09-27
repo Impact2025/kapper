@@ -5,21 +5,15 @@ import { notFound } from "next/navigation";
 import { requireJobOwner } from "@/lib/jobs/access";
 import { getJobDetail, listActiveStaff } from "@/lib/jobs/queries";
 import { toAmsterdamLocalInput } from "@/lib/jobs/datetime";
-import {
-  DOCUMENT_KIND_LABEL,
-  INVOICE_STATUS_LABEL,
-  JOB_SOURCE_LABEL,
-  QUOTE_STATUS_LABEL,
-  checklistProgress,
-  customerDisplayName,
-  formatMoney,
-  type DocumentKind,
-  type JobSource,
-} from "@/lib/jobs/model";
-import { assetKindLabeler, categoryLabeler } from "@/lib/jobs/labels";
+import { DOCUMENT_KIND_LABEL, INVOICE_STATUS_LABEL, JOB_SOURCE_LABEL, QUOTE_STATUS_LABEL, checklistProgress, customerDisplayName, formatMoney, type DocumentKind, type JobSource, cadenceLabel } from "@/lib/jobs/model";
+import { assetKindLabeler, assetTerms, capitalize, categoryLabeler } from "@/lib/jobs/labels";
 import { fieldsForCategory } from "@/lib/jobs/fields";
 import { Badge, Card } from "@/components/salon/dash-ui";
 import { Icon } from "@/components/ui/icon";
+import { BeforeAfter } from "@/components/salon/jobs/before-after";
+import { ActionForm } from "@/components/salon/jobs/action-form";
+import { handoverUrl } from "@/lib/jobs/handover";
+import { sendHandoverPageAction } from "@/lib/jobs/actions";
 import { PriorityBadge, StatusBadge, TextLink, fmtDate, fmtDateTime } from "@/components/salon/jobs/ui";
 import {
   ChecklistPanel,
@@ -134,6 +128,15 @@ export default async function KlusDetailPage({ params }: { params: Promise<{ id:
 
           <Card>
             <h2 className="dash-h2 mb-sm text-headline-md">Foto&rsquo;s</h2>
+            {(() => {
+              const before = photos.find((p) => p.kind === "before");
+              const after = [...photos].reverse().find((p) => p.kind === "after");
+              return before && after ? (
+                <div className="mb-md">
+                  <BeforeAfter before={before.blobUrl} after={after.blobUrl} caption="Sleep om voor en na te vergelijken" />
+                </div>
+              ) : null;
+            })()}
             {photos.length > 0 && (
               <div className="mb-md grid grid-cols-2 gap-sm sm:grid-cols-4">
                 {photos.map((p) => (
@@ -147,6 +150,24 @@ export default async function KlusDetailPage({ params }: { params: Promise<{ id:
             )}
             <PhotoUploader jobId={job.id} />
           </Card>
+
+          {["completed", "invoiced", "paid"].includes(job.status) && (
+            <Card>
+              <h2 className="dash-h2 mb-xs text-headline-md">Opleverpagina voor de klant</h2>
+              <p className="mb-sm text-body-md text-on-surface-variant">
+                Werkverslag, checklist en voor/na-foto&rsquo;s op één pagina, zonder prijzen of interne notities.
+              </p>
+              <input
+                readOnly
+                value={handoverUrl(ctx.pack.id, job.id)}
+                className="mb-sm w-full rounded-lg border border-outline-variant bg-surface px-sm py-xs text-label-md"
+                aria-label="Link naar de opleverpagina"
+              />
+              <ActionForm action={sendHandoverPageAction} submitLabel="Stuur naar de klant" submitIcon="send">
+                <input type="hidden" name="jobId" value={job.id} />
+              </ActionForm>
+            </Card>
+          )}
 
           <Card>
             <h2 className="dash-h2 mb-sm text-headline-md">Gegevens &amp; werkverslag</h2>
@@ -243,7 +264,7 @@ export default async function KlusDetailPage({ params }: { params: Promise<{ id:
 
           {(asset || contract) && (
             <Card>
-              <h2 className="dash-h2 mb-sm text-headline-md">Installatie</h2>
+              <h2 className="dash-h2 mb-sm text-headline-md">{capitalize(assetTerms(ctx.pack).singular)}</h2>
               {asset && (
                 <div className="text-body-md text-on-surface">
                   <div className="font-label-md">{assetLabel(asset.kind)}</div>
@@ -258,7 +279,7 @@ export default async function KlusDetailPage({ params }: { params: Promise<{ id:
               )}
               {contract && (
                 <p className="mt-sm text-label-md text-on-surface-variant">
-                  Contract: {contract.name} (elke {contract.intervalMonths} mnd)
+                  Contract: {contract.name} ({cadenceLabel(contract).toLowerCase()})
                 </p>
               )}
             </Card>

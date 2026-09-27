@@ -1,0 +1,72 @@
+[
+ {
+  "title": "AI-gebruik en kosten per klant meten",
+  "phase": "A · Meten",
+  "status": "done"
+ },
+ {
+  "title": "Auditlog en dagstatistieken",
+  "phase": "A · Meten",
+  "status": "done"
+ },
+ {
+  "title": "Command Center met MRR-bewegingen",
+  "phase": "B · Cockpit",
+  "status": "done"
+ },
+ {
+  "title": "Klantoverzicht met gezondheidsscore",
+  "phase": "B · Cockpit",
+  "status": "done"
+ },
+ {
+  "title": "Rapporten 2.0 (AI-marge, afwijkingen)",
+  "phase": "B · Cockpit",
+  "status": "done"
+ },
+ {
+  "title": "Nieuwsbriefsysteem (segmenten, tracking, dubbele opt-in, A/B)",
+  "phase": "C · Nieuwsbrief",
+  "status": "done"
+ },
+ {
+  "title": "Automatische flows (onboarding en win-back)",
+  "phase": "C · Nieuwsbrief",
+  "status": "todo"
+ },
+ {
+  "title": "Helpdesk pro (toewijzen, macro's, CSAT)",
+  "phase": "D · Helpdesk",
+  "status": "todo"
+ },
+ {
+  "title": "CRM-kanban",
+  "phase": "E · CRM en blog",
+  "status": "todo"
+ },
+ {
+  "title": "Blog AI-copilot",
+  "phase": "E · CRM en blog",
+  "status": "todo"
+ },
+ {
+  "title": "Zoeken met ⌘K",
+  "phase": "F · Beheer",
+  "status": "todo"
+ },
+ {
+  "title": "Beheerdersrollen en 2FA",
+  "phase": "F · Beheer",
+  "status": "todo"
+ },
+ {
+  "title": "Alerts",
+  "phase": "F · Beheer",
+  "status": "todo"
+ },
+ {
+  "title": "Meekijken als klant",
+  "phase": "F · Beheer",
+  "status": "todo"
+ }
+]

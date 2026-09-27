@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Icon } from "@/components/ui/icon";
+import { InfoTip } from "@/components/ui/info-tip";
 import { cn } from "@/lib/utils";
 
 /**
@@ -61,19 +62,25 @@ export function StatCard({
   value,
   icon,
   hint,
+  tip,
   tint = "plain",
 }: {
   label: string;
   value: string;
   icon: string;
   hint?: string;
+  /** Uitleg in een tooltip naast het label. */
+  tip?: string;
   tint?: keyof typeof TINTS;
 }) {
   return (
-    <Card tint={tint} className="flex items-start gap-sm">
+    <Card tint={tint} className="flex flex-col items-start gap-xs sm:flex-row sm:gap-sm">
       <IconTile icon={icon} tone={tint === "plain" ? "primary" : tint} />
       <div className="min-w-0">
-        <div className="dash-eyebrow">{label}</div>
+        <div className="dash-eyebrow flex items-center gap-[2px] break-words">
+          {label}
+          {tip && <InfoTip text={tip} label={`Uitleg: ${label}`} />}
+        </div>
         <div className="stat-figure mt-xs text-headline-md text-on-surface">{value}</div>
         {hint && <div className="mt-xs text-label-sm text-on-surface-variant">{hint}</div>}
       </div>

@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { getCurrentUser } from "@/lib/auth/dal";
+import { requireRole } from "@/lib/auth/dal";
 import { buildAndStoreReport, type ReportPeriod } from "@/lib/reports/generate";
 
 export interface GenerateReportState {
@@ -14,7 +14,7 @@ export async function generateReportNow(
   _prev: GenerateReportState | undefined,
   formData: FormData,
 ): Promise<GenerateReportState> {
-  await getCurrentUser();
+  await requireRole("admin");
   const period: ReportPeriod = formData.get("period") === "monthly" ? "monthly" : "daily";
   try {
     const { summary } = await buildAndStoreReport(period);

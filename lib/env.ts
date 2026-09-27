@@ -28,6 +28,10 @@ const serverSchema = z.object({
   OPENMODEL_API_KEY: z.string().optional(),
   OPENMODEL_BASE_URL: z.string().url().default("https://api.openmodel.ai"),
   OPENMODEL_MODEL: z.string().default("deepseek-v4-flash"),
+  // Platform-cockpit cost tracking — see lib/ai/pricing.ts for the format.
+  // Unset: tokens are still recorded, cost stays empty.
+  AI_PRICING_JSON: z.string().optional(),
+  USD_EUR_RATE: z.coerce.number().positive().default(0.92), // Vapi bills in USD
 
   // SEO scan
   PAGESPEED_API_KEY: z.string().optional(),

@@ -79,7 +79,8 @@ export type NavKey =
   | "noshow"
   | "integrations"
   | "subscription"
-  | "support";
+  | "support"
+  | "guide";
 
 export interface NavEntry {
   key: NavKey;
@@ -100,6 +101,9 @@ export interface VerticalTerms {
   owner: string;
   /** "afspraak" / "afspraak" (a klus is planned via an afspraak). */
   appointment: string;
+  /** What "an asset per adres" is called (job archetype). Omitted = the
+   * installatie wording of the plumber. */
+  asset?: { singular: string; plural: string; passport: string };
 }
 
 export interface LandingCopy {
@@ -113,6 +117,8 @@ export interface LandingCopy {
   faq: { q: string; a: string }[];
   ctaTitle: string;
   ctaBody: string;
+  /** Optional hero photo (in /public); the chat then floats on it as a phone mockup. */
+  heroImage?: { src: string; alt: string };
 }
 
 export interface MarketingConfig {
@@ -137,6 +143,10 @@ export interface VerticalTheme {
   onPrimaryFixed: string;
   onPrimaryFixedVariant: string;
   inversePrimary: string;
+  /** Optional warm surfaces (e.g. sand for outdoor trades); omitted = the shared neutrals. */
+  surface?: string;
+  surfaceContainerLow?: string;
+  surfaceContainer?: string;
 }
 
 export type OnboardingKey = "business" | "services" | "team" | "whatsapp" | "phone" | "firstJob";
@@ -223,6 +233,10 @@ export interface VerticalFeatures {
   assets: boolean;
   /** Onderhoudscontracten met automatische herinnering/klus. */
   contracts: boolean;
+  /** Contracts by weeks and within a season (mrt–okt) — hovenier. */
+  seasonalContracts?: boolean;
+  /** Fotodossier per klant: voor/na-foto's per klus. */
+  photoTimeline?: boolean;
   /** Kleurkaarten/behandelkaarten (dossier per bezoek). */
   treatmentCards: boolean;
   /** Artikel 9 AVG health records. */
@@ -244,6 +258,8 @@ export interface VerticalPack {
    * per item. See the kapper/loodgieter comments for why they differ. */
   vatRates: { treatment: number; product: number };
   terms: VerticalTerms;
+  /** Eenheden in de offerte-editor; omitted = LINE_UNITS in lib/jobs/model.ts. */
+  lineUnits?: string[];
   /** Whether the Artikel 9 AVG special-category-data guard in
    * lib/ai/manager.ts applies (kapper-only until a vertical actually collects
    * special-category data). */
@@ -261,6 +277,8 @@ export interface VerticalPack {
   integrations: string[];
   /** Extra klus fields (job archetype). */
   jobFields: JobField[];
+  /** Voorbeeldtitel in het "nieuwe klus"-formulier ("bv. …"); default is loodgietertekst-vrij. */
+  jobTitleExample?: string;
   marketing: MarketingConfig;
   nav: NavEntry[];
   /** Onboarding checklist (job archetype), in order; omitted = the default set. */

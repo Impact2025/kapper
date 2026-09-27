@@ -2,11 +2,12 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { requireJobOwner } from "@/lib/jobs/access";
 import { listAssetsDueForService, listContracts } from "@/lib/jobs/crm";
-import { assetKindLabeler } from "@/lib/jobs/labels";
-import { customerDisplayName, formatMoney } from "@/lib/jobs/model";
+import { assetKindLabeler, assetTerms, capitalize } from "@/lib/jobs/labels";
+import { customerDisplayName, formatMoney, cadenceLabel, visitsPerYear } from "@/lib/jobs/model";
 import { PageHeader, Card, Badge, EmptyState, StatCard } from "@/components/salon/dash-ui";
 import { InlineActionButton } from "@/components/salon/jobs/action-form";
 import { fmtDate } from "@/components/salon/jobs/ui";
+import { SeasonCalendar } from "@/components/salon/jobs/season-calendar";
 import { setContractStatusAction } from "@/lib/jobs/actions";
 
 export const metadata: Metadata = { title: "Onderhoud" };
@@ -34,7 +35,7 @@ export default async function OnderhoudPage() {
   const assetLabel = assetKindLabeler(ctx.pack);
   const now = new Date();
   const active = contracts.filter((c) => c.status === "active");
-  const yearlyRevenue = active.reduce((s, c) => s + Math.round((c.priceCents * 12) / c.intervalMonths), 0);
+  const yearlyRevenue = Math.round(active.reduce((s, c) => s + c.priceCents * visitsPerYear(c), 0));
   const dueSoon = active.filter((c) => c.nextDueAt.getTime() < now.getTime() + 30 * 24 * 3600_000).length;
 
   return (
@@ -42,11 +43,19 @@ export default async function OnderhoudPage() {
       <PageHeader title="Onderhoud" subtitle="Terugkerend werk: contracten die vanzelf een klus en een klantbericht opleveren." />
 
       <div className="grid grid-cols-2 gap-md xl:grid-cols-4">
-        <StatCard label="Actieve contracten" value={String(active.length)} icon="event_repeat" />
-        <StatCard label="Jaaromzet contracten" value={formatMoney(yearlyRevenue)} icon="savings" hint="excl. btw, op basis van interval" />
-        <StatCard label="Binnen 30 dagen" value={String(dueSoon)} icon="upcoming" />
-        <StatCard label="Installaties aan de beurt" value={String(due.length)} icon="build_circle" hint="komende 90 dagen" />
+        <StatCard label="Actieve contracten" value={String(active.length)} icon="event_repeat" tip="Lopende onderhoudscontracten. Elk contract maakt binnen het seizoen zelf klussen en klantberichten aan." />
+        <StatCard label="Jaaromzet contracten" value={formatMoney(yearlyRevenue)} icon="savings" tip="Verwachte omzet per jaar uit contracten, op basis van de herhaling in weken en het seizoen." hint="excl. btw, op basis van herhaling en seizoen" />
+        <StatCard label="Binnen 30 dagen" value={String(dueSoon)} icon="upcoming" tip="Contractbeurten die de komende 30 dagen aan de beurt zijn." />
+        <StatCard label={`${capitalize(assetTerms(ctx.pack).plural)} aan de beurt`} value={String(due.length)} icon="build_circle" tip="Tuinonderdelen (haag, boom, vijver, beregening) waarvan het aanbevolen onderhoud de komende 90 dagen valt." hint="komende 90 dagen" />
       </div>
+
+      {ctx.pack.features.seasonalContracts && active.length > 0 && (
+        <Card>
+          <h2 className="dash-h2 mb-xs text-headline-md">Seizoenskalender</h2>
+          <p className="mb-sm text-body-md text-on-surface-variant">Wanneer je contracten beurten opleveren en wat dat per maand aan omzet betekent (excl. btw).</p>
+          <SeasonCalendar contracts={active} currentMonth={now.getUTCMonth() + 1} />
+        </Card>
+      )}
 
       <Card>
         <h2 className="dash-h2 mb-sm text-headline-md">Contracten</h2>
@@ -57,13 +66,13 @@ export default async function OnderhoudPage() {
         ) : (
           <div className="divide-y divide-outline-variant/30">
             {contracts.map((c) => (
-              <div key={c.id} className="flex flex-wrap items-center gap-sm py-sm">
-                <div className="min-w-0 flex-1">
+              <div key={c.id} className="flex flex-col gap-xs py-sm sm:flex-row sm:flex-wrap sm:items-center sm:gap-sm">
+                <div className="min-w-0 sm:flex-1">
                   <Link href={`/dashboard/klanten/${c.customerId}`} className="text-body-md text-primary hover:underline">
                     {customerDisplayName({ name: c.customerName, companyName: c.customerCompany })}
                   </Link>
                   <div className="text-label-sm text-on-surface-variant">
-                    {c.name} · elke {c.intervalMonths} mnd · {formatMoney(c.priceCents)}
+                    {c.name} · {cadenceLabel(c).toLowerCase()} · {formatMoney(c.priceCents)}
                   </div>
                 </div>
                 <div className="text-label-md text-on-surface">Volgende beurt: {fmtDate(c.nextDueAt)}</div>
@@ -78,14 +87,14 @@ export default async function OnderhoudPage() {
       </Card>
 
       <Card>
-        <h2 className="dash-h2 mb-sm text-headline-md">Installaties waar onderhoud aankomt</h2>
+        <h2 className="dash-h2 mb-sm text-headline-md">{capitalize(assetTerms(ctx.pack).plural)} waar onderhoud aankomt</h2>
         {due.length === 0 ? (
-          <p className="text-body-md text-on-surface-variant">Geen installaties met onderhoud in de komende 90 dagen.</p>
+          <p className="text-body-md text-on-surface-variant">Geen {assetTerms(ctx.pack).plural} met onderhoud in de komende 90 dagen.</p>
         ) : (
           <div className="divide-y divide-outline-variant/30">
             {due.map((a) => (
-              <div key={a.id} className="flex flex-wrap items-center gap-sm py-sm">
-                <div className="min-w-0 flex-1">
+              <div key={a.id} className="flex flex-col gap-xs py-sm sm:flex-row sm:flex-wrap sm:items-center sm:gap-sm">
+                <div className="min-w-0 sm:flex-1">
                   <Link href={`/dashboard/klanten/${a.customerId}`} className="text-body-md text-primary hover:underline">
                     {customerDisplayName({ name: a.customerName, companyName: a.customerCompany })}
                   </Link>

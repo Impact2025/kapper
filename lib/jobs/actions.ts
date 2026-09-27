@@ -7,7 +7,8 @@ import { z } from "zod";
 import { db } from "@/lib/db";
 import { customers, salons, staff, treatments } from "@/lib/db/schema";
 import { customerAddresses, jobs } from "@/lib/db/schema-jobs";
-import { requireJobOwner, UPGRADE_ASSETS, UPGRADE_CONTRACTS, UPGRADE_QUOTES } from "@/lib/jobs/access";
+import { assetTerms } from "@/lib/jobs/labels";
+import { requireJobOwner, upgradeAssetsMessage, UPGRADE_CONTRACTS, UPGRADE_QUOTES } from "@/lib/jobs/access";
 import {
   CUSTOMER_TYPES,
   JOB_PRIORITIES,
@@ -49,7 +50,9 @@ import {
   type DocLineDraft,
 } from "@/lib/jobs/documents";
 import { notifyEnRoute } from "@/lib/jobs/customer-messages";
+import { sendHandoverPage } from "@/lib/jobs/handover";
 import { sanitizeDetails } from "@/lib/jobs/fields";
+import { parsePrefixInput } from "@/lib/jobs/service-area";
 import { isValidIban, isValidKvk, isValidVatNumber, normalizeIban } from "@/lib/jobs/business";
 
 export interface JobActionState {
@@ -576,12 +579,12 @@ export async function deleteAddressAction(_prev: JobActionState | undefined, fd:
 
 export async function addAssetAction(_prev: JobActionState | undefined, fd: FormData): Promise<JobActionState> {
   const ctx = await requireJobOwner();
-  if (!ctx.can.assets) return { error: UPGRADE_ASSETS };
+  if (!ctx.can.assets) return { error: upgradeAssetsMessage(assetTerms(ctx.pack).passport) };
   const customerId = str(fd, "customerId");
   if (!uuid.safeParse(customerId).success) return { error: "Ongeldige klant." };
   const kind = str(fd, "kind") || "overig";
   const kindDef = ctx.pack.assetKinds.find((k) => k.key === kind);
-  if (!kindDef) return { error: "Onbekend type installatie." };
+  if (!kindDef) return { error: `Onbekend type ${assetTerms(ctx.pack).singular}.` };
   const addressId = str(fd, "addressId");
   const installedAt = parseDateInput(str(fd, "installedAt"));
   const lastServiceAt = parseDateInput(str(fd, "lastServiceAt"));
@@ -614,7 +617,7 @@ export async function addAssetAction(_prev: JobActionState | undefined, fd: Form
 export async function deleteAssetAction(_prev: JobActionState | undefined, fd: FormData): Promise<JobActionState> {
   const ctx = await requireJobOwner();
   const assetId = str(fd, "assetId");
-  if (!uuid.safeParse(assetId).success) return { error: "Ongeldige installatie." };
+  if (!uuid.safeParse(assetId).success) return { error: `Ongeldige ${assetTerms(ctx.pack).singular}.` };
   await deleteAsset(ctx.salonId, assetId);
   revalidatePath(`/dashboard/klanten/${str(fd, "customerId")}`);
   revalidatePath("/dashboard/onderhoud");
@@ -627,7 +630,30 @@ const contractSchema = z.object({
   jobCategory: z.string().max(60),
   intervalMonths: z.number().int().min(1).max(120),
   vatRatePercent: z.number().refine((v) => (VAT_RATES as readonly number[]).includes(v)),
+  // Seizoenscontract (packs with features.seasonalContracts only).
+  intervalWeeks: z.number().int().min(1).max(52).nullable(),
+  seasonStartMonth: z.number().int().min(1).max(12).nullable(),
+  seasonEndMonth: z.number().int().min(1).max(12).nullable(),
 });
+
+/** "" / missing → null, otherwise the number (NaN stays NaN so zod rejects it). */
+const optNum = (fd: FormData, key: string): number | null => {
+  const v = str(fd, key);
+  return v === "" ? null : Number(v);
+};
+
+/** Cadence/season fields from the form; ignored (all null) for a vak without
+ * seizoenscontracten so a crafted POST cannot switch the feature on. */
+function seasonalFields(fd: FormData, enabled: boolean) {
+  const off = { intervalWeeks: null, seasonStartMonth: null, seasonEndMonth: null };
+  if (!enabled) return off;
+  const weeks = str(fd, "intervalUnit") === "weeks";
+  return {
+    intervalWeeks: weeks ? Number(str(fd, "intervalCount") || 2) : null,
+    seasonStartMonth: optNum(fd, "seasonStartMonth"),
+    seasonEndMonth: optNum(fd, "seasonEndMonth"),
+  };
+}
 
 export async function createContractAction(_prev: JobActionState | undefined, fd: FormData): Promise<JobActionState> {
   const ctx = await requireJobOwner();
@@ -636,10 +662,14 @@ export async function createContractAction(_prev: JobActionState | undefined, fd
     customerId: str(fd, "customerId"),
     name: str(fd, "name"),
     jobCategory: str(fd, "jobCategory") || "overig",
-    intervalMonths: Number(str(fd, "intervalMonths") || 12),
+    intervalMonths: Number(str(fd, "intervalUnit") === "months" ? str(fd, "intervalCount") || 12 : str(fd, "intervalMonths") || 12),
     vatRatePercent: Number(str(fd, "vatRatePercent") || ctx.pack.vatRates.treatment),
+    ...seasonalFields(fd, ctx.pack.features.seasonalContracts === true),
   });
   if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Controleer de velden." };
+  if ((parsed.data.seasonStartMonth == null) !== (parsed.data.seasonEndMonth == null)) {
+    return { error: "Kies zowel het begin als het einde van het seizoen, of laat beide leeg." };
+  }
   const firstDueAt = parseDateInput(str(fd, "firstDueAt"));
   if (!firstDueAt) return { error: "Kies de datum van de eerste beurt." };
   const euros = parseEuros(str(fd, "priceEuros") || "0");
@@ -655,6 +685,9 @@ export async function createContractAction(_prev: JobActionState | undefined, fd
     priceCents: Math.round(euros * 100),
     vatRatePercent: parsed.data.vatRatePercent,
     intervalMonths: parsed.data.intervalMonths,
+    intervalWeeks: parsed.data.intervalWeeks,
+    seasonStartMonth: parsed.data.seasonStartMonth,
+    seasonEndMonth: parsed.data.seasonEndMonth,
     firstDueAt,
     assetId: uuid.safeParse(assetId).success ? assetId : null,
     addressId: uuid.safeParse(addressId).success ? addressId : null,
@@ -708,6 +741,32 @@ export async function saveBusinessProfileAction(_prev: JobActionState | undefine
     .where(eq(salons.id, ctx.salonId));
   revalidatePath("/dashboard/facturatie");
   return { success: true, message: "Bedrijfsgegevens opgeslagen." };
+}
+
+/* ============================ Opleverpagina ============================ */
+export async function sendHandoverPageAction(_prev: JobActionState | undefined, fd: FormData): Promise<JobActionState> {
+  const ctx = await requireJobOwner();
+  const jobId = str(fd, "jobId");
+  if (!uuid.safeParse(jobId).success) return { error: "Ongeldige klus." };
+  const res = await sendHandoverPage(ctx.salonId, jobId, ctx.userId);
+  if ("error" in res) return { error: res.error };
+  revalidateJob(jobId);
+  const via = res.whatsapp && res.email ? " (WhatsApp en e-mail)" : res.whatsapp ? " via WhatsApp" : " per e-mail";
+  return { success: true, message: `Opleverpagina verstuurd${via}.` };
+}
+
+/* ============================ Werkgebied ============================ */
+export async function saveServiceAreaAction(_prev: JobActionState | undefined, fd: FormData): Promise<JobActionState> {
+  const ctx = await requireJobOwner();
+  const { prefixes, invalid } = parsePrefixInput(str(fd, "prefixes"));
+  if (invalid.length) return { error: `Deze waarden zijn geen postcodegebied (2 tot 4 cijfers): ${invalid.join(", ")}.` };
+  if (prefixes.length > 200) return { error: "Maximaal 200 postcodegebieden." };
+  await db
+    .update(salons)
+    .set({ settings: sql`${salons.settings} || jsonb_build_object('serviceArea', ${JSON.stringify({ prefixes })}::jsonb)` })
+    .where(eq(salons.id, ctx.salonId));
+  revalidatePath("/dashboard/praktijk");
+  return { success: true, message: prefixes.length ? "Werkgebied opgeslagen." : "Werkgebied leeggemaakt: alle adressen tellen mee." };
 }
 
 /** Starter dienstencatalogus from the vertical pack — only names the salon

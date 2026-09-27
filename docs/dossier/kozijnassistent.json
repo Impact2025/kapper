@@ -1,0 +1,47 @@
+[
+ {
+  "title": "Eigen vakpack (thema, klusvelden, spoedregels, copy)",
+  "phase": "Product",
+  "status": "done"
+ },
+ {
+  "title": "Conformiteitstests groen",
+  "phase": "Product",
+  "status": "done"
+ },
+ {
+  "title": "Klussen-CRM, offertes en planbord via gedeelde basis",
+  "phase": "Product",
+  "status": "done"
+ },
+ {
+  "title": "Vakspecifieke uitbreidingen bepalen met een echte kozijnenbedrijf",
+  "phase": "Product",
+  "status": "todo"
+ },
+ {
+  "title": "Domein kozijnassistent.nl in Vercel",
+  "phase": "Lancering",
+  "status": "todo"
+ },
+ {
+  "title": "E-maildomein in Resend",
+  "phase": "Lancering",
+  "status": "todo"
+ },
+ {
+  "title": "Pack op live zetten",
+  "phase": "Lancering",
+  "status": "todo"
+ },
+ {
+  "title": "Pilot met een echte kozijnenbedrijf",
+  "phase": "Lancering",
+  "status": "todo"
+ },
+ {
+  "title": "Eerste betalende klant",
+  "phase": "Lancering",
+  "status": "todo"
+ }
+]

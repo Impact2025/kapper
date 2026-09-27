@@ -122,7 +122,25 @@ export function DocumentSheet({
       {title && <h2 className="mt-lg text-headline-md font-label-md">{title}</h2>}
       {introText && <p className="mt-xs whitespace-pre-line text-body-md text-on-surface-variant">{introText}</p>}
 
-      <div className="mt-md overflow-x-auto">
+      {/* Mobiel: elke regel als compacte kaart, zodat Prijs/Btw niet buiten beeld vallen. */}
+      <div className="mt-md flex flex-col divide-y divide-outline-variant/30 sm:hidden">
+        {lines.map((l, i) => {
+          const qty = Number(l.quantity);
+          return (
+            <div key={i} className="py-xs">
+              <div className="text-body-md">{l.description}</div>
+              <div className="flex justify-between gap-sm text-label-sm text-on-surface-variant">
+                <span>
+                  {formatQuantity(qty)} {l.unit} × {formatMoney(l.unitPriceCents)} · {l.vatRatePercent}% btw
+                </span>
+                <span className="tabular-nums text-on-surface">{formatMoney(lineNetCents({ quantity: qty, unitPriceCents: l.unitPriceCents }))}</span>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      <div className="mt-md hidden overflow-x-auto sm:block">
         <table className="w-full text-body-md">
           <thead>
             <tr className="border-b border-outline-variant/50 text-left text-label-sm text-on-surface-variant">

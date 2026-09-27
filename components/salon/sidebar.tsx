@@ -13,6 +13,8 @@ interface NavItem {
   label: string;
   icon: string;
   group?: NavGroup;
+  /** Korte uitleg, getoond als tooltip naast het menu-item (desktop). */
+  tip?: string;
 }
 
 const PLAN_LABELS: Record<string, string> = {
@@ -116,7 +118,7 @@ export function SalonSidebar({
                   onClick={() => setOpen(false)}
                   aria-current={isActive(item.href) ? "page" : undefined}
                   className={cn(
-                    "tap-target flex items-center gap-sm rounded-xl px-sm py-sm text-label-md font-label-md transition-colors",
+                    "group relative tap-target flex items-center gap-sm rounded-xl px-sm py-sm text-label-md font-label-md transition-colors",
                     isActive(item.href)
                       ? "bg-primary text-on-primary"
                       : "text-on-surface-variant hover:bg-surface-container",
@@ -124,6 +126,14 @@ export function SalonSidebar({
                 >
                   <Icon name={item.icon} className="text-[20px]" />
                   {item.label}
+                  {item.tip && (
+                    <span
+                      role="tooltip"
+                      className="pointer-events-none absolute left-full top-1/2 z-50 ml-sm hidden w-64 -translate-y-1/2 rounded-xl bg-inverse-surface px-sm py-xs text-label-sm font-normal leading-snug text-inverse-on-surface opacity-0 shadow-lg transition-opacity delay-300 group-hover:opacity-100 group-focus-visible:opacity-100 md:block"
+                    >
+                      {item.tip}
+                    </span>
+                  )}
                 </Link>
               ))}
             </div>

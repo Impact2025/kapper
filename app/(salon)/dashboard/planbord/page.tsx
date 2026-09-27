@@ -116,7 +116,57 @@ export default async function PlanbordPage({ searchParams }: { searchParams: Pro
       {scheduled.length === 0 && unscheduled.length === 0 ? (
         <EmptyState icon="calendar_view_week" title="Niets gepland deze week" description="Geplande klussen verschijnen hier per monteur en per dag." />
       ) : (
-        <div className="overflow-x-auto">
+        <>
+        {/* Mobiel: per dag een lijst, oplopend op tijd — een weekgrid past niet op een telefoon. */}
+        <div className="flex flex-col gap-md md:hidden">
+          {days.map((d) => {
+            const list = scheduled
+              .filter((j) => j.scheduledStart && amsterdamDateKey(j.scheduledStart) === d.key)
+              .sort((a, b) => (a.scheduledStart?.getTime() ?? 0) - (b.scheduledStart?.getTime() ?? 0));
+            return (
+              <section key={d.key}>
+                <h3
+                  className={cn(
+                    "mb-xs rounded-lg px-sm py-xs text-label-md font-label-md",
+                    d.key === todayKey ? "bg-primary text-on-primary" : "bg-surface-container text-on-surface-variant",
+                  )}
+                >
+                  {DAY_LABEL.format(d.start)}
+                  {d.key === todayKey ? " · vandaag" : ""}
+                </h3>
+                {list.length === 0 ? (
+                  <p className="px-sm text-label-md text-on-surface-variant">Niets gepland.</p>
+                ) : (
+                  <div className="flex flex-col gap-xs">
+                    {list.map((j) => (
+                      <Link
+                        key={j.id}
+                        href={`/dashboard/klussen/${j.id}`}
+                        className={cn(
+                          "block rounded-lg border-l-4 bg-surface-container-lowest p-sm shadow-sm",
+                          j.priority === "urgent" ? "border-error" : "border-primary",
+                        )}
+                      >
+                        <div className="flex items-center justify-between gap-sm">
+                          <span className="text-label-md font-label-md">
+                            {fmtTime(j.scheduledStart)} · {j.estimatedMinutes} min
+                          </span>
+                          <StatusBadge status={j.status} />
+                        </div>
+                        <div className="text-body-md text-on-surface">{j.title}</div>
+                        <div className="text-label-sm text-on-surface-variant">
+                          {[j.addressLine ?? j.customerName, j.staffName].filter(Boolean).join(" · ")}
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </section>
+            );
+          })}
+        </div>
+
+        <div className="hidden overflow-x-auto md:block">
           <div className="min-w-[56rem]">
             <div className="grid grid-cols-[9rem_repeat(7,minmax(0,1fr))] gap-xs">
               <div />
@@ -168,6 +218,7 @@ export default async function PlanbordPage({ searchParams }: { searchParams: Pro
             </div>
           </div>
         </div>
+        </>
       )}
     </div>
   );

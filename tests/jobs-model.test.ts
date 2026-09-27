@@ -11,6 +11,11 @@ import {
   addDays,
   contractNeedsGeneration,
   advanceDue,
+  advanceContractDue,
+  inSeason,
+  snapToSeason,
+  visitsPerYear,
+  cadenceLabel,
   normalizePostalCode,
   formatAddressLine,
   detectUrgency,
@@ -267,5 +272,60 @@ describe("business profile", () => {
   it("clamps silly payment terms", () => {
     expect(parseBusinessProfile({ business: { paymentTermDays: 9999 } }).paymentTermDays).toBe(120);
     expect(parseBusinessProfile({ business: { paymentTermDays: "abc" } }).paymentTermDays).toBe(14);
+  });
+});
+
+describe("seizoenscontracten", () => {
+  const season = { intervalMonths: 12, intervalWeeks: 2, seasonStartMonth: 3, seasonEndMonth: 10 };
+  const d = (s: string) => new Date(`${s}T08:00:00Z`);
+
+  it("steps by weeks inside the season", () => {
+    expect(advanceContractDue(d("2026-04-06"), season, d("2026-04-06")).toISOString()).toBe(d("2026-04-20").toISOString());
+  });
+
+  it("jumps to the start of the next season instead of landing in winter", () => {
+    const next = advanceContractDue(d("2026-10-26"), season, d("2026-10-26"));
+    expect(next.toISOString()).toBe(d("2027-03-01").toISOString());
+  });
+
+  it("skips missed cycles after a pause instead of backfilling", () => {
+    const next = advanceContractDue(d("2026-04-06"), season, d("2026-07-01"));
+    expect(next.getTime()).toBeGreaterThanOrEqual(d("2026-07-01").getTime());
+    expect(next.getTime()).toBeLessThan(d("2026-07-16").getTime());
+  });
+
+  it("supports a season that wraps the year (nov–feb)", () => {
+    const winter = { intervalMonths: 1, seasonStartMonth: 11, seasonEndMonth: 2 };
+    expect(inSeason(winter, 12)).toBe(true);
+    expect(inSeason(winter, 1)).toBe(true);
+    expect(inSeason(winter, 6)).toBe(false);
+    expect(snapToSeason(d("2026-06-15"), winter).toISOString()).toBe(d("2026-11-01").toISOString());
+  });
+
+  it("leaves a whole-year monthly contract exactly as before", () => {
+    const plain = { intervalMonths: 12 };
+    const from = new Date("2026-10-10T00:00:00Z");
+    expect(advanceContractDue(from, plain, from).toISOString()).toBe(advanceDue(from, 12, from).toISOString());
+    expect(snapToSeason(from, plain)).toBe(from);
+  });
+
+  it("counts visits per year within the season", () => {
+    expect(visitsPerYear({ intervalMonths: 12 })).toBe(1);
+    expect(visitsPerYear({ intervalMonths: 3 })).toBe(4);
+    expect(visitsPerYear(season)).toBe(17); // 8 maanden ≈ 34,7 weken / 2
+    expect(visitsPerYear({ intervalMonths: 12, intervalWeeks: 4, seasonStartMonth: 3, seasonEndMonth: 10 })).toBe(9);
+  });
+
+  it("gives a fraction for intervals of a year or longer or that don't divide 12", () => {
+    expect(visitsPerYear({ intervalMonths: 24 })).toBe(0.5); // ketel om de 2 jaar
+    expect(visitsPerYear({ intervalMonths: 36 })).toBeCloseTo(1 / 3);
+    expect(visitsPerYear({ intervalMonths: 5 })).toBeCloseTo(2.4);
+    expect(visitsPerYear({ intervalMonths: 24, seasonStartMonth: 3, seasonEndMonth: 10 })).toBe(0.5);
+  });
+
+  it("labels cadence and season", () => {
+    expect(cadenceLabel({ intervalMonths: 12 })).toBe("Elke 12 mnd");
+    expect(cadenceLabel(season)).toBe("Elke 2 weken · mrt–okt");
+    expect(cadenceLabel({ intervalMonths: 1, intervalWeeks: 1 })).toBe("Elke week");
   });
 });

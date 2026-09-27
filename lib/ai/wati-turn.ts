@@ -94,6 +94,12 @@ export async function processWatiTurn(input: {
   );
   const isNewConversation = !rawHistory.some((h) => h.role === "assistant");
 
+  const [conv] = await db
+    .select({ customerName: conversations.customerName })
+    .from(conversations)
+    .where(eq(conversations.id, conversationId))
+    .limit(1);
+
   const salonContext = await loadSalonContext(salon);
   salonContext.aiSettings.watiApiKey = watiApiKey;
 
@@ -104,6 +110,7 @@ export async function processWatiTurn(input: {
     customerPhone: fromPhone,
     conversationId,
     isNewConversation,
+    customerName: conv?.customerName,
     channel: "whatsapp",
   });
 

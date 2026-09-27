@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { requireRole } from "@/lib/auth/dal";
+import { auditAdmin } from "@/lib/admin/audit";
 import { addIncidentUpdate, createIncident } from "@/lib/status/store";
 import { COMPONENT_IDS, INCIDENT_STATUSES, SEVERITIES } from "@/lib/status/model";
 
@@ -38,14 +39,16 @@ export async function createIncidentAction(_prev: IncidentFormState, formData: F
   });
   if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Controleer de velden." };
   await createIncident({ ...parsed.data, createdBy: admin.id });
+  await auditAdmin(admin, "incident.create", null, { title: parsed.data.title, severity: parsed.data.severity });
   refresh();
   redirect("/admin/support/status");
 }
 
 export async function addUpdateAction(incidentId: string, formData: FormData): Promise<void> {
-  await requireRole("admin");
+  const admin = await requireRole("admin");
   const parsed = updateSchema.safeParse({ status: formData.get("status"), message: formData.get("message") });
   if (!parsed.success) return;
   await addIncidentUpdate(incidentId, parsed.data.status, parsed.data.message);
+  await auditAdmin(admin, "incident.update", { type: "incident", id: incidentId }, { status: parsed.data.status });
   refresh();
 }

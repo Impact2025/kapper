@@ -1,0 +1,62 @@
+[
+ {
+  "title": "Klussen-CRM (klanten, adressen, installaties)",
+  "phase": "Product",
+  "status": "done"
+ },
+ {
+  "title": "Offertes en facturen met klantlink",
+  "phase": "Product",
+  "status": "done"
+ },
+ {
+  "title": "Planbord en onderhoudscontracten",
+  "phase": "Product",
+  "status": "done"
+ },
+ {
+  "title": "AI-receptie met spoedregels per vak",
+  "phase": "Product",
+  "status": "done"
+ },
+ {
+  "title": "Tenant-scoping gecontroleerd",
+  "phase": "Product",
+  "status": "done"
+ },
+ {
+  "title": "Eigen login per assistent",
+  "phase": "Product",
+  "status": "done"
+ },
+ {
+  "title": "Landingspagina loodgietersassistent.nl",
+  "phase": "Product",
+  "status": "done"
+ },
+ {
+  "title": "Domein en e-mail live (Vercel, Resend)",
+  "phase": "Product",
+  "status": "done"
+ },
+ {
+  "title": "Gas- en waterveiligheidsregels laten toetsen door een echte loodgieter",
+  "phase": "Product",
+  "status": "todo"
+ },
+ {
+  "title": "Reduced-btw-regel (9%) per klus controleren",
+  "phase": "Product",
+  "status": "todo"
+ },
+ {
+  "title": "Eerste betalende loodgieter",
+  "phase": "Lancering",
+  "status": "todo"
+ },
+ {
+  "title": "Prijzen en claims controleren tegen de code",
+  "phase": "Lancering",
+  "status": "todo"
+ }
+]

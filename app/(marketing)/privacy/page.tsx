@@ -65,9 +65,22 @@ export default function PrivacyPage() {
             <li>Naam en telefoonnummer bij het plannen van afspraken</li>
             <li>Gesprekscontent (telefoon en WhatsApp) die noodzakelijk is om te boeken of herinneringen te sturen</li>
             <li>
-              <strong className="text-on-surface">Geen bijzondere persoonsgegevens</strong> — informatie
-              over allergieën, huidcondities of gezondheid wordt gefilterd via een PII-gateway
-              voordat het een AI-model bereikt
+              <strong className="text-on-surface">Gezondheidsinformatie in WhatsApp-berichten</strong> —
+              namen, telefoonnummers, e-mailadressen en termen over allergieën, huidcondities of
+              gezondheid worden via een PII-gateway vervangen door codes voordat een bericht een
+              AI-model bereikt. Noemt een klant zulke informatie, dan beoordeelt de AI dat niet
+              zelf, maar zet het gesprek door naar een medewerker
+            </li>
+            <li>
+              <strong className="text-on-surface">Foto&apos;s</strong> die een klant via WhatsApp stuurt gaan ongewijzigd naar het AI-model om de behandeling in te
+              schatten. Een foto kan niet gefilterd worden. De AI stelt nooit een diagnose op basis
+              van een foto
+            </li>
+            <li>
+              <strong className="text-on-surface">Telefoongesprekken</strong> worden live omgezet naar
+              tekst en weer naar spraak. Die tekst kan niet vooraf gefilterd worden en gaat dus
+              ongefilterd naar de spraakdiensten en het AI-model. Er worden geen geluidsopnames
+              gemaakt; alleen het uitgeschreven gesprek wordt bewaard
             </li>
           </ul>
         </section>
@@ -119,7 +132,10 @@ export default function PrivacyPage() {
             {[
               { name: "Stripe", role: "Betalingsverwerking", note: "ISO 27001, PCI DSS" },
               { name: "Neon", role: "Databasehosting", note: "EU-servers" },
-              { name: "Anthropic", role: "AI-modellen", note: "PII-filtering actief" },
+              { name: "Anthropic", role: "AI-modellen", note: "PII-filtering op WhatsApp-berichten" },
+              { name: "Vapi", role: "Telefoonassistent", note: "Optioneel, geen geluidsopnames" },
+              { name: "Deepgram", role: "Spraak naar tekst (telefoon)", note: "Optioneel, indien telefoon actief" },
+              { name: "Cartesia", role: "Tekst naar spraak (telefoon)", note: "Optioneel, indien telefoon actief" },
               { name: "Resend", role: "E-mailverzending", note: "EU-compliant" },
               { name: "Google", role: "PageSpeed API (scan)", note: "Enkel URL-data" },
               { name: "Wati / Twilio", role: "WhatsApp / telefonie", note: "Optioneel, indien actief" },
@@ -138,10 +154,11 @@ export default function PrivacyPage() {
             Doorgifte buiten de EER
           </h2>
           <p>
-            Anthropic is gevestigd in de VS. Wij filteren alle berichten via een PII-gateway
-            zodat identificerende persoonsgegevens niet rauw worden doorgestuurd. Voor de
-            resterende overdracht vertrouwen wij op Standard Contractual Clauses (SCC&apos;s)
-            zoals goedgekeurd door de Europese Commissie.
+            Anthropic, Vapi, Deepgram en Cartesia zijn gevestigd in de VS. WhatsApp-berichten
+            filteren wij via een PII-gateway, zodat identificerende persoonsgegevens niet rauw
+            worden doorgestuurd. Foto&apos;s en telefoongesprekken kunnen niet gefilterd worden (zie
+            hierboven). Voor de overdracht vertrouwen wij op Standard Contractual Clauses
+            (SCC&apos;s) zoals goedgekeurd door de Europese Commissie.
           </p>
         </section>
 

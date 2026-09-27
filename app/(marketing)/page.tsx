@@ -5,9 +5,10 @@ import { ButtonLink } from "@/components/ui/button";
 import { Reveal } from "@/components/marketing/reveal";
 import { PricingCards } from "@/components/marketing/pricing-cards";
 import { publicEnv } from "@/lib/env";
+import { PLANS } from "@/lib/plans";
 
 export const metadata: Metadata = {
-  title: "Twee handen aan de stoel. Nul gemiste afspraken aan de balie.",
+  title: { absolute: "AI-receptionist voor kappers — KapperAssistent.nl" },
   description:
     "KapperAssistent is je AI-receptionist die 24/7 telefoon en WhatsApp opneemt, direct boekt in Salonized, Treatwell of Phorest en no-shows voorkomt. Klinkt als een echte collega. White-glove setup binnen 48 uur.",
   alternates: { canonical: "/" },
@@ -112,7 +113,7 @@ export default function HomePage() {
     operatingSystem: "Web",
     offers: {
       "@type": "Offer",
-      price: "149",
+      price: String(PLANS[0].price),
       priceCurrency: "EUR",
     },
     description:

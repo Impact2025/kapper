@@ -2,10 +2,11 @@ import "server-only";
 import { and, asc, desc, eq, ilike, or, sql } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { customers } from "@/lib/db/schema";
-import { assets, customerAddresses, jobDocuments, serviceContracts } from "@/lib/db/schema-jobs";
+import { assets, customerAddresses, jobDocuments, jobPhotos, jobs, serviceContracts } from "@/lib/db/schema-jobs";
 import { findCustomerByPhone, upsertCustomerByPhone } from "@/lib/customers/queries";
 import { listJobs } from "@/lib/jobs/queries";
-import { normalizePostalCode, type CustomerType } from "@/lib/jobs/model";
+import type { DossierPhoto } from "@/lib/jobs/photos";
+import { normalizePostalCode, snapToSeason, type CustomerType } from "@/lib/jobs/model";
 
 /* ------------------------------ tenant guards ------------------------------ */
 /** Ids from a form are untrusted: a crafted POST can carry another salon's
@@ -289,6 +290,9 @@ export interface ContractInput {
   priceCents: number;
   vatRatePercent: number;
   intervalMonths: number;
+  intervalWeeks?: number | null;
+  seasonStartMonth?: number | null;
+  seasonEndMonth?: number | null;
   /** First beurt is due on this date. */
   firstDueAt: Date;
   leadDays?: number;
@@ -301,6 +305,8 @@ export async function createContract(input: ContractInput) {
     ownedAddressId(input.salonId, input.customerId, input.addressId),
     ownedAssetId(input.salonId, input.customerId, input.assetId),
   ]);
+  // A first beurt outside the season starts at the season's start.
+  const firstDueAt = snapToSeason(input.firstDueAt, input);
   const [row] = await db
     .insert(serviceContracts)
     .values({
@@ -313,16 +319,20 @@ export async function createContract(input: ContractInput) {
       priceCents: input.priceCents,
       vatRatePercent: input.vatRatePercent,
       intervalMonths: input.intervalMonths,
-      startsOn: input.firstDueAt,
-      nextDueAt: input.firstDueAt,
-      leadDays: input.leadDays ?? 30,
+      intervalWeeks: input.intervalWeeks ?? null,
+      seasonStartMonth: input.seasonStartMonth ?? null,
+      seasonEndMonth: input.seasonEndMonth ?? null,
+      startsOn: firstDueAt,
+      nextDueAt: firstDueAt,
+      // A weekly cadence is notified a week ahead, a monthly one a month ahead.
+      leadDays: input.leadDays ?? (input.intervalWeeks ? 7 : 30),
       notes: input.notes?.trim() || null,
     })
     .returning();
   if (assetId) {
     await db
       .update(assets)
-      .set({ nextServiceDue: input.firstDueAt })
+      .set({ nextServiceDue: firstDueAt })
       .where(and(eq(assets.id, assetId), eq(assets.salonId, input.salonId)));
   }
   return { ok: true as const, contract: row! };
@@ -342,6 +352,9 @@ export async function listContracts(salonId: string) {
       name: serviceContracts.name,
       status: serviceContracts.status,
       intervalMonths: serviceContracts.intervalMonths,
+      intervalWeeks: serviceContracts.intervalWeeks,
+      seasonStartMonth: serviceContracts.seasonStartMonth,
+      seasonEndMonth: serviceContracts.seasonEndMonth,
       nextDueAt: serviceContracts.nextDueAt,
       priceCents: serviceContracts.priceCents,
       vatRatePercent: serviceContracts.vatRatePercent,
@@ -355,4 +368,25 @@ export async function listContracts(salonId: string) {
     .innerJoin(customers, eq(serviceContracts.customerId, customers.id))
     .where(eq(serviceContracts.salonId, salonId))
     .orderBy(asc(serviceContracts.nextDueAt));
+}
+
+/** All photos of a klant's klussen, flat (see groupPhotosByJob for the view). */
+export async function listCustomerPhotos(salonId: string, customerId: string, limit = 200): Promise<DossierPhoto[]> {
+  return db
+    .select({
+      id: jobPhotos.id,
+      blobUrl: jobPhotos.blobUrl,
+      kind: jobPhotos.kind,
+      caption: jobPhotos.caption,
+      createdAt: jobPhotos.createdAt,
+      jobId: jobs.id,
+      jobNumber: jobs.number,
+      jobTitle: jobs.title,
+      addressLine: jobs.addressLine,
+    })
+    .from(jobPhotos)
+    .innerJoin(jobs, eq(jobPhotos.jobId, jobs.id))
+    .where(and(eq(jobPhotos.salonId, salonId), eq(jobs.customerId, customerId)))
+    .orderBy(desc(jobPhotos.createdAt))
+    .limit(limit);
 }

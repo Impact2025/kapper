@@ -18,9 +18,9 @@ export default async function AdminLayout({
   const user = await requireRole("admin");
 
   return (
-    <div className="flex min-h-screen flex-col bg-surface-container-lowest md:flex-row">
+    <div className="flex min-h-dvh flex-col bg-surface-container-lowest md:flex-row">
       <Sidebar user={{ name: user.name, email: user.email, role: user.role }} />
-      <main className="flex-1 px-margin-mobile py-md md:px-lg md:py-lg">{children}</main>
+      <main className="min-w-0 flex-1 px-margin-mobile pt-md pb-[calc(1.5rem+env(safe-area-inset-bottom))] md:px-lg md:py-lg">{children}</main>
     </div>
   );
 }

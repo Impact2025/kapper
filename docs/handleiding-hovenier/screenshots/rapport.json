@@ -1,0 +1,290 @@
+[
+  {
+    "view": "mobiel",
+    "name": "01-startpagina",
+    "path": "/dashboard",
+    "horizontalOverflowPx": 0
+  },
+  {
+    "view": "mobiel",
+    "name": "02-klussen",
+    "path": "/dashboard/klussen",
+    "horizontalOverflowPx": 0
+  },
+  {
+    "view": "mobiel",
+    "name": "03-nieuwe-klus",
+    "path": "/dashboard/klussen/nieuw",
+    "horizontalOverflowPx": 0
+  },
+  {
+    "view": "mobiel",
+    "name": "05-planbord",
+    "path": "/dashboard/planbord",
+    "horizontalOverflowPx": 0
+  },
+  {
+    "view": "mobiel",
+    "name": "06-klanten",
+    "path": "/dashboard/klanten",
+    "horizontalOverflowPx": 0
+  },
+  {
+    "view": "mobiel",
+    "name": "08-offertes-facturen",
+    "path": "/dashboard/facturatie",
+    "horizontalOverflowPx": 0
+  },
+  {
+    "view": "mobiel",
+    "name": "10-onderhoud",
+    "path": "/dashboard/onderhoud",
+    "horizontalOverflowPx": 4
+  },
+  {
+    "view": "mobiel",
+    "name": "11-ai-receptie",
+    "path": "/dashboard/ai-receptie",
+    "horizontalOverflowPx": 0
+  },
+  {
+    "view": "mobiel",
+    "name": "12-gesprekken",
+    "path": "/dashboard/gesprekken",
+    "horizontalOverflowPx": 0
+  },
+  {
+    "view": "mobiel",
+    "name": "13-storm-doorverbinden",
+    "path": "/dashboard/escalaties",
+    "horizontalOverflowPx": 0
+  },
+  {
+    "view": "mobiel",
+    "name": "14-diensten-team",
+    "path": "/dashboard/praktijk",
+    "horizontalOverflowPx": 0
+  },
+  {
+    "view": "mobiel",
+    "name": "15-rapportage",
+    "path": "/dashboard/rapportage",
+    "horizontalOverflowPx": 0
+  },
+  {
+    "view": "mobiel",
+    "name": "16-reviews-terugkeer",
+    "path": "/dashboard/retentie",
+    "horizontalOverflowPx": 0
+  },
+  {
+    "view": "mobiel",
+    "name": "17-annulering",
+    "path": "/dashboard/no-show",
+    "horizontalOverflowPx": 0
+  },
+  {
+    "view": "mobiel",
+    "name": "18-integraties",
+    "path": "/dashboard/integraties",
+    "horizontalOverflowPx": 0
+  },
+  {
+    "view": "mobiel",
+    "name": "19-abonnement",
+    "path": "/dashboard/abonnement",
+    "horizontalOverflowPx": 0
+  },
+  {
+    "view": "mobiel",
+    "name": "20-bedrijfsgegevens",
+    "path": "/dashboard/facturatie/instellingen",
+    "horizontalOverflowPx": 0
+  },
+  {
+    "view": "mobiel",
+    "name": "04-klus-detail",
+    "path": "/dashboard/klussen/c7655996-d03b-451c-94f9-df2803b4523f",
+    "horizontalOverflowPx": 0
+  },
+  {
+    "view": "mobiel",
+    "name": "04b-werkbon",
+    "path": "/dashboard/klussen/c7655996-d03b-451c-94f9-df2803b4523f/werkbon",
+    "horizontalOverflowPx": 0
+  },
+  {
+    "view": "mobiel",
+    "name": "07-klant-detail",
+    "path": "/dashboard/klanten/351bfe0c-7a38-4280-8b1a-c3919c0f6d0e",
+    "horizontalOverflowPx": 0
+  },
+  {
+    "view": "mobiel",
+    "name": "09-offerte-factuur-detail",
+    "path": "/dashboard/facturatie/50ae3745-36f9-4f95-9446-f5ce6f35122f",
+    "horizontalOverflowPx": 0
+  },
+  {
+    "view": "mobiel",
+    "name": "p1-landing",
+    "path": "/sites/hovenier",
+    "horizontalOverflowPx": 0
+  },
+  {
+    "view": "mobiel",
+    "name": "p2-prijzen",
+    "path": "/sites/hovenier/prijzen",
+    "horizontalOverflowPx": 0
+  },
+  {
+    "view": "mobiel",
+    "name": "p3-contact",
+    "path": "/sites/hovenier/contact",
+    "horizontalOverflowPx": 0
+  },
+  {
+    "view": "desktop",
+    "name": "01-startpagina",
+    "path": "/dashboard",
+    "horizontalOverflowPx": 0
+  },
+  {
+    "view": "desktop",
+    "name": "02-klussen",
+    "path": "/dashboard/klussen",
+    "horizontalOverflowPx": 1
+  },
+  {
+    "view": "desktop",
+    "name": "03-nieuwe-klus",
+    "path": "/dashboard/klussen/nieuw",
+    "horizontalOverflowPx": 0
+  },
+  {
+    "view": "desktop",
+    "name": "05-planbord",
+    "path": "/dashboard/planbord",
+    "horizontalOverflowPx": 0
+  },
+  {
+    "view": "desktop",
+    "name": "06-klanten",
+    "path": "/dashboard/klanten",
+    "horizontalOverflowPx": 0
+  },
+  {
+    "view": "desktop",
+    "name": "08-offertes-facturen",
+    "path": "/dashboard/facturatie",
+    "horizontalOverflowPx": 0
+  },
+  {
+    "view": "desktop",
+    "name": "10-onderhoud",
+    "path": "/dashboard/onderhoud",
+    "horizontalOverflowPx": 0
+  },
+  {
+    "view": "desktop",
+    "name": "11-ai-receptie",
+    "path": "/dashboard/ai-receptie",
+    "horizontalOverflowPx": 0
+  },
+  {
+    "view": "desktop",
+    "name": "12-gesprekken",
+    "path": "/dashboard/gesprekken",
+    "horizontalOverflowPx": 0
+  },
+  {
+    "view": "desktop",
+    "name": "13-storm-doorverbinden",
+    "path": "/dashboard/escalaties",
+    "horizontalOverflowPx": 0
+  },
+  {
+    "view": "desktop",
+    "name": "14-diensten-team",
+    "path": "/dashboard/praktijk",
+    "horizontalOverflowPx": 0
+  },
+  {
+    "view": "desktop",
+    "name": "15-rapportage",
+    "path": "/dashboard/rapportage",
+    "horizontalOverflowPx": 0
+  },
+  {
+    "view": "desktop",
+    "name": "16-reviews-terugkeer",
+    "path": "/dashboard/retentie",
+    "horizontalOverflowPx": 0
+  },
+  {
+    "view": "desktop",
+    "name": "17-annulering",
+    "path": "/dashboard/no-show",
+    "horizontalOverflowPx": 0
+  },
+  {
+    "view": "desktop",
+    "name": "18-integraties",
+    "path": "/dashboard/integraties",
+    "horizontalOverflowPx": 0
+  },
+  {
+    "view": "desktop",
+    "name": "19-abonnement",
+    "path": "/dashboard/abonnement",
+    "horizontalOverflowPx": 0
+  },
+  {
+    "view": "desktop",
+    "name": "20-bedrijfsgegevens",
+    "path": "/dashboard/facturatie/instellingen",
+    "horizontalOverflowPx": 0
+  },
+  {
+    "view": "desktop",
+    "name": "04-klus-detail",
+    "path": "/dashboard/klussen/c7655996-d03b-451c-94f9-df2803b4523f",
+    "horizontalOverflowPx": 0
+  },
+  {
+    "view": "desktop",
+    "name": "04b-werkbon",
+    "path": "/dashboard/klussen/c7655996-d03b-451c-94f9-df2803b4523f/werkbon",
+    "horizontalOverflowPx": 0
+  },
+  {
+    "view": "desktop",
+    "name": "07-klant-detail",
+    "path": "/dashboard/klanten/351bfe0c-7a38-4280-8b1a-c3919c0f6d0e",
+    "horizontalOverflowPx": 0
+  },
+  {
+    "view": "desktop",
+    "name": "09-offerte-factuur-detail",
+    "path": "/dashboard/facturatie/50ae3745-36f9-4f95-9446-f5ce6f35122f",
+    "horizontalOverflowPx": 0
+  },
+  {
+    "view": "desktop",
+    "name": "p1-landing",
+    "path": "/sites/hovenier",
+    "horizontalOverflowPx": 0
+  },
+  {
+    "view": "desktop",
+    "name": "p2-prijzen",
+    "path": "/sites/hovenier/prijzen",
+    "horizontalOverflowPx": 0
+  },
+  {
+    "view": "desktop",
+    "name": "p3-contact",
+    "path": "/sites/hovenier/contact",
+    "horizontalOverflowPx": 0
+  }
+]

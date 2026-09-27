@@ -123,6 +123,52 @@
   --text-display-lg--font-weight: 500;
 }
 
+/* ---- Mobiele basis (iOS Safari + Android Chrome) ---- */
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
+  /* ankerlinks (#functies) landen niet meer onder de sticky header */
+  scroll-padding-top: 80px;
+}
+
+body {
+  /* nooit horizontaal scrollen door een te brede sectie */
+  overflow-x: clip;
+}
+
+/* Geen 300ms-vertraging / dubbeltik-zoom op tikdoelen */
+a, button, summary, [role="button"], input, select, textarea, label {
+  touch-action: manipulation;
+}
+
+/* iOS Safari zoomt in op velden < 16px; op touch-apparaten dus minimaal 16px */
+@media (pointer: coarse) {
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+  select,
+  textarea {
+    font-size: max(16px, 1em);
+  }
+}
+
+/* Safe-area (notch, home-indicator, afgeronde hoeken) */
+@utility pt-safe { padding-top: env(safe-area-inset-top); }
+@utility pb-safe { padding-bottom: env(safe-area-inset-bottom); }
+@utility pl-safe { padding-left: env(safe-area-inset-left); }
+@utility pr-safe { padding-right: env(safe-area-inset-right); }
+/* Minimale tikdoelgrootte (Apple HIG 44pt / Material 48dp) */
+@utility tap-target { min-height: 44px; min-width: 44px; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  .reveal-on-scroll { opacity: 1; transform: none; }
+}
+
 body {
   background-color: var(--color-background);
   color: var(--color-on-surface);
@@ -151,13 +197,26 @@ body {
 
 @utility hover-lift {
   transition: transform 0.3s ease, box-shadow 0.3s ease;
-  &:hover {
-    transform: translateY(-4px);
-    box-shadow: 0px 12px 30px rgba(143, 161, 139, 0.12);
+  /* alleen bij echte hover: op touch blijft :hover anders "plakken" na een tik */
+  @media (hover: hover) {
+    &:hover {
+      transform: translateY(-4px);
+      box-shadow: 0px 12px 30px rgba(143, 161, 139, 0.12);
+    }
   }
 }
 
 /* Material Symbols icon font (loaded via <link> in layout) */
+/* Self-hosted subset (scripts/build-icon-font.mjs): ~34 KB instead of Google's 4 MB
+   full font, no third-party request, no render-blocking stylesheet. */
+@font-face {
+  font-family: "Material Symbols Outlined";
+  font-style: normal;
+  font-weight: 100 700;
+  font-display: block;
+  src: url("/fonts/material-symbols-subset.woff2?v=2") format("woff2");
+}
+
 .material-symbols-outlined {
   font-family: "Material Symbols Outlined";
   font-weight: normal;
@@ -310,6 +369,7 @@ body {
   color: var(--color-on-surface);
   margin-top: 8px;
 }
+.prose-blog h2, .prose-blog h3 { scroll-margin-top: 96px; }
 .prose-blog p { margin: 0; }
 .prose-blog ul, .prose-blog ol { padding-left: 24px; display: flex; flex-direction: column; gap: 8px; }
 .prose-blog ul { list-style: disc; }

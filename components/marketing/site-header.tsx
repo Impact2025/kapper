@@ -37,7 +37,7 @@ export function SiteHeader({
   const [open, setOpen] = useState(false);
 
   return (
-    <header className="bg-surface/80 backdrop-blur-md sticky top-0 z-50 shadow-sm">
+    <header className="bg-surface/80 backdrop-blur-md sticky top-0 z-50 pt-safe shadow-sm">
       <nav className="flex justify-between items-center w-full px-margin-mobile md:px-xl py-base max-w-container-max mx-auto">
         <Link href="/" className="flex items-center gap-sm">
           {logoIcon ? (
@@ -54,7 +54,7 @@ export function SiteHeader({
               priority
             />
           )}
-          <span className="mkt-h2 text-headline-lg font-bold text-primary">
+          <span className="mkt-h2 text-headline-md md:text-headline-lg font-bold text-primary">
             {brandName}
           </span>
         </Link>
@@ -82,9 +82,10 @@ export function SiteHeader({
             {cta.label}
           </ButtonLink>
           <button
-            className="md:hidden text-primary"
+            className="tap-target -mr-sm flex items-center justify-center text-primary md:hidden"
             onClick={() => setOpen((v) => !v)}
-            aria-label="Menu"
+            aria-label={open ? "Menu sluiten" : "Menu openen"}
+            aria-expanded={open}
           >
             <Icon name={open ? "close" : "menu"} />
           </button>
@@ -93,18 +94,19 @@ export function SiteHeader({
 
       {/* Mobile menu */}
       <div
+        inert={!open}
         className={cn(
-          "md:hidden overflow-hidden transition-all duration-300 border-t border-outline-variant/40",
-          open ? "max-h-96" : "max-h-0",
+          "md:hidden overflow-y-auto overscroll-contain transition-all duration-300 border-t border-outline-variant/40",
+          open ? "max-h-[calc(100dvh-4rem)]" : "max-h-0 border-t-0",
         )}
       >
-        <div className="px-margin-mobile py-md flex flex-col gap-sm bg-surface/95">
+        <div className="px-margin-mobile pt-sm pb-[calc(1.5rem+env(safe-area-inset-bottom))] flex flex-col bg-surface/95">
           {navLinks.map((l) => (
             <Link
               key={l.href}
               href={l.href}
               onClick={() => setOpen(false)}
-              className="font-label-md text-label-md text-on-surface-variant py-xs"
+              className="flex min-h-12 items-center font-label-md text-body-md text-on-surface-variant active:text-primary"
             >
               {l.label}
             </Link>
@@ -112,11 +114,11 @@ export function SiteHeader({
           <Link
             href="/login"
             onClick={() => setOpen(false)}
-            className="font-label-md text-label-md text-on-surface-variant py-xs"
+            className="flex min-h-12 items-center font-label-md text-body-md text-on-surface-variant active:text-primary"
           >
             Inloggen
           </Link>
-          <ButtonLink href={cta.href} className="mt-xs">
+          <ButtonLink href={cta.href} className="mt-sm min-h-12">
             {cta.label}
           </ButtonLink>
         </div>
