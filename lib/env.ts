@@ -37,10 +37,18 @@ const serverSchema = z.object({
   PAGESPEED_API_KEY: z.string().optional(),
   GOOGLE_PLACES_API_KEY: z.string().optional(),
 
-  // Google Search Console — Indexing API service account (see lib/google/indexing.ts).
-  // Both unset: publishing silently skips indexing, same as before this existed.
-  GOOGLE_INDEXING_CLIENT_EMAIL: z.string().optional(),
-  GOOGLE_INDEXING_PRIVATE_KEY: z.string().optional(),
+  // Google Search Console — one service account, two scopes (see lib/google/).
+  // Unset: publishing silently skips GSC/IndexNow, same as before this existed.
+  GOOGLE_SERVICE_ACCOUNT_CLIENT_EMAIL: z.string().optional(),
+  GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY: z.string().optional(),
+  // Google Indexing API is officially scoped to JobPosting/Livestream content,
+  // not blog articles — off by default, same caution as AgentOS
+  // (backend/domains/publish/indexing.py). Sitemap-submit + IndexNow below
+  // are the sanctioned routes for ordinary articles.
+  GOOGLE_INDEXING_ENABLED: z.coerce.boolean().default(false),
+  // IndexNow (Bing/Yandex/Seznam/Naver) — not secret, just needs to match the
+  // keyfile served at <host>/<key>.txt (see app/[slug]/route.ts).
+  INDEXNOW_KEY: z.string().optional(),
 
   // Billing (M5)
   STRIPE_SECRET_KEY: z.string().optional(),
