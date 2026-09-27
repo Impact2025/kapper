@@ -37,6 +37,11 @@ const serverSchema = z.object({
   PAGESPEED_API_KEY: z.string().optional(),
   GOOGLE_PLACES_API_KEY: z.string().optional(),
 
+  // Google Search Console — Indexing API service account (see lib/google/indexing.ts).
+  // Both unset: publishing silently skips indexing, same as before this existed.
+  GOOGLE_INDEXING_CLIENT_EMAIL: z.string().optional(),
+  GOOGLE_INDEXING_PRIVATE_KEY: z.string().optional(),
+
   // Billing (M5)
   STRIPE_SECRET_KEY: z.string().optional(),
   STRIPE_WEBHOOK_SECRET: z.string().optional(),
