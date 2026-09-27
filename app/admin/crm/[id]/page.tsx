@@ -13,6 +13,7 @@ import {
   type ActivityType,
 } from "@/lib/crm/constants";
 import { StageSelect, NoteForm, EmailForm } from "@/components/admin/crm/lead-actions";
+import { getVerticalConfig } from "@/lib/verticals";
 
 export default async function LeadDetailPage({
   params,
@@ -52,6 +53,8 @@ export default async function LeadDetailPage({
             <Badge tone={LEAD_STAGE_TONES[lead.stage]}>
               {LEAD_STAGE_LABELS[lead.stage]}
             </Badge>
+            <Badge tone="neutral">{getVerticalConfig(lead.vertical).brand.name}</Badge>
+            {lead.optedOutAt && <Badge tone="error">Afgemeld</Badge>}
           </div>
           <div className="mt-xs flex flex-wrap gap-md text-label-md text-on-surface-variant">
             {lead.email && (
@@ -114,7 +117,13 @@ export default async function LeadDetailPage({
             <h2 className="mb-sm font-headline-md text-headline-md text-on-surface">
               Acties
             </h2>
-            <EmailForm leadId={lead.id} defaultTo={lead.email ?? ""} />
+            {lead.optedOutAt ? (
+              <p className="text-body-md text-on-surface-variant">
+                Afgemeld op {dt.format(lead.optedOutAt)} — deze lead krijgt geen mails meer.
+              </p>
+            ) : (
+              <EmailForm leadId={lead.id} defaultTo={lead.email ?? ""} />
+            )}
           </Card>
 
           {lead.emails.length > 0 && (

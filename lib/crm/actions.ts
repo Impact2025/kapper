@@ -8,7 +8,9 @@ import { leads, crmActivities, emailMessages } from "@/lib/db/schema";
 import { requireRole } from "@/lib/auth/dal";
 import { auditAdmin } from "@/lib/admin/audit";
 import { sendEmail } from "@/lib/mail/resend";
-import { simpleEmail } from "@/lib/mail/templates";
+import { renderOutreach, sendOutreach, outreachAudience, MAX_PER_SEND } from "@/lib/crm/outreach";
+import { unknownPlaceholders } from "@/lib/crm/outreach-template";
+import { isVerticalId } from "@/lib/verticals";
 import { env } from "@/lib/env";
 import { LEAD_STAGES, LEAD_STAGE_LABELS, type LeadStage } from "@/lib/crm/constants";
 
@@ -109,15 +111,31 @@ export async function sendLeadEmail(
   }
 
   const { leadId, to, subject, body } = parsed.data;
-  const html = simpleEmail({ title: subject, body });
-  const resendId = await sendEmail({ to, subject, html, replyTo: env.REPORT_RECIPIENT });
+  const [lead] = await db
+    .select({
+      salonName: leads.salonName,
+      city: leads.city,
+      vertical: leads.vertical,
+      optOutToken: leads.optOutToken,
+      optedOutAt: leads.optedOutAt,
+    })
+    .from(leads)
+    .where(eq(leads.id, leadId))
+    .limit(1);
+  if (!lead) return { ok: false, error: "Lead niet gevonden." };
+  if (lead.optedOutAt) return { ok: false, error: "Deze lead heeft zich afgemeld — niet mailen." };
+
+  // Same rendering as bulk outreach: vertical brand, {{placeholders}}, unsubscribe line.
+  const mail = renderOutreach(lead, subject, body);
+  const { from, html } = mail;
+  const resendId = await sendEmail({ to, subject: mail.subject, html, from, replyTo: env.REPORT_RECIPIENT });
 
   await db.insert(emailMessages).values({
     leadId,
     direction: "outbound",
     toAddress: to,
-    fromAddress: env.MAIL_FROM,
-    subject,
+    fromAddress: from,
+    subject: mail.subject,
     html,
     resendId,
     status: resendId ? "sent" : "skipped",
@@ -126,7 +144,7 @@ export async function sendLeadEmail(
     leadId,
     type: "email",
     userId: user.id,
-    body: `E-mail verstuurd: "${subject}"`,
+    body: `E-mail verstuurd: "${mail.subject}"`,
     meta: { to, resendId },
   });
   await auditAdmin(user, "lead.email", { type: "lead", id: leadId }, { subject });
@@ -135,4 +153,71 @@ export async function sendLeadEmail(
   return resendId
     ? { ok: true }
     : { ok: true, error: "Verstuurd (let op: RESEND_API_KEY ontbreekt, e-mail niet daadwerkelijk verzonden)." };
+}
+
+const outreachSchema = z.object({
+  vertical: z.string().refine(isVerticalId, "Onbekende vertical."),
+  subject: z.string().trim().min(2, "Onderwerp is verplicht.").max(200),
+  body: z.string().trim().min(20, "Bericht is te kort.").max(20000),
+  onlyNeverEmailed: z.boolean(),
+  leadIds: z.array(z.string().uuid()).min(1, "Selecteer minstens één lead.").max(MAX_PER_SEND, `Maximaal ${MAX_PER_SEND} leads per keer.`),
+});
+
+export interface OutreachActionResult extends ActionResult {
+  message?: string;
+}
+
+function parseOutreach(formData: FormData) {
+  const parsed = outreachSchema.safeParse({
+    vertical: formData.get("vertical"),
+    subject: formData.get("subject"),
+    body: formData.get("body"),
+    onlyNeverEmailed: formData.get("onlyNeverEmailed") === "1",
+    leadIds: formData.getAll("leadIds"),
+  });
+  if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Ongeldige invoer." } as const;
+  const unknown = unknownPlaceholders(`${parsed.data.subject}
+${parsed.data.body}`);
+  if (unknown.length) {
+    return { error: `Onbekende placeholder: ${unknown.map((u) => `{{${u}}}`).join(", ")}. Gebruik {{naam}}, {{plaats}}, {{merk}} of {{site}}.` } as const;
+  }
+  return { data: parsed.data } as const;
+}
+
+/**
+ * Bulk outreach to selected leads of one vertical ("send" button), or a
+ * test copy of the first selected lead's mail to the admin ("test" button).
+ */
+export async function sendOutreachAction(
+  _prev: OutreachActionResult | undefined,
+  formData: FormData,
+): Promise<OutreachActionResult> {
+  const user = await requireRole("admin");
+  const parsed = parseOutreach(formData);
+  if ("error" in parsed) return { ok: false, error: parsed.error };
+  const { vertical, subject, body, onlyNeverEmailed, leadIds } = parsed.data;
+
+  if (formData.get("intent") === "test") {
+    const audience = await outreachAudience({ vertical, stages: [], onlyNeverEmailed: false });
+    const sample = audience.find((l) => l.id === leadIds[0]);
+    if (!sample) return { ok: false, error: "Lead niet gevonden." };
+    const mail = renderOutreach(sample, subject, body);
+    const id = await sendEmail({ to: user.email, subject: `[TEST] ${mail.subject}`, html: mail.html, from: mail.from, replyTo: env.REPORT_RECIPIENT });
+    return id
+      ? { ok: true, message: `Testmail (zoals ${sample.salonName} hem krijgt) verstuurd naar ${user.email}.` }
+      : { ok: false, error: "Testmail niet verstuurd — RESEND_API_KEY ontbreekt of Resend gaf een fout." };
+  }
+
+  const result = await sendOutreach({ leadIds, subject, body, onlyNeverEmailed, userId: user.id });
+  await auditAdmin(user, "lead.outreach", null, { vertical, subject, ...result });
+  revalidatePath("/admin/crm");
+  revalidatePath("/admin/crm/outreach");
+
+  if (result.dryRun) {
+    return { ok: false, error: `Niets verstuurd: RESEND_API_KEY ontbreekt. Gelogd als "skipped" bij de leads.` };
+  }
+  const parts = [`${result.sent} verstuurd`];
+  if (result.skipped) parts.push(`${result.skipped} overgeslagen`);
+  if (result.failed) parts.push(`${result.failed} mislukt`);
+  return { ok: result.failed === 0, message: parts.join(" · "), error: result.failed ? "Een deel is mislukt — zie Sentry/logs." : undefined };
 }

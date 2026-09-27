@@ -16,7 +16,8 @@
     "db:seed": "tsx scripts/seed.ts",
     "db:seed-demo": "tsx scripts/seed-demo.ts",
     "db:seed-elixir": "tsx scripts/seed-elixir.ts",
-    "db:seed-hovenier": "tsx scripts/seed-hovenier-demo.ts"
+    "db:seed-hovenier": "tsx scripts/seed-hovenier-demo.ts",
+    "import:leads": "tsx scripts/import-leads.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.105.0",

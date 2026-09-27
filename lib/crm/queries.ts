@@ -11,12 +11,14 @@ export interface LeadListItem {
   email: string | null;
   city: string | null;
   stage: LeadStage;
+  vertical: string;
   missedRevenueEstimate: number | null;
   createdAt: Date;
 }
 
 export interface LeadListFilters {
   stage?: LeadStage;
+  vertical?: string;
   search?: string;
   limit?: number;
 }
@@ -25,6 +27,7 @@ export async function listLeads(filters: LeadListFilters = {}): Promise<LeadList
   if (!env.DATABASE_URL) return [];
   const conditions: SQL[] = [];
   if (filters.stage) conditions.push(eq(leads.stage, filters.stage));
+  if (filters.vertical) conditions.push(eq(leads.vertical, filters.vertical));
   if (filters.search?.trim()) {
     const q = `%${filters.search.trim()}%`;
     const search = or(
@@ -42,6 +45,7 @@ export async function listLeads(filters: LeadListFilters = {}): Promise<LeadList
       email: leads.email,
       city: leads.city,
       stage: leads.stage,
+      vertical: leads.vertical,
       missedRevenueEstimate: leads.missedRevenueEstimate,
       createdAt: leads.createdAt,
     })
@@ -77,6 +81,8 @@ export interface LeadDetail {
   phone: string | null;
   city: string | null;
   stage: LeadStage;
+  vertical: string;
+  optedOutAt: Date | null;
   scanResult: Record<string, unknown> | null;
   missedRevenueEstimate: number | null;
   createdAt: Date;
@@ -126,6 +132,8 @@ export async function getLead(id: string): Promise<LeadDetail | null> {
     phone: leadRow.phone,
     city: leadRow.city,
     stage: leadRow.stage,
+    vertical: leadRow.vertical,
+    optedOutAt: leadRow.optedOutAt,
     scanResult: leadRow.scanResult ?? null,
     missedRevenueEstimate: leadRow.missedRevenueEstimate,
     createdAt: leadRow.createdAt,

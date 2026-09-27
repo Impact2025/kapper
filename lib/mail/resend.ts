@@ -1,5 +1,6 @@
 import { Resend } from "resend";
 import { env } from "@/lib/env";
+import { getVerticalConfig } from "@/lib/verticals";
 
 let client: Resend | null = null;
 
@@ -39,4 +40,16 @@ export async function sendEmail(input: SendEmailInput): Promise<string | null> {
     return null;
   }
   return data?.id ?? null;
+}
+
+/**
+ * "<Vertical brand> <verified address>" — the underlying mailbox is
+ * whatever domain is verified in Resend (MAIL_FROM's address), only the
+ * display name changes per vertical so replies still land in one inbox.
+ */
+export function brandedFrom(vertical: string | null | undefined): string {
+  const brand = getVerticalConfig(vertical).brand.name;
+  const m = /<([^>]+)>/.exec(env.MAIL_FROM);
+  const address = m?.[1] ?? env.MAIL_FROM;
+  return `${brand} <${address}>`;
 }

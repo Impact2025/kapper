@@ -68,7 +68,18 @@ export function welcomeEmail({
 }
 
 /** Generic email: a title + free-text body (newlines become paragraphs). */
-export function simpleEmail({ title, body }: { title: string; body: string }): string {
+export function simpleEmail({
+  title,
+  body,
+  brand,
+  footerHtml = "",
+}: {
+  title: string;
+  body: string;
+  brand?: MailBrand;
+  /** Trusted HTML appended after the escaped body (e.g. an unsubscribe line). */
+  footerHtml?: string;
+}): string {
   const paragraphs = body
     .split(/\n{2,}/)
     .map(
@@ -80,7 +91,7 @@ export function simpleEmail({ title, body }: { title: string; body: string }): s
           .replace(/\n/g, "<br>")}</p>`,
     )
     .join("");
-  return shell(title, paragraphs);
+  return shell(title, paragraphs + footerHtml, brand);
 }
 
 export function aiLiveEmail({ salonName, dashboardUrl }: { salonName: string; dashboardUrl: string }): string {

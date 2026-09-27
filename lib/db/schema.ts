@@ -13,6 +13,7 @@ import {
   index,
   uniqueIndex,
 } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
 
 /* ============================ Enums ============================ */
 export const roleEnum = pgEnum("role", ["admin", "owner"]);
@@ -146,13 +147,26 @@ export const leads = pgTable(
     phone: text("phone"),
     city: text("city"),
     stage: leadStageEnum("stage").default("new").notNull(),
+    // Welke marketing-site/merk deze lead hoort te krijgen — zelfde
+    // vertical-ids als salons.vertical (lib/verticals). Bepaalt brand.name,
+    // siteUrl en supportEmail bij outreach-mails.
+    vertical: text("vertical").default("kapper").notNull(),
     scanResult: jsonb("scan_result").$type<Record<string, unknown>>(),
     missedRevenueEstimate: integer("missed_revenue_estimate"), // euro/month
     ownerId: uuid("owner_id").references(() => users.id, { onDelete: "set null" }),
     salonId: uuid("salon_id").references(() => salons.id, { onDelete: "set null" }),
+    // Onraadbaar token voor de afmeldlink in outreach-mails (/afmelden/[token]);
+    // de volatile default geeft ook bestaande rijen elk een eigen token.
+    optOutToken: text("opt_out_token").default(sql`gen_random_uuid()::text`).notNull().unique(),
+    // Gezet zodra de lead zich afmeldt — outreach slaat deze lead (en elk
+    // andere lead met hetzelfde e-mailadres) daarna altijd over.
+    optedOutAt: timestamp("opted_out_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   },
-  (t) => [index("leads_stage_idx").on(t.stage)],
+  (t) => [
+    index("leads_stage_idx").on(t.stage),
+    index("leads_vertical_idx").on(t.vertical),
+  ],
 );
 
 export const crmActivities = pgTable("crm_activities", {
@@ -803,6 +817,10 @@ export const supportTickets = pgTable(
     status: text("status").notNull().default("open"),
     priority: text("priority").notNull().default("normaal"),
     source: text("source").notNull().default("formulier"), // formulier | chat | dashboard | mail
+    // Welk merk-site dit ticket hoort te krijgen in de bevestigings-/reactiemail
+    // (lib/verticals ids). Voor een ingelogde salon leidend via salonId/vertical;
+    // voor een gast (prospect op /contact) is dit de enige bron van de branding.
+    vertical: text("vertical").default("kapper").notNull(),
     salonId: uuid("salon_id").references(() => salons.id, { onDelete: "set null" }),
     userId: uuid("user_id").references(() => users.id, { onDelete: "set null" }),
     requesterName: text("requester_name").notNull(),

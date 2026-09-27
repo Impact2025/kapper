@@ -225,6 +225,27 @@
       "when": 1790414728337,
       "tag": "0031_newsletter",
       "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "7",
+      "when": 1790492311266,
+      "tag": "0032_shocking_sentinel",
+      "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "7",
+      "when": 1790492988485,
+      "tag": "0033_add_support_tickets_vertical",
+      "breakpoints": true
+    },
+    {
+      "idx": 34,
+      "version": "7",
+      "when": 1790533853069,
+      "tag": "0034_leads_opt_out",
+      "breakpoints": true
     }
   ]
 }
