@@ -210,6 +210,13 @@ export const HOVENIER_VERTICAL: VerticalPack = {
       headline: "Meer tijd in de tuin, minder achter je bureau.",
       sub: "Terwijl jij met de bosmaaier werkt, neemt HovenierAssistent 24/7 de telefoon en WhatsApp op, legt tuinadres en klus vast en zet alles klaar in je klus-CRM.",
       heroImage: { src: "/hovenier-hero.png", alt: "Smartphone op werkhandschoenen naast een machine in een tuin" },
+      heroVideo: {
+        src: "/video/hovenier-hero.mp4",
+        poster: "/video/hovenier-hero-poster.jpg",
+        label: "Sfeerbeeld van een tuin waar een hovenier aan het werk is",
+        eyebrow: "voor hoveniers & groenbedrijven",
+        accent: "#f1d675",
+      },
       chat: {
         title: "WhatsApp — HovenierAssistent",
         messages: [

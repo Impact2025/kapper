@@ -119,6 +119,8 @@ export interface LandingCopy {
   ctaBody: string;
   /** Optional hero photo (in /public); the chat then floats on it as a phone mockup. */
   heroImage?: { src: string; alt: string };
+  /** Optional full-bleed video hero (files in /public); replaces the split hero when set. */
+  heroVideo?: { src: string; poster: string; label: string; eyebrow: string; accent?: string };
 }
 
 export interface MarketingConfig {

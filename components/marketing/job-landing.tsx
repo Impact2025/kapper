@@ -1,6 +1,7 @@
 import Image from "next/image";
 import { Icon } from "@/components/ui/icon";
 import { ButtonLink } from "@/components/ui/button";
+import { CinematicHero } from "@/components/marketing/cinematic-hero";
 import { PricingCards } from "@/components/marketing/pricing-cards";
 import { plansFor } from "@/lib/verticals/plans";
 import type { VerticalPack } from "@/lib/verticals";
@@ -43,7 +44,33 @@ export function JobLanding({ pack }: { pack: VerticalPack }) {
         <script key={i} type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(ld) }} />
       ))}
 
-      {/* Hero */}
+      {landing.heroVideo ? (
+        <>
+          <CinematicHero
+            eyebrow={landing.heroVideo.eyebrow}
+            headline={landing.headline}
+            sub={landing.sub}
+            video={landing.heroVideo}
+            accent={landing.heroVideo.accent}
+            primary={{ href: "/scan", label: "doe de gratis scan" }}
+            secondary={{ href: "/contact", label: "vraag een demo aan" }}
+          />
+          {/* Stats onder de hero, als rustige waardebalk. */}
+          <section className="bg-surface py-lg">
+            <div className="mx-auto grid max-w-container-max grid-cols-1 gap-md px-margin-mobile md:grid-cols-3 md:px-xl">
+              {landing.stats.map((s) => (
+                <div key={s.value} className="flex items-center gap-sm">
+                  <Icon name={s.icon} className="text-[28px] text-primary" />
+                  <div>
+                    <div className="font-label-md text-label-md text-on-surface">{s.value}</div>
+                    <div className="text-label-sm text-on-surface-variant">{s.label}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+        </>
+      ) : (
       <section className="relative overflow-hidden pt-xl pb-lg md:pb-xl">
         <div className="mx-auto grid max-w-container-max grid-cols-1 items-center gap-lg px-margin-mobile md:px-xl lg:grid-cols-2">
           <div className="z-10">
@@ -126,6 +153,7 @@ export function JobLanding({ pack }: { pack: VerticalPack }) {
           )}
         </div>
       </section>
+      )}
 
       {/* Functies */}
       <section id="functies" className="bg-surface-container-lowest py-xl">
