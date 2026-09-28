@@ -1,6 +1,7 @@
 import type { ScanResult } from "@/lib/scan/run-scan";
 import { publicEnv } from "@/lib/env";
 import { KAPPER_VERTICAL, getVerticalConfig } from "@/lib/verticals";
+import { siteUrlFor } from "@/lib/verticals/site-url";
 
 const BRAND = "#526350";
 const CREAM = "#fbf9f8";
@@ -191,11 +192,14 @@ export function adminReportEmail({
 export function scanReportEmail({
   salonName,
   result,
+  vertical,
 }: {
   salonName: string;
   result: ScanResult;
+  vertical?: string | null;
 }): string {
   const r = result.revenue;
+  const brand = brandFor(vertical);
   const inner = `
     <p style="font-size:16px;line-height:1.6;margin:0 0 16px;">${result.summary}</p>
     <div style="background:${CREAM};border-radius:12px;padding:20px;margin:16px 0;">
@@ -205,27 +209,29 @@ export function scanReportEmail({
     </div>
     <table style="width:100%;border-collapse:collapse;font-size:14px;">
       <tr><td style="padding:6px 0;color:#444842;">Gemiste oproepen / maand</td><td style="text-align:right;font-weight:600;">${r.missedCallsPerMonth}</td></tr>
-      <tr><td style="padding:6px 0;color:#444842;">Herwonnen leads (60%)</td><td style="text-align:right;font-weight:600;">${r.recoveredLeads}</td></tr>
-      <tr><td style="padding:6px 0;color:#444842;">Extra boekingen (30%)</td><td style="text-align:right;font-weight:600;">${r.extraBookings}</td></tr>
-      <tr><td style="padding:6px 0;color:#444842;">No-show besparing</td><td style="text-align:right;font-weight:600;">${eur(r.noShowSavings)}</td></tr>
+      <tr><td style="padding:6px 0;color:#444842;">Herwonnen leads (${Math.round((r.recoveryRate ?? 0.6) * 100)}%)</td><td style="text-align:right;font-weight:600;">${r.recoveredLeads}</td></tr>
+      <tr><td style="padding:6px 0;color:#444842;">${r.bookingsLabel ?? "Extra boekingen"} (${Math.round((r.conversionRate ?? 0.3) * 100)}%)</td><td style="text-align:right;font-weight:600;">${r.extraBookings}</td></tr>
+      <tr><td style="padding:6px 0;color:#444842;">${r.savingsLabel ?? "No-show besparing"}</td><td style="text-align:right;font-weight:600;">${eur(r.noShowSavings)}</td></tr>
     </table>
     ${result.performanceScore != null ? `<p style="font-size:13px;color:#747871;margin-top:16px;">Website-prestatie: ${result.performanceScore}/100 · SEO: ${result.seoScore ?? "—"}/100</p>` : ""}
-    <div style="margin-top:24px;">${button(`${publicEnv.NEXT_PUBLIC_SITE_URL}/scan`, "Start je 14-daagse pilot")}</div>
+    <div style="margin-top:24px;">${button(`${siteUrlFor(vertical).replace(/\/$/, "")}/prijzen`, "Start je 14-daagse pilot")}</div>
   `;
-  return shell(`Je AI & SEO-scan voor ${salonName}`, inner);
+  return shell(`Je AI & SEO-scan voor ${salonName}`, inner, brand);
 }
 
 export function scanLeadNotifyEmail({
   input,
   result,
+  vertical,
 }: {
   input: { salonName: string; url: string; email: string; phone?: string; city?: string };
   result: ScanResult;
+  vertical?: string | null;
 }): string {
   const inner = `
-    <p style="font-size:15px;line-height:1.6;">Er is een nieuwe scan-lead binnengekomen.</p>
+    <p style="font-size:15px;line-height:1.6;">Er is een nieuwe scan-lead binnengekomen via ${brandFor(vertical).name}.</p>
     <table style="width:100%;border-collapse:collapse;font-size:14px;">
-      <tr><td style="padding:6px 0;color:#444842;">Salon</td><td style="text-align:right;font-weight:600;">${input.salonName}</td></tr>
+      <tr><td style="padding:6px 0;color:#444842;">Bedrijf</td><td style="text-align:right;font-weight:600;">${input.salonName}</td></tr>
       <tr><td style="padding:6px 0;color:#444842;">Website</td><td style="text-align:right;">${result.normalizedUrl}</td></tr>
       <tr><td style="padding:6px 0;color:#444842;">E-mail</td><td style="text-align:right;">${input.email}</td></tr>
       <tr><td style="padding:6px 0;color:#444842;">Telefoon</td><td style="text-align:right;">${input.phone || "—"}</td></tr>

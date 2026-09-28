@@ -10,6 +10,7 @@ import { DEFAULT_VERTICAL_ID, type VerticalPack } from "./index";
 
 /** Marketing paths (and their sub-paths) that exist per vertical. */
 const SITE_PREFIXES = [
+  "/scan", // per-vertical scan; verticals without a scan profile 404 in the page
   "/prijzen",
   "/blog",
   "/kennisbank",
@@ -26,7 +27,7 @@ const SITE_PREFIXES = [
 
 /** Kapper-only marketing pages: on a trade's domain they must 404 rather
  * than show the kapper site under the wrong brand. */
-const KAPPER_ONLY_PREFIXES = ["/diensten", "/over-ons", "/scan", "/integraties"];
+const KAPPER_ONLY_PREFIXES = ["/diensten", "/over-ons", "/integraties"];
 
 const matches = (pathname: string, prefix: string) => pathname === prefix || pathname.startsWith(`${prefix}/`);
 

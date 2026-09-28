@@ -139,7 +139,7 @@ export const LOODGIETER_VERTICAL: VerticalPack = {
       { href: "/help", label: "Hulp" },
       { href: "/contact", label: "Contact" },
     ],
-    cta: { href: "/contact", label: "Gratis kennismaking" },
+    cta: { href: "/scan", label: "Gratis scan" },
     footerBlurb:
       "Het klus-CRM met AI-receptionist voor loodgietersbedrijven: geen spoedoproep meer missen, van aanvraag tot betaalde factuur op één plek.",
     logoIcon: "plumbing",

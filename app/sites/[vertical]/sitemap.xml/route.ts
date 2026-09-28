@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { listPublishedSlugs } from "@/lib/blog/queries";
 import { listPublishedKnowledgeSlugs } from "@/lib/kennisbank/queries";
 import { solutionsFor } from "@/lib/marketing/solutions";
+import { scanProfileFor } from "@/lib/scan/profiles";
 import { DEFAULT_VERTICAL_ID, isVerticalId, getVerticalConfig, listLiveVerticals } from "@/lib/verticals";
 
 // Rendered per request and cached at the CDN (Cache-Control) instead of
@@ -26,7 +27,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ vertica
   if (!isVerticalId(vertical) || vertical === DEFAULT_VERTICAL_ID || !listLiveVerticals().some((v) => v.id === vertical)) notFound();
   const base = getVerticalConfig(vertical).brand.siteUrl;
   type Entry = { loc: string; lastmod?: Date | null };
-  const entries: Entry[] = [...STATIC_ROUTES, ...solutionsFor(vertical).map((s) => `/oplossingen/${s.slug}`)].map((r) => ({ loc: `${base}${r}` }));
+  const entries: Entry[] = [...STATIC_ROUTES, ...(scanProfileFor(vertical) ? ["/scan"] : []), ...solutionsFor(vertical).map((s) => `/oplossingen/${s.slug}`)].map((r) => ({ loc: `${base}${r}` }));
   const newest = (ds: (Date | null)[]) => ds.reduce<Date | null>((acc, d) => (d && (!acc || d > acc) ? d : acc), null);
 
   try {

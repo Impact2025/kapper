@@ -1,15 +1,22 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { Icon } from "@/components/ui/icon";
 import { Button } from "@/components/ui/button";
 import type { ScanResult } from "@/lib/scan/run-scan";
+import type { ScanProfile } from "@/lib/scan/profiles";
 
 function eur(n: number) {
   return "€" + n.toLocaleString("nl-NL");
 }
 
-export function ScanForm() {
+type FormProfile = Pick<
+  ScanProfile,
+  "vertical" | "sizeLabel" | "sizeDefault" | "sizeMax" | "nameLabel" | "namePlaceholder" | "urlLabel" | "urlPlaceholder" | "emailPlaceholder"
+>;
+
+export function ScanForm({ profile }: { profile: FormProfile }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<ScanResult | null>(null);
@@ -65,9 +72,9 @@ export function ScanForm() {
         <div className="grid grid-cols-2 gap-md mb-lg">
           {[
             { label: "Gemiste oproepen / maand", value: r.missedCallsPerMonth },
-            { label: "Herwonnen leads (60%)", value: r.recoveredLeads },
-            { label: "Extra boekingen (30%)", value: r.extraBookings },
-            { label: "No-show besparing", value: eur(r.noShowSavings) },
+            { label: `Herwonnen leads (${Math.round((r.recoveryRate ?? 0.6) * 100)}%)`, value: r.recoveredLeads },
+            { label: `${r.bookingsLabel ?? "Extra boekingen"} (${Math.round((r.conversionRate ?? 0.3) * 100)}%)`, value: r.extraBookings },
+            { label: r.savingsLabel ?? "No-show besparing", value: eur(r.noShowSavings) },
           ].map((s) => (
             <div key={s.label} className="border border-outline-variant rounded-lg p-md">
               <div className="mkt-h3 text-headline-md text-secondary">
@@ -104,12 +111,12 @@ export function ScanForm() {
             We hebben dit rapport ook naar je e-mail gestuurd. Klaar om deze omzet
             terug te pakken?
           </p>
-          <a
+          <Link
             href="/prijzen"
             className="inline-block bg-white text-primary px-xl py-sm rounded-full font-label-md"
           >
             Bekijk de pakketten
-          </a>
+          </Link>
         </div>
       </div>
     );
@@ -125,25 +132,28 @@ export function ScanForm() {
           {error}
         </div>
       )}
+      <input type="hidden" name="vertical" value={profile.vertical} />
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-md">
-        <Field name="salonName" label="Naam van je salon" required placeholder="Salon Sanne" />
+        <Field name="salonName" label={profile.nameLabel} required placeholder={profile.namePlaceholder} />
         <Field name="city" label="Plaats" placeholder="Amsterdam" />
       </div>
       <Field
         name="url"
-        label="Website van je salon"
+        label={profile.urlLabel}
         required
-        placeholder="www.jouwsalon.nl"
+        placeholder={profile.urlPlaceholder}
       />
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-md">
-        <Field name="email" type="email" label="E-mailadres" required placeholder="jij@jouwsalon.nl" />
+        <Field name="email" type="email" label="E-mailadres" required placeholder={profile.emailPlaceholder} />
         <Field name="phone" label="Telefoon (optioneel)" placeholder="06 1234 5678" />
       </div>
       <Field
-        name="chairs"
+        name="size"
         type="number"
-        label="Aantal stoelen"
-        placeholder="6"
+        label={profile.sizeLabel}
+        placeholder={String(profile.sizeDefault)}
+        min={1}
+        max={profile.sizeMax}
       />
       <Button type="submit" size="lg" className="w-full rounded-lg" disabled={loading}>
         {loading ? (
@@ -171,12 +181,16 @@ function Field({
   type = "text",
   required,
   placeholder,
+  min,
+  max,
 }: {
   name: string;
   label: string;
   type?: string;
   required?: boolean;
   placeholder?: string;
+  min?: number;
+  max?: number;
 }) {
   return (
     <label className="block">
@@ -189,6 +203,8 @@ function Field({
         type={type}
         required={required}
         placeholder={placeholder}
+        min={min}
+        max={max}
         className="w-full rounded-lg border border-outline-variant bg-surface-container-lowest px-md py-sm font-body-md text-body-md text-on-surface focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition"
       />
     </label>

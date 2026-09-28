@@ -2,12 +2,19 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { runScan } from "@/lib/scan/run-scan";
 import { env } from "@/lib/env";
-import { sendEmail } from "@/lib/mail/resend";
+import { sendEmail, brandedFrom } from "@/lib/mail/resend";
+import { scanProfileFor } from "@/lib/scan/profiles";
 import { scanReportEmail, scanLeadNotifyEmail } from "@/lib/mail/templates";
 import { trackEvent } from "@/lib/analytics/track";
 
 export const runtime = "nodejs";
 export const maxDuration = 30;
+
+// An empty number field arrives as "" — that means "not given", not 0.
+const optionalCount = z.preprocess(
+  (v) => (v === "" || v == null ? undefined : v),
+  z.coerce.number().int().min(1).max(100).optional(),
+);
 
 const bodySchema = z.object({
   salonName: z.string().min(2).max(120),
@@ -15,7 +22,10 @@ const bodySchema = z.object({
   email: z.string().email(),
   phone: z.string().max(40).optional().or(z.literal("")),
   city: z.string().max(80).optional().or(z.literal("")),
-  chairs: z.coerce.number().int().min(1).max(50).optional(),
+  vertical: z.string().max(40).optional(),
+  // "chairs" is the pre-vertical field name, still accepted.
+  size: optionalCount,
+  chairs: optionalCount,
 });
 
 export async function POST(req: Request) {
@@ -34,16 +44,24 @@ export async function POST(req: Request) {
     );
   }
   const input = parsed.data;
+  const profile = scanProfileFor(input.vertical || "kapper");
+  if (!profile) {
+    return NextResponse.json({ error: "Deze scan is niet beschikbaar." }, { status: 404 });
+  }
+  const vertical = profile.vertical;
+  const size = Math.min(input.size ?? input.chairs ?? profile.sizeDefault, profile.sizeMax);
 
   const result = await runScan({
     url: input.url,
     salonName: input.salonName,
-    chairs: input.chairs,
+    vertical,
+    size,
   });
 
   await trackEvent({
     type: "scan_completed",
     props: {
+      vertical,
       salonName: input.salonName,
       missedMonthly: result.revenue.totalMonthly,
       performanceScore: result.performanceScore,
@@ -63,6 +81,7 @@ export async function POST(req: Request) {
           email: input.email,
           phone: input.phone || null,
           city: input.city || null,
+          vertical,
           scanResult: result as unknown as Record<string, unknown>,
           missedRevenueEstimate: result.revenue.totalMonthly,
           stage: "new",
@@ -86,13 +105,14 @@ export async function POST(req: Request) {
   await Promise.allSettled([
     sendEmail({
       to: input.email,
+      from: brandedFrom(vertical),
       subject: `Je gratis AI & SEO-scan voor ${input.salonName}`,
-      html: scanReportEmail({ salonName: input.salonName, result }),
+      html: scanReportEmail({ salonName: input.salonName, result, vertical }),
     }),
     sendEmail({
       to: env.REPORT_RECIPIENT,
-      subject: `Nieuwe scan-lead: ${input.salonName}`,
-      html: scanLeadNotifyEmail({ input, result }),
+      subject: `Nieuwe scan-lead (${vertical}): ${input.salonName}`,
+      html: scanLeadNotifyEmail({ input, result, vertical }),
     }),
   ]);
 

@@ -4,6 +4,7 @@ import type { VerticalPack } from "@/lib/verticals";
 import { siteUrlFor } from "@/lib/verticals/site-url";
 import { solutionsFor } from "@/lib/marketing/solutions";
 import { WAI } from "@/lib/seo/wai";
+import { scanProfileFor } from "@/lib/scan/profiles";
 import { INTEGRATION_PAGES } from "@/lib/marketing/integrations";
 
 /**
@@ -39,6 +40,10 @@ export async function buildLlmsTxt(pack: VerticalPack): Promise<string> {
   const solutions = solutionsFor(pack.id);
   if (solutions.length) {
     out.push("", "## Oplossingen", ...solutions.map((s) => line(s.headline, `/oplossingen/${s.slug}`, s.metaDescription)));
+  }
+
+  if (pack.id !== "kapper" && scanProfileFor(pack.id)) {
+    out.push(line("Gratis AI-scan", "/scan", "Bereken in 60 seconden wat gemiste oproepen je per maand kosten."));
   }
 
   if (pack.id === "kapper") {
