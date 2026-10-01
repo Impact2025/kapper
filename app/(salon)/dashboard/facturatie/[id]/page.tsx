@@ -210,3 +210,7 @@ export default async function DocumentPage({ params }: { params: Promise<{ id: s
     </div>
   );
 }
+            packages={(ctx.pack.quotePackages ?? []).map((p) => ({
+              ...p,
+              lines: p.lines.map((l) => ({ ...l, priceEuros: l.priceCents / 100 })),
+            }))}

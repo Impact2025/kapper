@@ -6,19 +6,20 @@ import { getVerticalConfig } from "@/lib/verticals";
 import { solutionsFor } from "@/lib/marketing/solutions";
 import { parseArticle, type ParsedArticle } from "@/lib/blog/frontmatter";
 
-type Folder = { dir: string; vertical: string; section: "kennisbank" | "blog" };
+type Folder = { dir: string; vertical: string; section: "kennisbank" | "blog"; /** Only these files (articles still to be brought up to standard are left out). */ files?: string[] };
 const FOLDERS: Folder[] = [
   { dir: "content/kennisbank-kapper", vertical: "kapper", section: "kennisbank" },
   { dir: "content/kennisbank-loodgieter", vertical: "loodgieter", section: "kennisbank" },
   { dir: "content/kennisbank-hovenier", vertical: "hovenier", section: "kennisbank" },
   { dir: "content/kennisbank-schilder", vertical: "schilder", section: "kennisbank" },
   { dir: "content/blog-hovenier", vertical: "hovenier", section: "blog" },
+  { dir: "content/blog-loodgieter", vertical: "loodgieter", section: "blog", files: ["warmtepomp-installeren-als-loodgieter.md"] },
 ];
 
 const load = (f: Folder) =>
   readdirSync(f.dir)
     .filter((n) => n.endsWith(".md"))
-    .map((n) => ({ file: n, ...f, a: parseArticle(readFileSync(join(f.dir, n), "utf8")) }));
+    .map((n) => ({ file: n, checked: !f.files || f.files.includes(n), ...f, a: parseArticle(readFileSync(join(f.dir, n), "utf8")) }));
 const all = FOLDERS.flatMap(load);
 
 /** Every article of a site, by section, for link checking. */
@@ -30,7 +31,7 @@ describe("article content", () => {
     expect(slugs.filter((s, i) => slugs.indexOf(s) !== i)).toEqual([]);
   });
 
-  for (const x of all) {
+  for (const x of all.filter((a) => a.checked)) {
     const id = `${x.vertical}/${x.section}/${x.file}`;
 
     describe(id, () => {

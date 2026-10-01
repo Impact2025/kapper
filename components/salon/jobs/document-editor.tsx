@@ -25,6 +25,13 @@ export interface EditorLine {
   vat: number;
 }
 
+/** A ready-made offerte (see QuotePackage), prices in euros. */
+export interface EditorPackage {
+  name: string;
+  description: string;
+  lines: { kind: LineKind; description: string; quantity: number; unit: string; priceEuros: number }[];
+}
+
 export interface CatalogItem {
   name: string;
   priceEuros: number;
@@ -46,6 +53,7 @@ export function DocumentEditor({
   introText,
   footerText,
   catalog,
+  packages = [],
   defaultVat,
   units = [...LINE_UNITS],
   canSend,
@@ -57,6 +65,8 @@ export function DocumentEditor({
   introText: string;
   footerText: string;
   catalog: CatalogItem[];
+  /** Complete offerte-pakketten (offerte only). */
+  packages?: EditorPackage[];
   defaultVat: number;
   /** Eenheden voor dit vak (see lineUnitsFor). */
   units?: string[];
@@ -143,6 +153,35 @@ export function DocumentEditor({
           <Icon name="add" className="text-[18px]" />
           Regel toevoegen
         </button>
+        {kind === "quote" && packages.length > 0 && (
+          <select
+            value=""
+            onChange={(e) => {
+              const pkg = packages[Number(e.target.value)];
+              if (!pkg) return;
+              setLines((ls) => [
+                ...ls.filter((l) => l.description.trim() !== ""),
+                ...pkg.lines.map((l) => ({
+                  kind: l.kind,
+                  description: l.description,
+                  quantity: String(l.quantity),
+                  unit: l.unit,
+                  unitPrice: l.priceEuros ? String(l.priceEuros).replace(".", ",") : "",
+                  vat: defaultVat,
+                })),
+              ]);
+            }}
+            className={`${inputCls} w-auto`}
+            aria-label="Offerte-pakket"
+          >
+            <option value="">+ Offerte-pakket…</option>
+            {packages.map((p, idx) => (
+              <option key={p.name} value={idx} title={p.description}>
+                {p.name}
+              </option>
+            ))}
+          </select>
+        )}
         {catalog.length > 0 && (
           <select
             value=""

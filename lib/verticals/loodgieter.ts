@@ -588,6 +588,61 @@ export const LOODGIETER_VERTICAL: VerticalPack = {
     { name: "Loodgieter per uur", category: "overig", durationMinutes: 60, priceCents: 7500, vatRatePercent: 21, description: "Uurtarief loodgieter (excl. materiaal)." },
     { name: "Spoedtarief buiten kantoortijd", category: "lekkage", durationMinutes: 60, priceCents: 15500, vatRatePercent: 21, description: "Spoedklus in avond, nacht of weekend." },
   ],
+  // Complete offerteregels per typische klus. Toestel en materiaal staan op €0 als
+  // invulplek: de vakman kent zijn inkoop en marge, wij verzinnen die niet.
+  quotePackages: [
+    {
+      name: "CV-ketel vervangen",
+      description: "Voorrijkosten, toestel, materiaal en arbeid voor een complete ketelvervanging.",
+      lines: [
+        { kind: "travel", description: "Voorrijkosten", quantity: 1, unit: "stuk", priceCents: 3500 },
+        { kind: "material", description: "Materiaal: cv-ketel (merk en type invullen)", quantity: 1, unit: "stuk", priceCents: 0 },
+        { kind: "material", description: "Materiaal: rookgasafvoer, aansluitmateriaal en overig", quantity: 1, unit: "post", priceCents: 0 },
+        { kind: "labor", description: "Arbeid: oude ketel verwijderen, nieuwe plaatsen, aansluiten en inregelen", quantity: 1, unit: "post", priceCents: 55000 },
+        { kind: "labor", description: "Rookgasanalyse en CO-meting bij oplevering", quantity: 1, unit: "stuk", priceCents: 4500 },
+      ],
+    },
+    {
+      name: "Boiler of geiser plaatsen",
+      description: "Toestel plaatsen en aansluiten, inclusief veiligheidsgroep en afvoer.",
+      lines: [
+        { kind: "travel", description: "Voorrijkosten", quantity: 1, unit: "stuk", priceCents: 3500 },
+        { kind: "material", description: "Materiaal: boiler of geiser (merk en type invullen)", quantity: 1, unit: "stuk", priceCents: 0 },
+        { kind: "material", description: "Materiaal: veiligheidsgroep, leidingwerk en overig", quantity: 1, unit: "post", priceCents: 0 },
+        { kind: "labor", description: "Arbeid: toestel plaatsen, aansluiten en testen", quantity: 1, unit: "post", priceCents: 22500 },
+      ],
+    },
+    {
+      name: "Hybride warmtepomp plaatsen",
+      description: "Opname, plaatsing en inregelen naast de bestaande cv-ketel. Elektrawerk apart opnemen.",
+      lines: [
+        { kind: "labor", description: "Opname ter plaatse en advies", quantity: 1, unit: "stuk", priceCents: 15000 },
+        { kind: "material", description: "Materiaal: hybride warmtepomp (merk en type invullen)", quantity: 1, unit: "stuk", priceCents: 0 },
+        { kind: "material", description: "Materiaal: leidingwerk, aansluitmateriaal en overig", quantity: 1, unit: "post", priceCents: 0 },
+        { kind: "labor", description: "Arbeid: plaatsen, aansluiten en inregelen (excl. elektrawerk)", quantity: 1, unit: "post", priceCents: 105000 },
+        { kind: "other", description: "Elektrawerk (groepenkast en aansluiting) door elektricien", quantity: 1, unit: "post", priceCents: 0 },
+      ],
+    },
+    {
+      name: "Badkamer: leidingwerk en sanitair",
+      description: "Leidingwerk per punt, sanitair plaatsen en druk- en dichtheidsproef.",
+      lines: [
+        { kind: "labor", description: "Opname en maatvoering", quantity: 1, unit: "stuk", priceCents: 0 },
+        { kind: "labor", description: "Leidingwerk aanleggen per aansluitpunt", quantity: 1, unit: "punt", priceCents: 0 },
+        { kind: "material", description: "Materiaal: leidingen en fittingen", quantity: 1, unit: "post", priceCents: 0 },
+        { kind: "labor", description: "Sanitair plaatsen en aansluiten", quantity: 1, unit: "post", priceCents: 0 },
+        { kind: "labor", description: "Druk- en dichtheidsproef en oplevering", quantity: 1, unit: "stuk", priceCents: 0 },
+      ],
+    },
+    {
+      name: "Jaarlijks cv-onderhoud",
+      description: "Onderhoudsbeurt inclusief rookgasanalyse.",
+      lines: [
+        { kind: "labor", description: "CV-onderhoud: reinigen en controleren", quantity: 1, unit: "stuk", priceCents: 8900 },
+        { kind: "labor", description: "Rookgasanalyse en CO-meting", quantity: 1, unit: "stuk", priceCents: 4500 },
+      ],
+    },
+  ],
   messages: {
     reminder: ({ salonName, serviceType, date, time }) =>
       `Hoi! Een herinnering van ${salonName}: onze monteur komt ${date} rond ${time} bij je langs voor ${serviceType}. ` +

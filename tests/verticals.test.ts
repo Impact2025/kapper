@@ -419,6 +419,24 @@ describe("loodgieter (live) — uitbreidingen zijn additief", () => {
     expect(gas).toEqual(expect.arrayContaining(["netbeheerderGewaarschuwd", "gasluchtLocatie"]));
   });
 
+  it("has offerte-pakketten with valid kinds, known units and no invented prices for toestel/materiaal", () => {
+    const pkgs = LOODGIETER_VERTICAL.quotePackages ?? [];
+    expect(pkgs.length).toBeGreaterThanOrEqual(4);
+    const units = new Set(LOODGIETER_VERTICAL.lineUnits);
+    const names = pkgs.map((p) => p.name);
+    expect(new Set(names).size).toBe(names.length);
+    for (const p of pkgs) {
+      expect(p.lines.length, p.name).toBeGreaterThan(0);
+      for (const l of p.lines) {
+        expect(["labor", "material", "travel", "other"]).toContain(l.kind);
+        expect(units.has(l.unit), `${p.name}: ${l.unit}`).toBe(true);
+        expect(l.quantity).toBeGreaterThan(0);
+        if (l.kind === "material") expect(l.priceCents, `${p.name}: ${l.description}`).toBe(0);
+      }
+    }
+    expect(JSON.stringify(pkgs)).not.toMatch(KAPPER_WORDS);
+  });
+
   it("keeps every category key that existing klussen may already use", () => {
     const keys = LOODGIETER_VERTICAL.jobCategories.map((c) => c.key);
     expect(keys).toEqual(
