@@ -248,6 +248,10 @@ export async function JobCustomerDetailView({ ctx, customerId }: { ctx: JobConte
                               </div>
                             </div>
                             {overdue && <Badge tone="warning">Onderhoud nodig</Badge>}
+                            <Link href={`/dashboard/klanten/${customer.id}/paspoort/${a.id}`} className="inline-flex items-center gap-xs text-label-md text-primary hover:underline">
+                              <Icon name="print" className="text-[16px]" />
+                              {capitalize(terms.asset.passport)}
+                            </Link>
                             <InlineActionButton action={deleteAssetAction} fields={{ assetId: a.id, customerId: customer.id }} label="Verwijder" icon="delete" confirm={`Deze ${terms.asset.singular} verwijderen?`} />
                           </div>
                         );

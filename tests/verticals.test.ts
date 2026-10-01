@@ -329,7 +329,8 @@ describe("hovenier extensies", () => {
   it("offers hovenier units (m³, aanhanger) and keeps the default set for others", async () => {
     const { lineUnitsFor } = await import("@/lib/jobs/labels");
     expect(lineUnitsFor(HOVENIER_VERTICAL)).toEqual(expect.arrayContaining(["m²", "m³", "aanhanger"]));
-    expect(lineUnitsFor(LOODGIETER_VERTICAL)).toEqual(["uur", "stuk", "m", "m²", "post", "dag"]);
+    expect(lineUnitsFor(LOODGIETER_VERTICAL)).toEqual(expect.arrayContaining(["uur", "m", "punt", "stuk"]));
+    expect(lineUnitsFor(KAPPER_VERTICAL)).toEqual(["uur", "stuk", "m", "m²", "post", "dag"]);
   });
 
   it("uses tuin wording for assets and only enables seasonal contracts + photo timeline for hovenier", async () => {
@@ -339,7 +340,7 @@ describe("hovenier extensies", () => {
     expect(HOVENIER_VERTICAL.features.seasonalContracts).toBe(true);
     expect(HOVENIER_VERTICAL.features.photoTimeline).toBe(true);
     expect(LOODGIETER_VERTICAL.features.seasonalContracts).toBeFalsy();
-    expect(LOODGIETER_VERTICAL.features.photoTimeline).toBeFalsy();
+    expect(LOODGIETER_VERTICAL.features.photoTimeline).toBe(true);
   });
 });
 
@@ -387,10 +388,35 @@ describe("schilder", () => {
 });
 
 describe("loodgieter (live) — uitbreidingen zijn additief", () => {
-  it("has its own theme, onboarding and no seasonal or photo-timeline extras", () => {
+  it("has its own theme, onboarding and the photo timeline, but no seasonal contracts", () => {
     expect(LOODGIETER_VERTICAL.theme?.primary).not.toBe(undefined);
     expect(LOODGIETER_VERTICAL.onboarding?.length).toBeGreaterThan(0);
     expect(LOODGIETER_VERTICAL.live).toBe(true);
+    expect(LOODGIETER_VERTICAL.features.photoTimeline).toBe(true);
+    expect(LOODGIETER_VERTICAL.features.seasonalContracts).toBeFalsy();
+  });
+
+  it("has its own pricing copy, handleiding in the nav and no hovenier vocabulary", () => {
+    const copy = JSON.stringify(plansFor(LOODGIETER_VERTICAL).map((p) => [p.name, p.tagline, p.features]));
+    expect(copy).toMatch(/loodgieter/i);
+    expect(copy).not.toMatch(/tuin|hovenier|boom|storm/i);
+    expect(LOODGIETER_VERTICAL.nav.map((n) => n.key)).toContain("guide");
+    expect(LOODGIETER_VERTICAL.jobTitleExample).toBeTruthy();
+  });
+
+  it("offers warmtepomp as its own category without stealing cv_installatie keywords", () => {
+    const byKey = new Map(LOODGIETER_VERTICAL.jobCategories.map((c) => [c.key, c]));
+    expect(byKey.get("warmtepomp")?.urgent).toBe(false);
+    expect(byKey.get("warmtepomp")?.keywords).toContain("warmtepomp");
+    expect(byKey.get("cv_installatie")?.keywords).not.toContain("warmtepomp");
+  });
+
+  it("captures rookgas meetwaarden for cv_onderhoud and gas details for gaslucht", async () => {
+    const { fieldsForCategory } = await import("@/lib/jobs/fields");
+    const onderhoud = fieldsForCategory(LOODGIETER_VERTICAL, "cv_onderhoud").map((f) => f.key);
+    expect(onderhoud).toEqual(expect.arrayContaining(["meetCo", "meetCo2", "meetRookgastemperatuur", "meetWaterdruk", "meetUitkomst"]));
+    const gas = fieldsForCategory(LOODGIETER_VERTICAL, "gaslucht").map((f) => f.key);
+    expect(gas).toEqual(expect.arrayContaining(["netbeheerderGewaarschuwd", "gasluchtLocatie"]));
   });
 
   it("keeps every category key that existing klussen may already use", () => {

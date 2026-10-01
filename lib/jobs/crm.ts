@@ -390,3 +390,35 @@ export async function listCustomerPhotos(salonId: string, customerId: string, li
     .orderBy(desc(jobPhotos.createdAt))
     .limit(limit);
 }
+
+/** Everything the printable installatiepaspoort needs: the asset, its owner,
+ * address and the klussen that touched it (newest first). Tenant-scoped. */
+export async function getAssetPassport(salonId: string, assetId: string) {
+  const [asset] = await db
+    .select()
+    .from(assets)
+    .where(and(eq(assets.id, assetId), eq(assets.salonId, salonId)))
+    .limit(1);
+  if (!asset) return null;
+  const [[customer], [address], history] = await Promise.all([
+    db.select().from(customers).where(eq(customers.id, asset.customerId)).limit(1),
+    asset.addressId
+      ? db.select().from(customerAddresses).where(eq(customerAddresses.id, asset.addressId)).limit(1)
+      : Promise.resolve([]),
+    db
+      .select({
+        id: jobs.id,
+        number: jobs.number,
+        title: jobs.title,
+        category: jobs.category,
+        status: jobs.status,
+        completedAt: jobs.completedAt,
+        details: jobs.details,
+      })
+      .from(jobs)
+      .where(and(eq(jobs.salonId, salonId), eq(jobs.assetId, assetId)))
+      .orderBy(desc(jobs.createdAt))
+      .limit(50),
+  ]);
+  return { asset, customer: customer ?? null, address: address ?? null, history };
+}

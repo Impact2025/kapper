@@ -9,15 +9,16 @@ import { Icon } from "@/components/ui/icon";
 
 export const metadata: Metadata = { title: "Handleiding" };
 
-const QUICKSTART = [
+const quickstart = (teamNoun: string) => [
   { icon: "storefront", title: "Diensten en tarieven", body: "Start met de voorbeeldcatalogus en pas de prijzen aan.", href: "/dashboard/praktijk" },
-  { icon: "group", title: "Team toevoegen", body: "Zet je hoveniers en ploegen erin, dan kun je klussen toewijzen.", href: "/dashboard/praktijk" },
+  { icon: "group", title: "Team toevoegen", body: `Zet je ${teamNoun} erin, dan kun je klussen toewijzen.`, href: "/dashboard/praktijk" },
   { icon: "cable", title: "Telefoon en WhatsApp koppelen", body: "Zo kan de AI klanten woord voor woord opvangen.", href: "/dashboard/integraties" },
   { icon: "construction", title: "Eerste klus aanmaken", body: "Maak een klus, plan hem in en probeer de checklist.", href: "/dashboard/klussen/nieuw" },
 ];
 
 export default async function HandleidingPage() {
   const ctx = await requireJobOwner();
+  const QUICKSTART = quickstart(ctx.pack.id === "hovenier" ? "hoveniers en ploegen" : ctx.pack.terms.practitionerPlural);
   const items = resolveNav(ctx.pack.nav)
     .map((n) => ({ n, g: guideFor(ctx.pack.id, n.key) }))
     .filter((x): x is { n: (typeof x)["n"]; g: NonNullable<(typeof x)["g"]> } => Boolean(x.g) && x.n.key !== "guide");

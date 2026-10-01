@@ -6,7 +6,7 @@ import { CLOSED_JOB_STATUSES, OPEN_JOB_STATUSES, compareJobsForBoard, customerDi
 import { PageHeader, Card, StatCard, EmptyState, AdminLink } from "@/components/salon/dash-ui";
 import { Icon } from "@/components/ui/icon";
 import { LinkTabs, PriorityBadge, StatusBadge, fmtDateTime, inputCls, btnOutline } from "@/components/salon/jobs/ui";
-import { GUIDE_TIPS } from "@/lib/help/guide";
+import { guideTipsFor } from "@/lib/help/guide";
 import { capitalize, categoryLabeler } from "@/lib/jobs/labels";
 
 export const metadata: Metadata = { title: "Klussen" };
@@ -24,6 +24,7 @@ export default async function KlussenPage({
   const q = (sp.q ?? "").trim();
   const ctx = await requireJobOwner();
   const noun = ctx.pack.terms.treatmentPlural;
+  const GUIDE_TIPS = guideTipsFor(ctx.pack.id);
   const Noun = capitalize(noun);
 
   const [stats, staff] = await Promise.all([getJobStats(ctx.salonId), listActiveStaff(ctx.salonId)]);
