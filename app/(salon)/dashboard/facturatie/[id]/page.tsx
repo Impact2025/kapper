@@ -153,6 +153,10 @@ export default async function DocumentPage({ params }: { params: Promise<{ id: s
             defaultVat={ctx.pack.vatRates.treatment}
             units={lineUnitsFor(ctx.pack)}
             canSend={ctx.can.quotes}
+            packages={(ctx.pack.quotePackages ?? []).map((p) => ({
+              ...p,
+              lines: p.lines.map((l) => ({ ...l, priceEuros: l.priceCents / 100 })),
+            }))}
           />
           <div className="mt-md border-t border-outline-variant/30 pt-md">
             <ActionForm action={deleteDraftAction} submitLabel="Concept verwijderen" buttonClassName={btnDanger} confirm="Dit concept verwijderen?">
@@ -210,7 +214,3 @@ export default async function DocumentPage({ params }: { params: Promise<{ id: s
     </div>
   );
 }
-            packages={(ctx.pack.quotePackages ?? []).map((p) => ({
-              ...p,
-              lines: p.lines.map((l) => ({ ...l, priceEuros: l.priceCents / 100 })),
-            }))}

@@ -231,11 +231,6 @@ export interface ServiceTemplate {
   description: string;
 }
 
-export interface VerticalMessages {
-  /** WhatsApp reminder for an upcoming planned visit. */
-  reminder: (p: { salonName: string; serviceType: string; date: string; time: string }) => string;
-  /** WhatsApp review request after a completed visit/job. */
-  review: (p: { salonName: string; reviewLink: string }) => string;
 /** A ready-made offerte (several regels in one click) for a typical klus. Prices
  * are example starting points; a regel with priceCents 0 is a placeholder the
  * owner fills in (toestel, materiaal). */
@@ -251,6 +246,11 @@ export interface QuotePackage {
   }[];
 }
 
+export interface VerticalMessages {
+  /** WhatsApp reminder for an upcoming planned visit. */
+  reminder: (p: { salonName: string; serviceType: string; date: string; time: string }) => string;
+  /** WhatsApp review request after a completed visit/job. */
+  review: (p: { salonName: string; reviewLink: string }) => string;
   /** WhatsApp reactivation message for a quiet customer. */
   retention: (p: { salonName: string; firstName: string }) => string;
   /** WhatsApp message for a due maintenance contract (job archetype). */
@@ -323,6 +323,8 @@ export interface VerticalPack {
   assetKinds: AssetKind[];
   /** Starter catalog offered during onboarding (job archetype). */
   serviceTemplates: ServiceTemplate[];
+  /** Offerte-pakketten: complete offerteregels voor een typische klus (job archetype). */
+  quotePackages?: QuotePackage[];
   messages: VerticalMessages;
   /** Blog/kennisbank generation context. */
   content: {
@@ -334,8 +336,6 @@ export interface VerticalPack {
     blogSuggestions: string[];
     blogMetaTitle: string;
     blogMetaDescription: string;
-  /** Offerte-pakketten: complete offerteregels voor een typische klus (job archetype). */
-  quotePackages?: QuotePackage[];
     blogHeading: string;
     blogSubheading: string;
     /** Call-to-action box under every article. */

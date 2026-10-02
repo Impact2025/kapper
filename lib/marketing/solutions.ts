@@ -4,6 +4,8 @@
  * wat het product aantoonbaar doet (zie de landing/features van de pack en het
  * hulpcentrum) — geen pagina belooft meer dan de code levert.
  */
+import { LOODGIETER_SOLUTIONS } from "./solutions-loodgieter";
+
 export interface SolutionPage {
   slug: string;
   /** <title> without the site suffix; keep it <= 34 chars so the whole title fits in 60. */
@@ -19,11 +21,15 @@ export interface SolutionPage {
   tips?: { title: string; items: string[] };
   /** Kennisbank category whose newest articles are linked from this page (topic cluster). */
   category?: string;
+  /** Optional free tool that belongs to this pillar (e.g. a calculator). `blurb` replaces the default (salon) sentence. */
+  tool?: { href: string; label: string; blurb?: string };
+  /** Optional overview/comparison table, rendered under the sections (good for featured snippets). */
+  table?: { title: string; headers: string[]; rows: string[][] };
+  /** Related blog posts or tools, linked next to the kennisbank cluster. */
+  links?: { href: string; label: string }[];
 }
 
 const KAPPER: SolutionPage[] = [
-  {
-    slug: "no-shows-voorkomen",
   {
     // Pijlerpagina: de categorieterm zelf. Staat bovenaan zodat footer en
     // "Ook interessant" op elke andere oplossingspagina hiernaar linken.
@@ -59,7 +65,10 @@ const KAPPER: SolutionPage[] = [
       { q: "Wat als de AI iets niet weet?", a: "Dan zet hij het gesprek door naar jou of je team, in plaats van iets te verzinnen." },
     ],
   },
+  {
+    slug: "no-shows-voorkomen",
     category: "No-shows",
+    tool: { href: "/tools/no-showkosten-calculator", label: "Bereken je no-showkosten" },
     tips: { title: "Zo pak je no-shows ook zelf aan", items: ["Leg je annuleringstermijn vast en vermeld hem bij het boeken, niet pas erna.","Vraag bij lange of dure behandelingen om bevestiging, of overweeg een aanbetaling.","Houd een lijst met klanten die kort van tevoren een plek willen, zodat een geannuleerde afspraak snel gevuld wordt.","Kijk terug welke dagen en behandelingen het vaakst uitvallen en pas je beleid daarop aan."] },
     metaTitle: "No-shows voorkomen in je salon",
     metaDescription:
@@ -112,145 +121,7 @@ const KAPPER: SolutionPage[] = [
   },
 ];
 
-const LOODGIETER: SolutionPage[] = [
-  {
-    slug: "spoedoproepen",
-    category: "Spoed",
-  {
-    slug: "ai-assistent-voor-loodgieters",
-    category: "Spoed",
-    metaTitle: "AI-assistent voor loodgieters",
-    metaDescription:
-      "Een AI-assistent voor loodgieters neemt 24/7 op via telefoon en WhatsApp, herkent spoed, legt de klus vast en plant hem in. Zo werkt het, en dit kost het.",
-    badge: "AI-assistent",
-    headline: "AI-assistent voor loodgieters: elke oproep opgenomen, ook onder de gootsteen",
-    intro:
-      "Een AI-assistent voor loodgieters neemt je telefoon en WhatsApp op als jij dat niet kunt. Hij herkent spoed, legt het klusadres en het probleem vast en plant de klus in. LoodgietersAssistent doet dat 24/7, vanaf €149 per maand.",
-    sections: [
-      { title: "Wat is een AI-assistent voor loodgieters?", body: "Software die klantgesprekken voert zoals een planner op kantoor dat doet. Hij verstaat gewone taal, vraagt door naar wat er aan de hand is en zet de klus klaar in je systeem. De klant hoeft niet naar je voicemail en niet terug te bellen, en jij hoeft niet met natte handen op te nemen." },
-      { title: "Wat doet hij bij spoed?", body: "Water dat blijft lopen, gaslucht of geen verwarming in de kou: dat herkent de AI als spoed. Hij geeft eerst veiligheidstips, zoals de hoofdkraan dichtdraaien, en bij gaslucht: ramen open, het pand verlaten en het gasstoringsnummer bellen. Daarna markeert hij de klus als spoed en krijg jij direct een melding per mail en WhatsApp. Bij gevaar of twijfel verbindt hij door." },
-      { title: "Van telefoontje naar klus", body: "Klusadres, probleem en spoed worden meteen vastgelegd als klus in je klus-CRM. Stuurt de klant een foto van de lekkage of de ketel, dan komt die bij de klus. Klanten met meerdere adressen en hun volledige klushistorie staan op één plek, en op het planbord zie je per monteur wie waar is." },
-      { title: "Offerte, factuur en onderhoud", body: "Met Pro verstuur je offertes die de klant online accepteert, en facturen met IBAN en automatische betalingsherinneringen. Het installatiepaspoort legt per adres merk, type, serienummer en garantie vast. Bij onderhoudscontracten ontstaan de klus en de klantherinnering vanzelf." },
-      { title: "Wat doet hij níet?", body: "Hij stelt niemand gerust bij een mogelijk gevaarlijke situatie: dan schakelt hij altijd een mens in. Hij doet zich ook niet voor als mens. Aan het begin van het gesprek zegt hij dat de klant met een AI-assistent praat, zoals de Europese AI-verordening voorschrijft." },
-      { title: "Wat kost een AI-assistent voor een loodgietersbedrijf?", body: "Een vast bedrag per maand: €149 voor Essential, €299 voor Pro en €649 voor Elite. Er zijn geen kosten per gesprek. Bij Pro zitten de WhatsApp-berichtkosten al in de prijs." },
-      { title: "Hoe begin je?", body: "Doe de gratis scan en zie hoeveel oproepen je nu misloopt. Daarna zet je je diensten en tarieven in het systeem. Je hebt geen aparte planningssoftware nodig: klussen, planning, offertes en facturen zitten in LoodgietersAssistent zelf." },
-    ],
-    features: [
-      { icon: "emergency", title: "Spoed herkend", body: "Lekkage, gaslucht, geen verwarming: jij hoort het direct." },
-      { icon: "checklist", title: "Klus direct vastgelegd", body: "Adres, probleem en foto's in je klus-CRM." },
-      { icon: "calendar_view_week", title: "Planbord per monteur", body: "Spoed bovenaan, wie is waar." },
-    ],
-    tips: { title: "Zo haal je het meeste uit een AI-assistent", items: ["Zet je diensten en voorrijkosten compleet in het systeem, zodat de AI de juiste klus aanmaakt.","Leg vast wat voor jou spoed is en wie er dienst heeft.","Vraag klanten om een foto via WhatsApp; dan weet je vooraf welk materiaal je meeneemt.","Lees de eerste weken mee met de gesprekken en scherp je instructies aan."] },
-    faq: [
-      { q: "Merken klanten dat ze met een AI praten?", a: "Ja. De assistent meldt aan het begin van het gesprek dat hij een AI is. Wie liever een mens spreekt, wordt doorgezet." },
-      { q: "Wat doet de AI bij gaslucht?", a: "Hij geeft eerst veiligheidstips (ramen open, geen vuur of lichtschakelaars, het pand verlaten, het gasstoringsnummer bellen) en schakelt jou direct in." },
-      { q: "Kunnen klanten foto's sturen?", a: "Ja, via WhatsApp. De AI gebruikt de foto om in te schatten wat er nodig is en voegt hem bij de klus." },
-      { q: "Heb ik planningssoftware nodig?", a: "Nee. Klussen, planning, offertes en facturen zitten in LoodgietersAssistent zelf." },
-      { q: "Zijn er kosten per gesprek?", a: "Nee. Je betaalt een vast maandbedrag. Zie de prijzenpagina." },
-    ],
-  },
-    metaTitle: "Spoedoproepen voor loodgieters",
-    metaDescription:
-      "Lekkage, gaslucht of geen verwarming: de AI herkent spoed, geeft veiligheidstips, markeert de klus als spoed en waarschuwt jou direct per mail en WhatsApp.",
-    badge: "Spoed-triage",
-    headline: "Elke spoedoproep direct bij jou",
-    intro:
-      "Terwijl jij onder een lekkende leiding ligt, rinkelt de telefoon. De AI neemt op, herkent spoed en zorgt dat jij het meteen weet.",
-    sections: [
-      { title: "Eerst veiligheid", body: "De AI geeft veiligheidstips, bijvoorbeeld de hoofdkraan dicht, bij gaslucht ramen open en 112 of het gasstoringsnummer bellen." },
-      { title: "Alles vastgelegd", body: "Klusadres, probleem en spoed worden vastgelegd; foto's van de klant komen bij de klus." },
-      { title: "Jij hoort het direct", body: "Spoed krijgt een markering en jij ontvangt meteen een mail en WhatsApp. Op het planbord staat spoed bovenaan." },
-    ],
-    features: [
-      { icon: "emergency", title: "Spoed-triage", body: "Lekkage, gaslucht, geen verwarming." },
-      { icon: "notifications_active", title: "Directe melding", body: "Per mail en WhatsApp." },
-      { icon: "calendar_view_week", title: "Planbord", body: "Spoed bovenaan, overlappende klussen gemarkeerd." },
-    ],
-    faq: [
-      { q: "Wat doet de AI bij gevaar?", a: "Bij twijfel of gevaar verbindt hij door en geeft hij eerst veiligheidstips." },
-      { q: "Werkt dit zonder planningssoftware?", a: "Ja. Klussen, planning, offertes en facturen zitten in LoodgietersAssistent zelf." },
-    ],
-  },
-  {
-    slug: "offertesoftware",
-    category: "Offertes",
-    tips: { title: "Wat een goede offerte bevat", items: ["Een duidelijke omschrijving van het werk en wat er niet bij hoort.","Prijzen per regel, met het btw-tarief dat voor die klus geldt.","Een geldigheidsduur en de geplande uitvoeringsperiode.","Een korte uitleg hoe de klant kan accepteren en wat er daarna gebeurt."] },
-    metaTitle: "Offertesoftware voor loodgieters",
-    metaDescription:
-      "Maak een offerte, laat de klant online accepteren en zet hem met één klik om in een factuur met IBAN en de wettelijk verplichte gegevens.",
-    badge: "Offertes en facturen",
-    headline: "Van offerte tot betaalde factuur",
-    intro:
-      "Offerte online laten accepteren, met één klik omzetten naar een factuur, en herinneringen laten sturen als er niet betaald wordt.",
-    sections: [
-      { title: "Online accepteren", body: "De klant accepteert de offerte online; jij hoeft niet meer te bellen of te wachten op een handtekening." },
-      { title: "Factuur met alle verplichte gegevens", body: "Facturen bevatten KvK, btw-nummer, factuurnummer en btw per tarief. Het btw-tarief (21%, 9% of 0%) kies je per regel." },
-      { title: "Betalingsherinneringen", body: "Automatische herinneringen en het IBAN op de factuur." },
-    ],
-    features: [
-      { icon: "request_quote", title: "Offertes", body: "Online accepteren." },
-      { icon: "receipt_long", title: "Facturen", body: "Eén klik vanaf de offerte." },
-      { icon: "checklist", title: "Werkbon", body: "Checklist, foto's voor en na, opleverhandtekening." },
-    ],
-    faq: [
-      { q: "Kan ik eigen tarieven instellen?", a: "Ja. Je begint met een voorbeeldcatalogus en past prijzen, duur en teksten aan." },
-    ],
-  },
-  {
-    slug: "onderhoudscontracten",
-    category: "Onderhoud",
-    metaTitle: "Onderhoudscontracten cv-ketels",
-    metaDescription:
-      "Elke onderhoudsbeurt ontstaat vanzelf als klus en de klant krijgt automatisch bericht. Terugkerende omzet zonder handwerk.",
-    badge: "Terugkerende omzet",
-    headline: "Onderhoudscontracten die zichzelf plannen",
-    intro:
-      "Een installatiepaspoort per ketel of boiler en contracten die vanzelf klussen aanmaken: zo groeit je terugkerende omzet zonder handwerk.",
-    sections: [
-      { title: "Installatiepaspoort", body: "Merk, type, serienummer en garantie van elke ketel of boiler, met het volgende onderhoud in beeld." },
-      { title: "Elke beurt vanzelf", body: "Volgens je contract ontstaat elke beurt als klus en de klant krijgt automatisch bericht." },
-    ],
-    features: [
-      { icon: "build_circle", title: "Installatiepaspoort", body: "Merk, type, serienummer, garantie." },
-      { icon: "event_repeat", title: "Contracten", body: "Beurten ontstaan automatisch." },
-    ],
-    faq: [{ q: "Krijgt de klant bericht?", a: "Ja, automatisch wanneer een beurt aan de orde is." }],
-  },
-  {
-    slug: "werkbon-en-planbord",
-    category: "Planning",
-    tips: {
-      title: "Zo leg je een klus goed vast",
-      items: [
-        "Noteer symptoom, oorzaak en wat je hebt gedaan, niet alleen de uren.",
-        "Maak foto's van de situatie voor en na.",
-        "Gebruik een checklist per soort klus, zodat niets wordt vergeten.",
-        "Laat de klant tekenen bij oplevering van grotere klussen.",
-      ],
-    },
-    metaTitle: "Werkbon en planbord",
-    metaDescription:
-      "Een werkbon op je telefoon met checklist, foto's en handtekening, en een planbord met spoed bovenaan. Van werkbon naar factuur zonder overtypen.",
-    badge: "Werkbon en planning",
-    headline: "Van spoedoproep tot betaalde klus, zonder papier",
-    intro:
-      "Zet een klus op het planbord, werk hem af op je telefoon met checklist en foto's, en maak er met één klik een factuur van.",
-    sections: [
-      { title: "Planbord per monteur", body: "Je ziet wie waar werkt. Spoed staat bovenaan en overlappende klussen worden gemarkeerd." },
-      { title: "Werkbon op je telefoon", body: "Checklist per soort klus, foto's voor en na, werkverslag en opleverhandtekening." },
-      { title: "Van werkbon naar factuur", body: "Met één klik wordt de klus een factuur, met het IBAN erop en automatische betalingsherinneringen." },
-    ],
-    features: [
-      { icon: "calendar_view_week", title: "Planbord per monteur", body: "Spoed bovenaan." },
-      { icon: "checklist", title: "Werkbon", body: "Checklist, foto's en handtekening." },
-      { icon: "request_quote", title: "Factuur met één klik", body: "Zonder overtypen." },
-    ],
-    faq: [
-      { q: "Kan ik per soort klus een eigen checklist gebruiken?", a: "Ja, er is een checklist per soort klus, van lekkage en ontstopping tot cv-onderhoud, riool en boiler." },
-      { q: "Worden foto's bij de klus bewaard?", a: "Ja, foto's voor en na worden bij de klus vastgelegd." },
-    ],
-  },
-];
+const LOODGIETER: SolutionPage[] = LOODGIETER_SOLUTIONS;
 
 const SCHILDER: SolutionPage[] = [
   {
@@ -361,9 +232,6 @@ const SCHILDER: SolutionPage[] = [
 
 const HOVENIER: SolutionPage[] = [
   {
-    slug: "storm-en-spoedmeldingen",
-    category: "Spoed",
-  {
     slug: "ai-assistent-voor-hoveniers",
     category: "Onderhoud",
     metaTitle: "AI-assistent voor hoveniers",
@@ -396,6 +264,9 @@ const HOVENIER: SolutionPage[] = [
       { q: "Zijn er kosten per gesprek?", a: "Nee. Je betaalt een vast maandbedrag. Zie de prijzenpagina." },
     ],
   },
+  {
+    slug: "storm-en-spoedmeldingen",
+    category: "Spoed",
     metaTitle: "Stormschade en spoedmeldingen",
     metaDescription:
       "Omgevallen boom of afgebroken tak: de AI geeft veiligheidstips, markeert de klus als spoed en waarschuwt jou direct.",
@@ -456,9 +327,6 @@ const HOVENIER: SolutionPage[] = [
 
 const KOZIJN: SolutionPage[] = [
   {
-    slug: "aanvragen-kwalificeren",
-    category: "Planning",
-  {
     slug: "ai-assistent-voor-kozijnbedrijven",
     category: "Offertes",
     metaTitle: "AI-assistent voor kozijnbedrijven",
@@ -491,6 +359,9 @@ const KOZIJN: SolutionPage[] = [
       { q: "Zijn er kosten per gesprek?", a: "Nee. Je betaalt een vast maandbedrag. Zie de prijzenpagina." },
     ],
   },
+  {
+    slug: "aanvragen-kwalificeren",
+    category: "Planning",
     metaTitle: "Kozijnaanvragen sneller kwalificeren",
     metaDescription:
       "De AI neemt telefoon en WhatsApp op, vraagt naar aantal kozijnen, materiaal en bouwjaar en zet foto's van de gevel bij het project.",
