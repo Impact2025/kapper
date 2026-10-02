@@ -15,13 +15,15 @@ export interface CinematicHeroProps {
   secondary: { href: string; label: string };
   /** Accent for the headline and primary button, e.g. warm zonlicht-geel. */
   accent?: string;
+  /** Optional element (e.g. a phone mockup) shown beside the copy on large screens. */
+  aside?: React.ReactNode;
 }
 
 /**
  * Full-bleed video hero. The video is decorative (muted, looping, no controls);
  * with prefers-reduced-motion or before it loads, the poster stays visible.
  */
-export function CinematicHero({ eyebrow, headline, sub, video, primary, secondary, accent = "#f1d675" }: CinematicHeroProps) {
+export function CinematicHero({ eyebrow, headline, sub, video, primary, secondary, accent = "#f1d675", aside }: CinematicHeroProps) {
   return (
     <section
       className={`${display.variable} ${serif.variable} relative isolate flex min-h-[calc(100svh-4rem)] items-end overflow-hidden bg-[#0c1f14] text-white`}
@@ -44,7 +46,8 @@ export function CinematicHero({ eyebrow, headline, sub, video, primary, secondar
       <div className="absolute inset-0 -z-10 bg-gradient-to-t from-[#0c1f14] via-[#0c1f14]/70 to-[#0c1f14]/25" aria-hidden="true" />
       <div className="absolute inset-0 -z-10 bg-gradient-to-r from-[#0c1f14]/70 via-transparent to-transparent" aria-hidden="true" />
 
-      <div className="mx-auto w-full max-w-container-max px-margin-mobile pb-xl pt-xl md:px-xl md:pb-xl">
+      <div className="mx-auto grid w-full max-w-container-max grid-cols-1 items-end gap-xl px-margin-mobile pb-xl pt-xl md:px-xl md:pb-xl lg:grid-cols-[1fr_auto]">
+        <div>
         <p className="mb-md font-[family-name:var(--font-cine-display)] text-[15px] font-medium lowercase tracking-[0.22em] text-white/90 md:text-lg">
           {eyebrow}
         </p>
@@ -72,6 +75,8 @@ export function CinematicHero({ eyebrow, headline, sub, video, primary, secondar
             {secondary.label} <span aria-hidden="true">→</span>
           </Link>
         </div>
+        </div>
+        {aside ? <div className="pb-md lg:pr-lg">{aside}</div> : null}
       </div>
     </section>
   );

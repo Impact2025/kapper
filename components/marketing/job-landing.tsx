@@ -2,6 +2,7 @@ import Image from "next/image";
 import { Icon } from "@/components/ui/icon";
 import { ButtonLink } from "@/components/ui/button";
 import { CinematicHero } from "@/components/marketing/cinematic-hero";
+import { HeroPhone } from "@/components/marketing/hero-phone";
 import { PricingCards } from "@/components/marketing/pricing-cards";
 import { plansFor } from "@/lib/verticals/plans";
 import type { VerticalPack } from "@/lib/verticals";
@@ -52,7 +53,8 @@ export function JobLanding({ pack }: { pack: VerticalPack }) {
             sub={landing.sub}
             video={landing.heroVideo}
             accent={landing.heroVideo.accent}
-            primary={{ href: "/scan", label: "doe de gratis scan" }}
+            aside={landing.heroVideo.phone ? <HeroPhone data={landing.heroVideo.phone} /> : undefined}
+            primary={{ href: "/scan", label: "bereken je gemiste omzet" }}
             secondary={{ href: "/contact", label: "vraag een demo aan" }}
           />
           {/* Stats onder de hero, als rustige waardebalk. */}

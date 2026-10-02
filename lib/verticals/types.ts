@@ -120,7 +120,25 @@ export interface LandingCopy {
   /** Optional hero photo (in /public); the chat then floats on it as a phone mockup. */
   heroImage?: { src: string; alt: string };
   /** Optional full-bleed video hero (files in /public); replaces the split hero when set. */
-  heroVideo?: { src: string; poster: string; label: string; eyebrow: string; accent?: string };
+  heroVideo?: {
+    src: string;
+    poster: string;
+    label: string;
+    eyebrow: string;
+    accent?: string;
+    /** Optional phone mockup of the app's home screen, shown beside the hero copy. */
+    phone?: HeroPhoneData;
+  };
+}
+
+export interface HeroPhoneData {
+  company: string;
+  date: string;
+  greeting: string;
+  summary: string;
+  urgentTitle: string;
+  urgent: { title: string; who: string; status: string; statusTone: "progress" | "new" }[];
+  tabs: { icon: string; label: string }[];
 }
 
 export interface MarketingConfig {

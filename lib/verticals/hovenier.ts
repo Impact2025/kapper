@@ -216,6 +216,23 @@ export const HOVENIER_VERTICAL: VerticalPack = {
         label: "Sfeerbeeld van een tuin waar een hovenier aan het werk is",
         eyebrow: "voor hoveniers & groenbedrijven",
         accent: "#f1d675",
+        phone: {
+          company: "Groenlust Tuinen",
+          date: "Maandag 28 september",
+          greeting: "Goedemorgen, Joost",
+          summary: "2 klussen bezig · 6 nog in te plannen",
+          urgentTitle: "2 spoedklussen wachten op je",
+          urgent: [
+            { title: "Stormschade: grote tak", who: "Mevrouw Hoekstra", status: "Onderweg", statusTone: "progress" },
+            { title: "Stormschade: tak op pad", who: "Familie Smits", status: "Nieuw", statusTone: "new" },
+          ],
+          tabs: [
+            { icon: "dashboard", label: "Overzicht" },
+            { icon: "construction", label: "Klussen" },
+            { icon: "calendar_view_week", label: "Planbord" },
+            { icon: "group", label: "Klanten" },
+          ],
+        },
       },
       chat: {
         title: "WhatsApp — HovenierAssistent",
