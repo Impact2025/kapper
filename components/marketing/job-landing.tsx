@@ -131,6 +131,34 @@ export function JobLanding({ pack }: { pack: VerticalPack }) {
                 </div>
               </div>
             </div>
+          ) : landing.appPreview ? (
+            <div className="relative z-10 mx-auto w-full max-w-[36rem] py-md">
+              <div className="absolute inset-0 rounded-[2.5rem] bg-primary-fixed/70" aria-hidden="true" />
+              <div className="relative flex flex-col items-center gap-md px-md py-lg sm:flex-row sm:justify-center sm:gap-0 sm:px-sm">
+                {/* De AI aan het werk: wat de klant ziet, naast wat de vakman ziet. */}
+                <div className="relative z-20 w-full max-w-[16rem] shrink-0 rounded-xl border border-outline-variant/40 bg-surface-container-lowest p-md soft-shadow sm:-mr-3 sm:w-[14rem]">
+                  <div className="mb-sm flex items-center gap-xs">
+                    <Icon name="chat" className="text-[18px] text-primary" />
+                    <span className="font-label-sm text-label-sm text-on-surface">{landing.chat.title}</span>
+                  </div>
+                  <div className="flex flex-col gap-xs text-label-md">
+                    {landing.chat.messages.map((m, i) => (
+                      <div
+                        key={i}
+                        className={
+                          m.from === "customer"
+                            ? "max-w-[92%] self-start rounded-xl bg-surface-container px-sm py-xs text-on-surface"
+                            : "max-w-[92%] self-end rounded-xl bg-primary px-sm py-xs text-on-primary"
+                        }
+                      >
+                        {m.text}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                <HeroPhone data={landing.appPreview} />
+              </div>
+            </div>
           ) : (
             <div className="relative z-10 rounded-xl border border-outline-variant/40 bg-surface-container-lowest p-lg soft-shadow">
             <div className="mb-md flex items-center gap-sm">

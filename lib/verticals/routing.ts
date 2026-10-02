@@ -15,6 +15,7 @@ const SITE_PREFIXES = [
   "/blog",
   "/kennisbank",
   "/oplossingen",
+  "/tools", // free tools per vertical; verticals without the tool 404 in the page
   "/contact",
   "/help",
   "/faq",

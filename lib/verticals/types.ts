@@ -119,6 +119,8 @@ export interface LandingCopy {
   ctaBody: string;
   /** Optional hero photo (in /public); the chat then floats on it as a phone mockup. */
   heroImage?: { src: string; alt: string };
+  /** Optional app preview (phone mockup of the home screen) for the split hero when there is no photo or video. */
+  appPreview?: HeroPhoneData;
   /** Optional full-bleed video hero (files in /public); replaces the split hero when set. */
   heroVideo?: {
     src: string;

@@ -83,7 +83,7 @@ Toen ik als directeur van een grote Haarlemse welzijnsorganisatie werkte, leerde
 - In de offerte-editor kies je het offerte-pakket "Hybride warmtepomp plaatsen". Toestel en materiaal staan op nul, zodat je je eigen inkoop en marge invult. Zet de meldcode in de omschrijving.
 - Het toestel komt in het installatiepaspoort, dat je kunt printen of als pdf opslaan, met merk, type, serienummer en garantie.
 - Voor- en nafoto's staan bij de klus en in het fotodossier van de klant.
-- De AI-receptie herkent een warmtepompvraag, legt adres en wens vast en zorgt dat jij gericht kunt opnemen. Hij geeft geen prijs of subsidiebedrag.
+- De AI-receptie herkent een warmtepompvraag, legt adres en wens vast en zorgt dat jij gericht kunt opnemen. Hij geeft geen prijs of subsidiebedrag. Een overzicht vind je op de pagina [software voor warmtepomp-klussen](/oplossingen/warmtepomp-installateur-software).
 
 ## Veelgestelde vragen
 

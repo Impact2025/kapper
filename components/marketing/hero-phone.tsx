@@ -13,17 +13,17 @@ export function HeroPhone({ data }: { data: HeroPhoneData }) {
       aria-label={`Voorbeeld van de app: ${data.urgentTitle}`}
     >
       <div className="overflow-hidden rounded-[2rem]">
-        <div className="bg-[#f5f1e4] px-4 pb-3 pt-7">
+        <div className="bg-surface-container px-4 pb-3 pt-7">
           <div className="flex items-center justify-between">
             <span className="text-base font-semibold">{data.company}</span>
-            <Icon name="menu" className="text-[20px] text-[#2e6b3a]" />
+            <Icon name="menu" className="text-[20px] text-primary" />
           </div>
         </div>
         <div className="px-4 pb-4 pt-3">
           <p className="text-[11px] font-semibold uppercase tracking-wider text-stone-600">{data.date}</p>
           <p className="mt-1 text-2xl font-semibold leading-tight">{data.greeting}</p>
           <p className="mt-1 text-[13px] leading-snug text-stone-700">{data.summary}</p>
-          <div className="mt-3 inline-flex items-center gap-1 rounded-full bg-[#2e6b3a] px-4 py-2 text-[13px] font-semibold text-white">
+          <div className="mt-3 inline-flex items-center gap-1 rounded-full bg-primary px-4 py-2 text-[13px] font-semibold text-white">
             <Icon name="add" className="text-[16px]" /> Nieuwe klus
           </div>
         </div>
@@ -40,7 +40,7 @@ export function HeroPhone({ data }: { data: HeroPhoneData }) {
                 </div>
                 <span
                   className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${
-                    u.statusTone === "new" ? "bg-[#2e6b3a] text-white" : "bg-green-200 text-green-950"
+                    u.statusTone === "new" ? "bg-primary text-white" : "bg-green-200 text-green-950"
                   }`}
                 >
                   {u.status}
@@ -52,9 +52,9 @@ export function HeroPhone({ data }: { data: HeroPhoneData }) {
             ))}
           </ul>
         </div>
-        <div className="flex justify-between bg-[#f5f1e4] px-3 py-2">
+        <div className="flex justify-between bg-surface-container px-3 py-2">
           {data.tabs.map((t, i) => (
-            <div key={t.label} className={`flex flex-col items-center gap-0.5 text-[10px] ${i === 0 ? "text-[#2e6b3a]" : "text-stone-700"}`}>
+            <div key={t.label} className={`flex flex-col items-center gap-0.5 text-[10px] ${i === 0 ? "text-primary" : "text-stone-700"}`}>
               <Icon name={t.icon} className="text-[20px]" />
               {t.label}
             </div>

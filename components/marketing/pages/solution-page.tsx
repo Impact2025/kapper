@@ -83,6 +83,51 @@ export async function SolutionPageView({ pack, slug }: { pack: VerticalPack; slu
             </div>
           ))}
 
+          {page.tool && (
+            <div className="mb-lg flex items-center justify-between gap-md rounded-xl bg-primary-fixed p-lg">
+              <p className="font-label-md text-label-md text-on-primary-fixed-variant">
+                {page.tool.blurb ?? "Gratis tool: reken het uit voor jouw salon"}
+              </p>
+              <ButtonLink href={page.tool.href} size="sm">
+                {page.tool.label}
+              </ButtonLink>
+            </div>
+          )}
+
+          {page.table && (
+            <div className="mb-lg overflow-x-auto">
+              <h2 className="mkt-h2 mb-sm text-headline-lg text-on-surface">{page.table.title}</h2>
+              <table className="w-full min-w-[32rem] border-collapse text-left text-body-md">
+                <thead>
+                  <tr>
+                    {page.table.headers.map((h) => (
+                      <th key={h} scope="col" className="border-b border-outline-variant px-sm py-xs font-label-md text-label-md text-on-surface">
+                        {h}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {page.table.rows.map((r) => (
+                    <tr key={r[0]}>
+                      {r.map((c, i) =>
+                        i === 0 ? (
+                          <th key={i} scope="row" className="border-b border-outline-variant/50 px-sm py-xs align-top font-label-md text-label-md text-on-surface">
+                            {c}
+                          </th>
+                        ) : (
+                          <td key={i} className="border-b border-outline-variant/50 px-sm py-xs align-top text-on-surface-variant">
+                            {c}
+                          </td>
+                        ),
+                      )}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+
           {page.tips && (
             <div className="mb-lg rounded-xl bg-surface-container-low p-lg">
               <h2 className="mkt-h3 mb-sm text-headline-md text-on-surface">{page.tips.title}</h2>
@@ -104,10 +149,17 @@ export async function SolutionPageView({ pack, slug }: { pack: VerticalPack; slu
             ))}
           </dl>
 
-          {articles.length > 0 && (
+          {(articles.length > 0 || (page.links?.length ?? 0) > 0) && (
             <nav aria-label="Verdieping" className="mt-xl border-t border-outline-variant pt-lg">
-              <p className="mb-sm font-label-md text-label-md uppercase tracking-wider text-on-surface-variant">Lees verder in de kennisbank</p>
+              <p className="mb-sm font-label-md text-label-md uppercase tracking-wider text-on-surface-variant">Lees verder</p>
               <ul className="flex flex-col gap-xs">
+                {page.links?.map((l) => (
+                  <li key={l.href}>
+                    <Link href={l.href} className="text-primary underline">
+                      {l.label}
+                    </Link>
+                  </li>
+                ))}
                 {articles.map((a) => (
                   <li key={a.slug}>
                     <Link href={`/kennisbank/${a.slug}`} className="text-primary underline">
@@ -115,7 +167,7 @@ export async function SolutionPageView({ pack, slug }: { pack: VerticalPack; slu
                     </Link>
                   </li>
                 ))}
-                {page.category && (
+                {page.category && articles.length > 0 && (
                   <li>
                     <Link href={`/kennisbank/categorie/${page.category}`} className="text-on-surface-variant hover:text-primary">
                       Alle artikelen in deze categorie →

@@ -11,11 +11,11 @@ export const LOODGIETER_VERTICAL: VerticalPack = {
   label: "Loodgieter",
   archetype: "job",
   live: true,
-  // A plumber's reduced 9% only applies conditionally per klus (verbouwing/
-  // herstel aan een woning ouder dan 2 jaar, arbeidsloon only) — never a
-  // blanket sector default, so this defaults to 21/21 and the owner overrides
-  // per klus/regel where the reduced rate genuinely applies. Do NOT "fix" this
-  // back to 9%.
+  // Loodgieterswerk aan woningen is 21%. Volgens de Belastingdienst geldt 9%
+  // alleen voor isoleren, schilderen, stukadoren en behangen van woningen ouder
+  // dan 2 jaar (en schoonmaken), dus nooit een sector-default. Dit staat op
+  // 21/21 en de eigenaar kiest per regel een ander tarief waar dat echt geldt
+  // (bijv. arbeid voor isolatie). Do NOT "fix" this back to 9%.
   vatRates: { treatment: 21, product: 21 },
   terms: {
     practitioner: "loodgieter",
@@ -139,7 +139,7 @@ export const LOODGIETER_VERTICAL: VerticalPack = {
       label: "Woning ouder dan 2 jaar?",
       type: "select",
       options: ["Onbekend", "Ja", "Nee"],
-      hint: "Bepaalt of het verlaagde btw-tarief op arbeid mogelijk is — controleer het actuele tarief bij de Belastingdienst.",
+      hint: "Het verlaagde tarief (9%) geldt alleen voor bepaalde werken aan woningen ouder dan 2 jaar, zoals isoleren. Voor loodgieterswerk is het doorgaans 21%. Controleer het bij de Belastingdienst.",
     },
     { key: "bouwjaar", label: "Bouwjaar woning", type: "number", placeholder: "1985" },
     {
@@ -261,6 +261,23 @@ export const LOODGIETER_VERTICAL: VerticalPack = {
       badge: "Voor loodgieters en installatiebedrijven",
       headline: "Nooit meer een gemiste noodoproep.",
       sub: "Terwijl jij onder een lekkende leiding ligt, rinkelt de telefoon. LoodgietersAssistent neemt 24/7 op via telefoon en WhatsApp, legt klusadres en spoed vast en zet alles klaar in je klus-CRM: van aanvraag tot betaalde factuur.",
+      appPreview: {
+        company: "De Vries Installatie",
+        date: "Maandag 28 september",
+        greeting: "Goedemorgen, Mark",
+        summary: "3 klussen bezig · 5 nog in te plannen",
+        urgentTitle: "2 spoedklussen wachten op je",
+        urgent: [
+          { title: "Lekkende cv-ketel", who: "Mevrouw Bakker", status: "Onderweg", statusTone: "progress" },
+          { title: "Gaslucht in de meterkast", who: "Familie Yilmaz", status: "Nieuw", statusTone: "new" },
+        ],
+        tabs: [
+          { icon: "dashboard", label: "Overzicht" },
+          { icon: "construction", label: "Klussen" },
+          { icon: "calendar_view_week", label: "Planbord" },
+          { icon: "group", label: "Klanten" },
+        ],
+      },
       chat: {
         title: "WhatsApp — LoodgietersAssistent",
         messages: [
@@ -315,7 +332,7 @@ export const LOODGIETER_VERTICAL: VerticalPack = {
         },
         {
           q: "Hoe zit het met btw en facturen?",
-          a: "Facturen bevatten de wettelijk verplichte gegevens (KvK, btw-nummer, factuurnummer, btw per tarief). Het btw-tarief kies je per regel — 21%, 9% of 0% — omdat het verlaagde tarief per klus kan verschillen.",
+          a: "Facturen bevatten de wettelijk verplichte gegevens (KvK, btw-nummer, factuurnummer, btw per tarief). Het btw-tarief kies je per regel — 21%, 9% of 0%. Loodgieterswerk is doorgaans 21%; het verlaagde tarief geldt alleen voor specifieke werken zoals isoleren, dus de keuze blijft bij jou.",
         },
         {
           q: "Wat is een installatiepaspoort?",
